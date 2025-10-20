@@ -31,10 +31,19 @@ SQLModel.metadata.create_all(engine)
 @app.get("/",response_model=UserRead)
 async def home():
 
-    with Session(engine) as session:
-        statement = select(User).where(User.username == "Username")
-        user = session.exec(statement).first()
-        print(type(user))
+    # with Session(engine) as session:
+    #     statement = select(User).where(User.username == "Username")
+    #     user = session.exec(statement).first()
+    #     print(type(user))
+    
+    return {"results": "Welcome"}
+
+
+@app.get("/health")
+async def check_healh():
+    return {"check": "I'm ok! No worry"}
+
+
         # user = user.model_dump()
         # print(user)
         # user = User(
@@ -46,10 +55,3 @@ async def home():
         # )
         # session.add(user)
         # session.commit()
-    # return user.model_dump()
-    return {"results": user}
-
-
-@app.get("/health")
-async def check_healh():
-    return {"check": "I'm ok! No worry"}
