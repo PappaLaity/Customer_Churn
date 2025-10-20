@@ -1,0 +1,17 @@
+fastapi
+pydantic
+uvicorn
+pytest
+# torch
+pandas
+numpy
+scikit-learn
+matplotlib
+mlflow
+sqlmodel
+alembic
+requests
+pymysql
+# flask-session==0.5.0
+# apache-airflow==2.7.2
+# airflow
