@@ -2,7 +2,7 @@ fastapi
 pydantic
 uvicorn
 pytest
-# torch
+python-dotenv
 pandas
 numpy
 scikit-learn
@@ -12,6 +12,6 @@ sqlmodel
 alembic
 requests
 pymysql
-# flask-session==0.5.0
-# apache-airflow==2.7.2
-# airflow
+pwlib
+pwlib[argon2]
+python-jose[cryptography]
