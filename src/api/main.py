@@ -1,42 +1,18 @@
 from fastapi import FastAPI
-from fastapi.encoders import jsonable_encoder
-from sqlalchemy import create_engine, select
-from sqlmodel import SQLModel, Session
-
-from src.api.utils.enum.UserRole import UserRole
-from src.api.entities.users import User
+from fastapi.security import HTTPBearer
+from fastapi.openapi.utils import get_openapi
+from src.api.routes import users,auth
+from src.api.core.database import init_db
+from pydantic import BaseModel
 
 
 app = FastAPI(title="Customer Churn Prediction")
 
-from pydantic import BaseModel
+init_db()
 
-class UserRead(BaseModel):
-    id: int
-    username: str
-    email: str
-    phone: str
-    role: str
-
-    class Config:
-        orm_mode = True
-
-# engine = create_engine("sqlite:///database.db")
-DATABASE_URL = "mysql+pymysql://root@localhost/churn_test"
-engine = create_engine(DATABASE_URL, echo=True)
-
-SQLModel.metadata.create_all(engine)
-
-
-@app.get("/",response_model=UserRead)
+@app.get("/")
 async def home():
-
-    # with Session(engine) as session:
-    #     statement = select(User).where(User.username == "Username")
-    #     user = session.exec(statement).first()
-    #     print(type(user))
-    
-    return {"results": "Welcome"}
+    return {"msg":"Customer Churn System"}
 
 
 @app.get("/health")
@@ -44,14 +20,33 @@ async def check_healh():
     return {"check": "I'm ok! No worry"}
 
 
-        # user = user.model_dump()
-        # print(user)
-        # user = User(
-        #     username="Username",
-        #     email="username1@example.com",
-        #     phone="+221772343321",
-        #     password="secret",
-        #     role=UserRole.ADMIN
-        # )
-        # session.add(user)
-        # session.commit()
+app.include_router(users.router)
+# app.include_router(auth.router)
+
+
+
+# security = HTTPBearer(auto_error=False)
+
+# def custom_openapi():
+#     if app.openapi_schema:
+#         return app.openapi_schema
+#     openapi_schema = get_openapi(
+#         title="Customer Churn API",
+#         version="1.0.0",
+#         description="API sécurisée avec JWT Bearer Token",
+#         routes=app.routes,
+#     )
+#     openapi_schema["components"]["securitySchemes"] = {
+#         "BearerAuth": {
+#             "type": "http",
+#             "scheme": "bearer",
+#             "bearerFormat": "JWT"
+#         }
+#     }
+#     for path in openapi_schema["paths"].values():
+#         for method in path.values():
+#             method.setdefault("security", [{"BearerAuth": []}])
+#     app.openapi_schema = openapi_schema
+#     return app.openapi_schema
+
+# app.openapi = custom_openapi
