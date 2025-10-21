@@ -1,3 +1,4 @@
+sqlmodel
 fastapi
 pydantic
 uvicorn
@@ -8,10 +9,9 @@ numpy
 scikit-learn
 matplotlib
 mlflow
-sqlmodel
 alembic
 requests
 pymysql
-pwlib
-pwlib[argon2]
+pwdlib[argon2]
 python-jose[cryptography]
+prometheus-fastapi-instrumentator
