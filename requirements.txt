@@ -15,3 +15,4 @@ pymysql
 pwdlib[argon2]
 python-jose[cryptography]
 prometheus-fastapi-instrumentator
+psycopg2-binary
