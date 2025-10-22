@@ -1,38 +1,68 @@
 services:
+  db:
+    image: postgres:15
+    container_name: churn_db
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: churn_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
   fastapi:
     build:
       context: .
       dockerfile: Dockerfile.api
-    container_name: telco_api
+    container_name: churn_api
+    environment:
+      DATABASE_URL: postgresql+psycopg2://user:password@db:5432/churn_db
+    depends_on:
+      - db
     ports:
       - "8000:8000"
-    # volumes:
-    #   - ./models:/app/models
-    #   - ./data:/app/data
-    # environment:
-    #   - ENV=production
-    depends_on:
-      - prometheus
-      # - postgres
+    command: >
+      sh -c "alembic upgrade head &&
+           python src/api/core/seed.py &&
+           uvicorn src.api.main:app --host 0.0.0.0 --port 8000"
+    restart: unless-stopped
 
   airflow:
     build:
       context: .
       dockerfile: Dockerfile.airflow
-    container_name: telco_airflow
+    container_name: airflow
+    entrypoint: >
+      bash -c "
+      airflow db migrate &&
+      airflow users create -u admin -p admin -f telco -l company -r Admin -e admin@telco.com &&
+      airflow webserver & sleep 10 &&
+      airflow scheduler
+      "
     environment:
       - AIRFLOW_HOME=/opt/airflow
     volumes:
       - ./dags:/opt/airflow/dags
       - ./data:/opt/airflow/data
       - ./models:/opt/airflow/models
-    command: >
-      bash -c "airflow db init &&
-               airflow users create --username admin --password admin --role Admin --email admin@telco.com -f telco -l company &&
-               airflow webserver & airflow scheduler"
     ports:
       - "8080:8080"
+    restart: on-failure
 
+  mlflow:
+    build:
+      context: .
+      dockerfile: Dockerfile.mlflow
+    container_name: mlflow
+    environment:
+      - BACKEND_STORE_URI=sqlite:///mlflow/mlflow.db
+      - ARTIFACT_ROOT=/mlflow/artifacts
+    volumes:
+      - ./mlflow:/mlflow
+    ports:
+      - "5001:5000"
+    restart: unless-stopped
 
 
   prometheus:
@@ -42,6 +72,7 @@ services:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
       - "9090:9090"
+    restart: unless-stopped
 
   grafana:
     image: grafana/grafana:latest
@@ -55,34 +86,8 @@ services:
       - prometheus
     volumes:
       - grafana-storage:/var/lib/grafana
+    restart: unless-stopped
 
 volumes:
+  db_data:
   grafana-storage:
-
-#   postgres:
-#     image: postgres:15
-#     container_name: telco_postgres
-#     environment:
-#       POSTGRES_USER: airflow
-#       POSTGRES_PASSWORD: airflow
-#       POSTGRES_DB: airflow
-#     ports:
-#       - "5432:5432"
-#     volumes:
-#       - pgdata:/var/lib/postgresql/data
-
-#   minio:
-#     image: minio/minio
-#     container_name: telco_minio
-#     environment:
-#       - MINIO_ROOT_USER=admin
-#       - MINIO_ROOT_PASSWORD=admin123
-#     ports:
-#       - "9000:9000"
-#     command: server /data
-#     volumes:
-#       - minio_data:/data
-
-# volumes:
-#   pgdata:
-#   minio_data:
