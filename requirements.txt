@@ -1,0 +1,17 @@
+sqlmodel
+fastapi
+pydantic
+uvicorn
+pytest
+python-dotenv
+pandas
+numpy
+scikit-learn
+matplotlib
+mlflow
+alembic
+requests
+pymysql
+pwdlib[argon2]
+python-jose[cryptography]
+prometheus-fastapi-instrumentator
