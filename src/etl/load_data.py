@@ -5,11 +5,11 @@ import pandas as pd
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 
 # Définir le chemin du fichier brut
-RAW_DATA_PATH = os.path.join(BASE_DIR, "data", "raw", "WA_Fn-UseC_-Telco-Customer-Churn.csv.xls")
+RAW_DATA_PATH = os.path.join(BASE_DIR, "data", "raw", "WA_Fn-UseC_-Telco-Customer-Churn.csv.xlsx")
 
 def load_data(path: str = RAW_DATA_PATH) -> pd.DataFrame:
     """
-    Load dataset from an Excel or CSV file.
+    Load dataset from a CSV or Excel file, automatically selecting the engine.
     
     Parameters
     ----------
@@ -21,11 +21,21 @@ def load_data(path: str = RAW_DATA_PATH) -> pd.DataFrame:
     pd.DataFrame
         Loaded dataset.
     """
-    # Charger automatiquement selon l’extension
+    # Détection automatique du type de fichier
     if path.endswith(".csv"):
         df = pd.read_csv(path)
-    elif path.endswith(".xls") or path.endswith(".xlsx"):
-        df = pd.read_excel(path)
+    elif path.endswith(".xls"):
+        try:
+            import xlrd
+        except ImportError:
+            raise ImportError("Please install xlrd to read .xls files: pip install xlrd")
+        df = pd.read_excel(path, engine="xlrd")
+    elif path.endswith(".xlsx"):
+        try:
+            import openpyxl
+        except ImportError:
+            raise ImportError("Please install openpyxl to read .xlsx files: pip install openpyxl")
+        df = pd.read_excel(path, engine="openpyxl")
     else:
         raise ValueError(f"Unsupported file type: {path}")
     
