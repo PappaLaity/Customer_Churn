@@ -1,7 +1,8 @@
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.security import HTTPBearer
 from fastapi.openapi.utils import get_openapi
 from prometheus_fastapi_instrumentator import Instrumentator
+from src.api.core.security import verify_api_key
 from src.api.routes import users,auth
 from src.api.core.database import init_db
 from pydantic import BaseModel
@@ -19,13 +20,13 @@ async def home():
     return {"msg":"Customer Churn System"}
 
 
-@app.get("/health")
+@app.get("/health", dependencies=[Depends(verify_api_key)])
 async def check_healh():
     return {"check": "I'm ok! No worry"}
 
 
 app.include_router(users.router)
-# app.include_router(auth.router)
+app.include_router(auth.router)
 
 
 
