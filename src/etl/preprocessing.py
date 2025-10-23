@@ -34,7 +34,7 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     # --- Convert TotalCharges to numeric ---
     if "TotalCharges" in df.columns:
         df["TotalCharges"] = pd.to_numeric(df["TotalCharges"], errors="coerce")
-        df["TotalCharges"].fillna(0, inplace=True)
+        df["TotalCharges"] = df["TotalCharges"].fillna(0)  # avoids chained assignment warning
         logging.info("TotalCharges converted to numeric")
 
     # --- Map target Churn to 0/1 ---
@@ -75,6 +75,15 @@ def run_pipeline(raw_path: str, processed_dir: str):
 
     # Build features
     df_features = build_features(df_clean)
+
+   
+    # Convert boolean columns to 0/1
+    bool_cols = df_features.select_dtypes(include='bool').columns
+    if len(bool_cols) > 0:
+        df_features[bool_cols] = df_features[bool_cols].astype(int)
+        logging.info(f"Converted boolean columns to int: {list(bool_cols)}")
+   
+    # Save feature-engineered data
     features_path = os.path.join(processed_dir, "churn_features.csv")
     os.makedirs(processed_dir, exist_ok=True)
     df_features.to_csv(features_path, index=False)

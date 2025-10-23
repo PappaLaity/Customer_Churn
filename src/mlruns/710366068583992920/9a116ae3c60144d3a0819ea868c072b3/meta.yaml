@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/elhadjimamadou/Documents/Customer_Churn/src/mlruns/710366068583992920/9a116ae3c60144d3a0819ea868c072b3/artifacts
+end_time: 1761231311121
+entry_point_name: ''
+experiment_id: '710366068583992920'
+lifecycle_stage: active
+run_id: 9a116ae3c60144d3a0819ea868c072b3
+run_name: Optuna_RF_XGB
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1761231251362
+status: 4
+tags: []
+user_id: elhadjimamadou
