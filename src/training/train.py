@@ -8,10 +8,11 @@ import pandas as pd
 import numpy as np
 import optuna
 import mlflow
+import argparse
 from sklearn.model_selection import train_test_split, StratifiedKFold
 from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
-from sklearn.metrics import recall_score
+from sklearn.metrics import recall_score, precision_score, f1_score, accuracy_score
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.pipeline import Pipeline
@@ -36,9 +37,31 @@ MODEL_DIR = os.path.join(BASE_DIR, "models")
 os.makedirs(MODEL_DIR, exist_ok=True)
 
 # =========================
+# Utility: compute best threshold
+# =========================
+def find_best_threshold(y_true, y_proba, metric='recall'):
+    thresholds = np.linspace(0, 1, 101)
+    best_thresh = 0.5
+    best_score = -np.inf
+    for t in thresholds:
+        y_pred = (y_proba >= t).astype(int)
+        if metric == 'recall':
+            score = recall_score(y_true, y_pred)
+        elif metric == 'f1':
+            score = f1_score(y_true, y_pred)
+        elif metric == 'precision':
+            score = precision_score(y_true, y_pred)
+        else:
+            raise ValueError("Metric not supported")
+        if score > best_score:
+            best_score = score
+            best_thresh = t
+    return best_thresh, best_score
+
+# =========================
 # Optuna objective functions
 # =========================
-def objective_rf(trial, X_train, y_train, preprocessor, threshold=0.5):
+def objective_rf(trial, X_train, y_train, preprocessor):
     params = {
         'n_estimators': trial.suggest_int('n_estimators', 50, 400),
         'max_depth': trial.suggest_int('max_depth', 3, 20),
@@ -63,13 +86,15 @@ def objective_rf(trial, X_train, y_train, preprocessor, threshold=0.5):
             ("classifier", RandomForestClassifier(**params))
         ])
         model.fit(X_t, y_t)
-        y_pred = (model.predict_proba(X_v)[:, 1] >= threshold).astype(int)
+        y_proba = model.predict_proba(X_v)[:, 1]
+        best_thresh, _ = find_best_threshold(y_v, y_proba, metric='recall')
+        y_pred = (y_proba >= best_thresh).astype(int)
         recalls.append(recall_score(y_v, y_pred))
 
     return np.mean(recalls)
 
 
-def objective_xgb(trial, X_train, y_train, preprocessor, threshold=0.5):
+def objective_xgb(trial, X_train, y_train, preprocessor):
     params = {
         'objective': 'binary:logistic',
         'eval_metric': 'logloss',
@@ -100,15 +125,18 @@ def objective_xgb(trial, X_train, y_train, preprocessor, threshold=0.5):
             ("classifier", XGBClassifier(**params))
         ])
         model.fit(X_t, y_t)
-        y_pred = (model.predict_proba(X_v)[:, 1] >= threshold).astype(int)
+        y_proba = model.predict_proba(X_v)[:, 1]
+        best_thresh, _ = find_best_threshold(y_v, y_proba, metric='recall')
+        y_pred = (y_proba >= best_thresh).astype(int)
         recalls.append(recall_score(y_v, y_pred))
 
     return np.mean(recalls)
 
+
 # =========================
 # Main
 # =========================
-def main(threshold=0.5):
+def main(rf_threshold=None, xgb_threshold=None):
     if not os.path.exists(DATA_PATH):
         raise FileNotFoundError(f"{DATA_PATH} not found. Run preprocessing first.")
 
@@ -133,11 +161,11 @@ def main(threshold=0.5):
     results = {}
     mlflow.set_experiment("Churn_Prediction")
 
-    # ---------- RandomForest Run ----------
+    # ---------- RandomForest ----------
     with mlflow.start_run(run_name="RandomForest"):
         logging.info("Running RandomForest Optuna study...")
         study_rf = optuna.create_study(direction="maximize")
-        study_rf.optimize(lambda trial: objective_rf(trial, X_train, y_train, preprocessor, threshold),
+        study_rf.optimize(lambda trial: objective_rf(trial, X_train, y_train, preprocessor), 
                           n_trials=30, show_progress_bar=True)
         best_params_rf = study_rf.best_params
 
@@ -145,31 +173,48 @@ def main(threshold=0.5):
             ("preprocessor", preprocessor),
             ("classifier", RandomForestClassifier(random_state=42, class_weight="balanced", **best_params_rf))
         ])
-        rf_metrics = train_and_evaluate_model(rf_pipeline, X_train, X_test, y_train, y_test, threshold=threshold)
-        results["RandomForest"] = rf_metrics
+        rf_pipeline.fit(X_train, y_train)
 
-        joblib.dump(rf_pipeline, os.path.join(MODEL_DIR, "rf_pipeline.pkl"))
+        # Utilisation du seuil manuel si fourni
+        rf_metrics = train_and_evaluate_model(
+            rf_pipeline, X_train, X_test, y_train, y_test, threshold=rf_threshold
+        )
+        results["RandomForest"] = rf_metrics
+        best_thresh_rf = rf_metrics["best_threshold"]
+
+        joblib.dump({"pipeline": rf_pipeline, "threshold": best_thresh_rf}, 
+                    os.path.join(MODEL_DIR, "rf_pipeline.pkl"))
         mlflow.log_params(best_params_rf)
         mlflow.log_metrics(rf_metrics)
+        mlflow.log_metric("best_threshold", best_thresh_rf)
 
-    # ---------- XGBoost Run ----------
+    # ---------- XGBoost ----------
     with mlflow.start_run(run_name="XGBoost"):
         logging.info("Running XGBoost Optuna study...")
         study_xgb = optuna.create_study(direction="maximize")
-        study_xgb.optimize(lambda trial: objective_xgb(trial, X_train, y_train, preprocessor, threshold),
+        study_xgb.optimize(lambda trial: objective_xgb(trial, X_train, y_train, preprocessor), 
                            n_trials=30, show_progress_bar=True)
         best_params_xgb = study_xgb.best_params
 
         xgb_pipeline = Pipeline([
             ("preprocessor", preprocessor),
-            ("classifier", XGBClassifier(random_state=42, n_jobs=-1, **best_params_xgb, use_label_encoder=False, eval_metric="logloss"))
+            ("classifier", XGBClassifier(random_state=42, n_jobs=-1, 
+                                         **best_params_xgb, use_label_encoder=False, eval_metric="logloss"))
         ])
-        xgb_metrics = train_and_evaluate_model(xgb_pipeline, X_train, X_test, y_train, y_test, threshold=threshold)
-        results["XGBoost"] = xgb_metrics
+        xgb_pipeline.fit(X_train, y_train)
 
-        joblib.dump(xgb_pipeline, os.path.join(MODEL_DIR, "xgb_pipeline.pkl"))
+        # Utilisation du seuil manuel si fourni
+        xgb_metrics = train_and_evaluate_model(
+            xgb_pipeline, X_train, X_test, y_train, y_test, threshold=xgb_threshold
+        )
+        results["XGBoost"] = xgb_metrics
+        best_thresh_xgb = xgb_metrics["best_threshold"]
+
+        joblib.dump({"pipeline": xgb_pipeline, "threshold": best_thresh_xgb}, 
+                    os.path.join(MODEL_DIR, "xgb_pipeline.pkl"))
         mlflow.log_params(best_params_xgb)
         mlflow.log_metrics(xgb_metrics)
+        mlflow.log_metric("best_threshold", best_thresh_xgb)
 
     # Save results JSON
     results_path = os.path.join(MODEL_DIR, "training_results.json")
@@ -182,4 +227,10 @@ def main(threshold=0.5):
 
 
 if __name__ == "__main__":
-    main(threshold=0.5)
+    parser = argparse.ArgumentParser(description="Train churn prediction models with optional manual thresholds.")
+    parser.add_argument("--rf_threshold", type=float, default=None, help="Manual threshold for RandomForest (0-1)")
+    parser.add_argument("--xgb_threshold", type=float, default=None, help="Manual threshold for XGBoost (0-1)")
+    args = parser.parse_args()
+    main(rf_threshold=args.rf_threshold, xgb_threshold=args.xgb_threshold)
+
+#PYTHONPATH=. python3 training/train.py --rf_threshold 0.6 --xgb_threshold 0.55

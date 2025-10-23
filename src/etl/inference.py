@@ -19,11 +19,11 @@ logging.basicConfig(
 # ============================================================
 # Inference functions
 # ============================================================
-def load_model(model_path):
-    """Load a trained model from a .pkl file."""
+def load_model_with_threshold(model_path):
+    """Load trained model and its threshold."""
     logging.info(f"Loading model from {model_path}")
-    return joblib.load(model_path)
-
+    data = joblib.load(model_path)
+    return data["pipeline"], data.get("threshold", 0.5)  # default 0.5 if not found
 
 def predict(model, X, threshold=0.5):
     """
@@ -44,7 +44,6 @@ def predict(model, X, threshold=0.5):
         y_proba = None
     return y_pred, y_proba
 
-
 # ============================================================
 # Main execution
 # ============================================================
@@ -56,17 +55,26 @@ if __name__ == "__main__":
     df = pd.read_csv(DATA_PATH)
     X_new = df  # assume all columns are features
 
+    # Option: use manual threshold instead of dynamic
+    MANUAL_THRESHOLD = None  # e.g., 0.6, or None to use threshold from training
+
     # Start MLflow run
     mlflow.set_experiment("Churn_Prediction_Inference")
     with mlflow.start_run(run_name="Inference_RF_XGB"):
 
-        # Load models
-        rf_model = load_model(os.path.join(MODEL_DIR, "random_forest_model.pkl"))
-        xgb_model = load_model(os.path.join(MODEL_DIR, "xgboost_model.pkl"))
+        # Load models + thresholds
+        rf_pipeline, rf_threshold = load_model_with_threshold(os.path.join(MODEL_DIR, "rf_pipeline.pkl"))
+        xgb_pipeline, xgb_threshold = load_model_with_threshold(os.path.join(MODEL_DIR, "xgb_pipeline.pkl"))
+
+        # Override thresholds if manual threshold is set
+        if MANUAL_THRESHOLD is not None:
+            rf_threshold = MANUAL_THRESHOLD
+            xgb_threshold = MANUAL_THRESHOLD
+            logging.info(f"Manual threshold set: {MANUAL_THRESHOLD}")
 
         # Predict
-        y_pred_rf, y_proba_rf = predict(rf_model, X_new)
-        y_pred_xgb, y_proba_xgb = predict(xgb_model, X_new)
+        y_pred_rf, y_proba_rf = predict(rf_pipeline, X_new, threshold=rf_threshold)
+        y_pred_xgb, y_proba_xgb = predict(xgb_pipeline, X_new, threshold=xgb_threshold)
 
         # Save predictions locally
         rf_pred_path = os.path.join(MODEL_DIR, "rf_predictions.csv")
@@ -79,4 +87,5 @@ if __name__ == "__main__":
         mlflow.log_artifact(rf_pred_path, artifact_path="predictions")
         mlflow.log_artifact(xgb_pred_path, artifact_path="predictions")
 
-        print("Predictions saved and logged to MLflow.")
+        logging.info(f"Predictions saved: RF={rf_pred_path}, XGB={xgb_pred_path}")
+        print("✅ Predictions saved and logged to MLflow.")

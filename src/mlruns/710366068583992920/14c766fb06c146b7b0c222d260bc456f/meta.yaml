@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/elhadjimamadou/Documents/Customer_Churn/src/mlruns/710366068583992920/14c766fb06c146b7b0c222d260bc456f/artifacts
+end_time: 1761237745838
+entry_point_name: ''
+experiment_id: '710366068583992920'
+lifecycle_stage: active
+run_id: 14c766fb06c146b7b0c222d260bc456f
+run_name: tasteful-gnu-800
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1761237745825
+status: 3
+tags: []
+user_id: elhadjimamadou

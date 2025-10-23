@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/elhadjimamadou/Documents/Customer_Churn/src/mlruns/710366068583992920/dcbf20a14343406ea8d49c45065f5ee9/artifacts
+end_time: 1761238407257
+entry_point_name: ''
+experiment_id: '710366068583992920'
+lifecycle_stage: active
+run_id: dcbf20a14343406ea8d49c45065f5ee9
+run_name: RandomForest
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1761238366182
+status: 3
+tags: []
+user_id: elhadjimamadou

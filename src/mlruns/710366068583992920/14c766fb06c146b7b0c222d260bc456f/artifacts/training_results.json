@@ -1,0 +1,16 @@
+{
+    "RandomForest": {
+        "recall": 0.9625668449197861,
+        "precision": 0.3669724770642202,
+        "f1_score": 0.5313653136531366,
+        "accuracy": 0.5493257629524485,
+        "best_threshold": 0.1
+    },
+    "XGBoost": {
+        "recall": 0.93048128342246,
+        "precision": 0.4259485924112607,
+        "f1_score": 0.5843828715365239,
+        "accuracy": 0.6486870120652946,
+        "best_threshold": 0.1
+    }
+}
