@@ -4,6 +4,9 @@ import os
 import logging
 import pandas as pd
 
+# Import build_features
+from features.build_features import build_features
+
 # =========================
 # Logger setup
 # =========================
@@ -49,9 +52,41 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     
     return df
 
-
 def save_clean_data(df: pd.DataFrame, path: str):
     """Save cleaned DataFrame to CSV"""
     os.makedirs(os.path.dirname(path), exist_ok=True)
     df.to_csv(path, index=False)
     logging.info(f"Cleaned data saved to {path}")
+
+# =========================
+# Full preprocessing pipeline
+# =========================
+def run_pipeline(raw_path: str, processed_dir: str):
+    """Run cleaning and feature building pipeline"""
+    # Load raw data
+    df_raw = pd.read_csv(raw_path)
+    print(f"📥 Loaded raw data: {df_raw.shape}")
+
+    # Clean data
+    df_clean = clean_data(df_raw)
+    clean_path = os.path.join(processed_dir, "clean.csv")
+    save_clean_data(df_clean, clean_path)
+    print(f"✅ Cleaned data saved: {clean_path}")
+
+    # Build features
+    df_features = build_features(df_clean)
+    features_path = os.path.join(processed_dir, "churn_features.csv")
+    os.makedirs(processed_dir, exist_ok=True)
+    df_features.to_csv(features_path, index=False)
+    logging.info(f"Feature-engineered data saved to {features_path}")
+    print(f"✅ Features built and saved: {features_path}")
+
+# =========================
+# Run manually
+# =========================
+if __name__ == "__main__":
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))  # remonte 2 niveaux depuis src/etl
+    RAW_DATA_PATH = os.path.join(BASE_DIR, "data", "raw", "WA_Fn-UseC_-Telco-Customer-Churn.csv")
+    PROCESSED_DIR = os.path.join(BASE_DIR, "data", "processed")
+    
+    run_pipeline(RAW_DATA_PATH, PROCESSED_DIR)
