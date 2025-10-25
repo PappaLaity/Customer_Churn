@@ -13,12 +13,14 @@ load_dotenv()
 
 IP_ADDRESS = os.getenv("IP_ADDRESS")
 mlflow_uri = IP_ADDRESS + ":5001"
+os.makedirs("mlruns", exist_ok=True)
+# mlflow.set_registry_uri("file:./mlruns")
 
 def load_production_model(model_name="CustomerChurnModel"):
     """
     Load the latest Production model from the MLflow Model Registry.
     """
-    client = MlflowClient(mlflow_uri)
+    client = MlflowClient(mlflow_uri,mlflow_uri)
     # Get all versions and find the one in Production
     versions = client.search_model_versions(f"name='{model_name}'")
     prod_version = next((v for v in versions if v.current_stage == "Production"), None)

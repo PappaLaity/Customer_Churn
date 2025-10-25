@@ -18,6 +18,9 @@ load_dotenv()
 IP_ADDRESS = os.getenv("IP_ADDRESS")
 mlflow_uri = IP_ADDRESS + ":5001"
 mlflow.set_tracking_uri(mlflow_uri)
+os.makedirs("mlruns", exist_ok=True)
+mlflow.set_registry_uri("file:./mlruns")
+# mlflow.set_registry_uri(mlflow_uri)
 
 model_registry_name = "CustomerChurnModel"
 def train_and_log_models(cv_folds=5):
@@ -47,6 +50,7 @@ def train_and_log_models(cv_folds=5):
             # --- Train and evaluate ---
             cv_scores = cross_val_score(model, X_train, y_train, cv=skf, scoring='accuracy')
             cv_mean, cv_std = np.mean(cv_scores), np.std(cv_scores)
+            input_example = X_train[:5]
 
             model.fit(X_train, y_train)
             y_pred = model.predict(X_test)
@@ -89,7 +93,9 @@ def train_and_log_models(cv_folds=5):
             #mlflow.sklearn.log_model(model, artifact_path="model")
 
             mlflow.sklearn.log_model(sk_model=model, 
-            artifact_path="model", registered_model_name=model_registry_name
+            name=name, registered_model_name=model_registry_name,
+            input_example=input_example,
+            signature=mlflow.models.infer_signature(X_train, y_train)
             )
 
             # --- Record result for comparison ---
@@ -111,7 +117,7 @@ def train_and_log_models(cv_folds=5):
 
 def register_best_model(best_run, model_registry_name="CustomerChurnModel"):
     # Register and promote the best model automatically.
-    client = MlflowClient()
+    client = MlflowClient(mlflow_uri)
     run_id = best_run["run_id"]
 
     # Ensure registry entry exists
