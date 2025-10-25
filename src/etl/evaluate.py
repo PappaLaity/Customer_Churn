@@ -1,3 +1,4 @@
+from dotenv import load_dotenv
 import mlflow
 from mlflow.tracking import MlflowClient
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
@@ -7,11 +8,17 @@ import seaborn as sns
 import numpy as np
 import os
 
+
+load_dotenv()
+
+IP_ADDRESS = os.getenv("IP_ADDRESS")
+mlflow_uri = IP_ADDRESS + ":5001"
+
 def load_production_model(model_name="CustomerChurnModel"):
     """
     Load the latest Production model from the MLflow Model Registry.
     """
-    client = MlflowClient()
+    client = MlflowClient(mlflow_uri)
     # Get all versions and find the one in Production
     versions = client.search_model_versions(f"name='{model_name}'")
     prod_version = next((v for v in versions if v.current_stage == "Production"), None)
