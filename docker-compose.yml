@@ -1,21 +1,32 @@
 services:
+  db:
+    image: postgres:15
+    container_name: churn_db
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: churn_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
   fastapi:
     build:
       context: .
       dockerfile: Dockerfile.api
     container_name: churn_api
+    environment:
+      DATABASE_URL: postgresql+psycopg2://user:password@db:5432/churn_db
+    depends_on:
+      - db
     ports:
       - "8000:8000"
-    volumes:
-    - ./database.db:/app/database.db 
-    # volumes:
-    #   - ./models:/app/models
-    #   - ./data:/app/data
-    # environment:
-    #   - ENV=production
-    depends_on:
-      - prometheus
-      # - postgres
+    env_file: .env
+    command: >
+      sh -c "alembic upgrade head &&
+           python src/api/core/seed.py &&
+           uvicorn src.api.main:app --host 0.0.0.0 --port 8000"
     restart: unless-stopped
 
   airflow:
@@ -40,19 +51,19 @@ services:
       - "8080:8080"
     restart: on-failure
 
-  # mlflow:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile.mlflow
-  #   container_name: mlflow
-  #   environment:
-  #     - BACKEND_STORE_URI=sqlite:///mlflow/mlflow.db
-  #     - ARTIFACT_ROOT=/mlflow/artifacts
-  #   volumes:
-  #     - ./mlflow:/mlflow
-  #   ports:
-  #     - "5001:5000"
-  #   restart: unless-stopped
+  mlflow:
+    build:
+      context: .
+      dockerfile: Dockerfile.mlflow
+    container_name: mlflow
+    environment:
+      - BACKEND_STORE_URI=sqlite:///mlflow/mlflow.db
+      - ARTIFACT_ROOT=/mlflow/artifacts
+    volumes:
+      - ./mlflow:/mlflow
+    ports:
+      - "5001:5000"
+    restart: unless-stopped
 
 
   prometheus:
@@ -79,4 +90,5 @@ services:
     restart: unless-stopped
 
 volumes:
+  db_data:
   grafana-storage:

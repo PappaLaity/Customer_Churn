@@ -6,7 +6,6 @@ from sklearn.metrics import accuracy_score, confusion_matrix, classification_rep
 def evaluate_best_model(cv_folds=5):
     # Train all models and pick the best one
     best_model, _ = train_and_select_best_model(cv_folds=cv_folds)
-
     # Reload data
     X_train, X_test, y_train, y_test = preprocess_data()
 

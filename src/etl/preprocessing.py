@@ -1,14 +1,11 @@
-import numpy as np
-import pandas as pd
-import seaborn as sns
-import matplotlib.pyplot as plt
-from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import LabelEncoder
 import pickle
 from imblearn.over_sampling import SMOTE
 from src.etl.extract import load
+
+
 def preprocess_data():
     df = load()
     # Convert missing value TotalCharges, ' ', by 0.0
