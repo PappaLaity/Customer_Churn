@@ -4,6 +4,7 @@ from sklearn.preprocessing import LabelEncoder
 import pickle
 from imblearn.over_sampling import SMOTE
 from src.etl.extract import load
+import pandas as pd
 
 
 def preprocess_data():
