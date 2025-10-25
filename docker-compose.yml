@@ -71,6 +71,10 @@ services:
     container_name: prometheus
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
     ports:
       - "9090:9090"
     restart: unless-stopped
@@ -87,6 +91,7 @@ services:
       - prometheus
     volumes:
       - grafana-storage:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
     restart: unless-stopped
 
 # networks:
@@ -95,3 +100,4 @@ services:
 volumes:
   db_data:
   grafana-storage:
+  prometheus-data:
