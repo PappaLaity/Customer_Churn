@@ -4,12 +4,20 @@ from sklearn.preprocessing import LabelEncoder
 import pickle
 from imblearn.over_sampling import SMOTE
 from src.etl.extract import load
+import pandas as pd
 
 
 def preprocess_data():
     df = load()
     # Convert missing value TotalCharges, ' ', by 0.0
-    df['TotalCharges'] = df['TotalCharges'].replace(' ', "0.0")
+    #df['TotalCharges'] = df['TotalCharges'].replace(' ', "0.0")
+    # Convert TotalCharges to numeric, forcing errors to NaN for blanks
+    df['TotalCharges'] = pd.to_numeric(df['TotalCharges'], errors='coerce')
+
+    # Replace missing TotalCharges with the corresponding MonthlyCharges
+    #df['TotalCharges'].fillna(df['MonthlyCharges'], inplace=True)
+    df['TotalCharges'] = df['TotalCharges'].fillna(df['MonthlyCharges'])
+
     df['TotalCharges'] = df['TotalCharges'].astype(float)
 
     # Identify colums with object type for label encoding
@@ -28,6 +36,15 @@ def preprocess_data():
     with open('encoders.pkl', 'wb') as f:
         pickle.dump(encoders, f) 
 
+    # Select important features based on correlation analysis
+    corr = df.corr()['Churn'].abs().sort_values(ascending=False)
+    important = corr[abs(corr) > 0.18].index.tolist()
+
+    df = df[important]
+    #df = df[important_features.tolist() + ['Churn']]
+
+
+
     # Split features and target
 
     X = df.drop(columns=['Churn'])
@@ -42,10 +59,10 @@ def preprocess_data():
     X_test_scaled = scaler.transform(X_test)
 
     # Apply SMOTE to the training data
-    smote = SMOTE(random_state=42)
-    X_train_smoted, y_train_smoted = smote.fit_resample(X_train_scaled, y_train)  
+    #smote = SMOTE(random_state=42)
+    #X_train_smoted, y_train_smoted = smote.fit_resample(X_train_scaled, y_train)  
 
 
-    return X_train_smoted, X_test_scaled, y_train_smoted, y_test
+    return X_train_scaled, X_test_scaled, y_train,  y_test
 
 
