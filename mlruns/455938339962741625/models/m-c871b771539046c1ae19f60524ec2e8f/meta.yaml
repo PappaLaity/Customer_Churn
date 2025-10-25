@@ -1,0 +1,10 @@
+artifact_location: file:///Users/mahamatabakarassouna/Downloads/Customer_Churn_Predict/Customer_Churn/mlruns/455938339962741625/models/m-c871b771539046c1ae19f60524ec2e8f/artifacts
+creation_timestamp: 1761390495623
+experiment_id: '455938339962741625'
+last_updated_timestamp: 1761390498561
+model_id: m-c871b771539046c1ae19f60524ec2e8f
+model_type: null
+name: model
+source_run_id: 851fafa2870c49bc9ce64de33c16d9e3
+status: 2
+status_message: null

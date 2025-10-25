@@ -1,0 +1,18 @@
+aliases: []
+creation_timestamp: 1761392967989
+current_stage: Production
+deployment_job_state: null
+description: Auto-registered Neural Network with test accuracy 0.8062
+last_updated_timestamp: 1761392968034
+metrics: null
+model_id: null
+name: CustomerChurnModel
+params: null
+run_id: 19881c002afb47e9a79c7e2bb7071dce
+run_link: null
+source: runs:/19881c002afb47e9a79c7e2bb7071dce/model
+status: READY
+status_message: null
+storage_location: runs:/19881c002afb47e9a79c7e2bb7071dce/model
+user_id: null
+version: 8
