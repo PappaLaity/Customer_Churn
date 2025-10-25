@@ -1,19 +1,19 @@
 FROM python:3.12-slim
 
-# Dossier de travail
 WORKDIR /mlflow
 
 # Installer MLflow et dépendances minimales pour le local
 RUN pip install mlflow
 
-# Variables d'environnement pour le local
-# Utilisation de SQLite pour le backend
-ENV BACKEND_STORE_URI=sqlite:///mlflow.db
-# Stockage local des artefacts
-ENV ARTIFACT_ROOT=/mlflow/artifacts
+# Créer le dossier pour les artefacts avec les bonnes permissions
+RUN mkdir -p /mlflow/artifacts && chmod -R 777 /mlflow
 
-# Créer le dossier pour les artefacts
-RUN mkdir -p /mlflow/artifacts
+# Exposer le port
+EXPOSE 5000
 
-# Lancer le serveur MLflow
-CMD ["mlflow", "server", "--backend-store-uri", "${BACKEND_STORE_URI}", "--default-artifact-root", "${ARTIFACT_ROOT}", "--host", "0.0.0.0", "--port", "5000"]
+# Lancer le serveur MLflow (utiliser shell form pour l'expansion des variables)
+CMD mlflow server \
+    --backend-store-uri sqlite:////mlflow/mlflow.db \
+    --artifacts-destination /mlflow/artifacts \
+    --host 0.0.0.0 \
+    --port 5000 \
