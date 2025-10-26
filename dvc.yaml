@@ -1,0 +1,30 @@
+stages:
+  preprocess:
+    cmd: PYTHONPATH=. python3 src/etl/preprocessing.py
+    deps:
+      - src/etl/preprocessing.py
+      - data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv
+    outs:
+      - data/processed/clean.csv
+      - data/processed/churn_features.csv
+
+  train:
+    cmd: PYTHONPATH=. python3 src/training/train.py --rf_threshold 0.4 --xgb_threshold 0.4 --nn_threshold 0.4
+    deps:
+      - src/training/train.py
+      - data/processed/churn_features.csv
+    outs:
+      - models/rf_pipeline.pkl
+      - models/xgb_pipeline.pkl
+      - models/nn_pipeline.pkl
+      - models/training_results.json
+
+  log_models:
+    cmd: PYTHONPATH=. python3 src/etl/mlflows_scripts/log_models.py
+    deps:
+      - src/etl/mlflows_scripts/log_models.py
+      - models/rf_pipeline.pkl
+      - models/xgb_pipeline.pkl
+      - models/nn_pipeline.pkl
+    outs:
+      - logs/mlflow.log
