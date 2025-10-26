@@ -5,10 +5,7 @@ import pickle
 from imblearn.over_sampling import SMOTE
 from src.etl.extract import load
 import pandas as pd
-<<<<<<< HEAD
 import numpy as np
-=======
->>>>>>> 49ccba45da0873634eb9f24980d9eef96e41676b
 
 
 def preprocess_data():
