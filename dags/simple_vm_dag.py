@@ -3,6 +3,7 @@ Simple Airflow DAG for VM deployment demonstration
 This DAG demonstrates basic Airflow concepts running on a remote VM
 """
 
+"""
 from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
@@ -10,8 +11,8 @@ from airflow.operators.bash_operator import BashOperator
 
 
 def print_system_info():
-    """Print system information to demonstrate we're running on VM"""
-    import platform
+    #Print system information to demonstrate we're running on VM"""
+ """   import platform
     import socket
     
     print(f"System: {platform.system()}")
@@ -23,8 +24,8 @@ def print_system_info():
 
 
 def get_process_namespace():
-    """Display process namespace information"""
-    import os
+    #Display process namespace information"""
+    """import os
     
     print(f"Process ID: {os.getpid()}")
     print(f"Parent Process ID: {os.getppid()}")
@@ -41,8 +42,8 @@ def get_process_namespace():
 
 
 def calculate_simple_stats():
-    """Perform a simple calculation and push to XCom"""
-    import random
+    Perform a simple calculation and push to XCom"""
+  """  import random
     
     numbers = [random.randint(1, 100) for _ in range(10)]
     avg = sum(numbers) / len(numbers)
@@ -107,3 +108,65 @@ with DAG(
     # Define task dependencies
     system_info_task >> disk_space_task >> namespace_task >> stats_task >> completion_task
 
+    """
+
+"""
+Airflow DAG for preprocessing, training, and evaluating customer churn models
+"""
+
+from datetime import datetime, timedelta
+from airflow import DAG
+from airflow.operators.bash_operator import BashOperator
+
+# Default arguments for the DAG
+default_args = {
+    'owner': 'student',
+    'depends_on_past': False,
+    'start_date': datetime(2024, 1, 1),
+    'email_on_failure': False,
+    'email_on_retry': False,
+    'retries': 1,
+    'retry_delay': timedelta(minutes=5),
+}
+
+# Define the DAG
+with DAG(
+    'customer_churn_pipeline',
+    default_args=default_args,
+    description='Preprocess, train, and evaluate customer churn models',
+    schedule_interval=timedelta(hours=1),
+    catchup=False,
+    tags=['customer_churn', 'ml', 'pipeline'],
+) as dag:
+
+    # Task 1: Preprocess data
+    preprocess_task = BashOperator(
+        task_id='preprocess_data',
+        bash_command='python -m src.etl.preprocessing',
+        cwd='/Users/mahamatabakarassouna/Downloads/Customer_Churn_Predict/Customer_Churn',
+    )
+
+    
+    # Task 2: Train models
+    """
+    train_models_task = BashOperator(
+        task_id='train_models',
+        bash_command='python -m src.training.train',
+        cwd='/Users/mahamatabakarassouna/Downloads/Customer_Churn_Predict/Customer_Churn',
+    )
+
+    # Task 3: Evaluate the production model
+    evaluate_model_task = BashOperator(
+        task_id='evaluate_model',
+        bash_command='python -m src.etl.evaluate',
+        cwd='/Users/mahamatabakarassouna/Downloads/Customer_Churn_Predict/Customer_Churn',
+    )
+
+    # Task 4: Print completion message
+    completion_task = BashOperator(
+        task_id='completion',
+        bash_command='echo "Customer churn pipeline completed at $(date)"',
+    )
+    """
+    # Define task dependencies
+    preprocess_task #>> train_models_task >> evaluate_model_task >> completion_task
