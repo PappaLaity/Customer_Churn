@@ -20,6 +20,8 @@ services:
       DATABASE_URL: postgresql+psycopg2://user:password@db:5432/churn_db
     depends_on:
       - db
+    volumes:
+      - ./Data:/app/Data 
     ports:
       - "8000:8000"
     env_file: .env
