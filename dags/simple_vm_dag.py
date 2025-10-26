@@ -148,7 +148,7 @@ with DAG(
 
     
     # Task 2: Train models
-    """
+   
     train_models_task = BashOperator(
         task_id='train_models',
         bash_command='python -m src.training.train',
@@ -167,6 +167,6 @@ with DAG(
         task_id='completion',
         bash_command='echo "Customer churn pipeline completed at $(date)"',
     )
-    """
+    
     # Define task dependencies
-    preprocess_task #>> train_models_task >> evaluate_model_task >> completion_task
+    preprocess_task >> train_models_task >> evaluate_model_task >> completion_task
