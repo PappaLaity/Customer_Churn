@@ -108,7 +108,7 @@ with DAG(
     # Define task dependencies
     system_info_task >> disk_space_task >> namespace_task >> stats_task >> completion_task
 
-    """
+"""
 
 """
 Airflow DAG for preprocessing, training, and evaluating customer churn models
