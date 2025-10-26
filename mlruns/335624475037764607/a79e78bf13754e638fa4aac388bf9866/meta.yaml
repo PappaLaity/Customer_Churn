@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/elhadjimamadou/Documents/Customer_Churn/mlruns/335624475037764607/a79e78bf13754e638fa4aac388bf9866/artifacts
+end_time: 1761435304491
+entry_point_name: ''
+experiment_id: '335624475037764607'
+lifecycle_stage: active
+run_id: a79e78bf13754e638fa4aac388bf9866
+run_name: popular-gnu-89
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1761435304457
+status: 3
+tags: []
+user_id: elhadjimamadou
