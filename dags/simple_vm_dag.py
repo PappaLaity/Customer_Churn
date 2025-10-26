@@ -143,7 +143,7 @@ with DAG(
     preprocess_task = BashOperator(
         task_id='preprocess_data',
         bash_command='python -m src.etl.preprocessing',
-        cwd='/Users/mahamatabakarassouna/Downloads/Customer_Churn_Predict/Customer_Churn',
+        cwd = 'src/etl/preprocessing.py'
     )
 
     
@@ -152,14 +152,14 @@ with DAG(
     train_models_task = BashOperator(
         task_id='train_models',
         bash_command='python -m src.training.train',
-        cwd='/Users/mahamatabakarassouna/Downloads/Customer_Churn_Predict/Customer_Churn',
+        cwd = 'src/training/train.py'
     )
 
     # Task 3: Evaluate the production model
     evaluate_model_task = BashOperator(
         task_id='evaluate_model',
         bash_command='python -m src.etl.evaluate',
-        cwd='/Users/mahamatabakarassouna/Downloads/Customer_Churn_Predict/Customer_Churn',
+        cwd='src/etl/evaluate.py',
     )
 
     # Task 4: Print completion message
