@@ -1,178 +1,5 @@
-"""f
-rom sklearn.model_selection import cross_val_score, StratifiedKFold
-from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
-from src.etl.preprocessing import preprocess_data
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
-from xgboost import XGBClassifier
-from sklearn.neural_network import MLPClassifier
-import numpy as np
-
-def train_and_select_best_model(cv_folds=5):
-    X_train, X_test, y_train, y_test = preprocess_data()
-
-    models = {
-        "Logistic Regression": LogisticRegression(max_iter=1000),
-        "Random Forest": RandomForestClassifier(n_estimators=200, random_state=42),
-        "XGBoost": XGBClassifier(
-            n_estimators=300, learning_rate=0.05, max_depth=5,
-            subsample=0.8, colsample_bytree=0.8, eval_metric='logloss', random_state=42
-        ),
-        "Neural Network": MLPClassifier(
-            hidden_layer_sizes=(64, 32), activation='relu', solver='adam',
-            max_iter=1000, random_state=42
-        )
-    }
-
-    trained_models = {}
-    test_accuracies = {}
-    skf = StratifiedKFold(n_splits=cv_folds, shuffle=True, random_state=42)
-
-    for name, model in models.items():
-        print(f"\nTraining and cross-validating: {name}")
-        
-        # Cross-validation on training set
-        cv_scores = cross_val_score(model, X_train, y_train, cv=skf, scoring='accuracy')
-        print(f"Cross-validation accuracy scores: {cv_scores}")
-        print(f"Mean CV accuracy: {np.mean(cv_scores):.4f} ± {np.std(cv_scores):.4f}")
-        
-        # Train on full training set
-        model.fit(X_train, y_train)
-        y_pred = model.predict(X_test)
-
-        test_acc = accuracy_score(y_test, y_pred)
-        test_accuracies[name] = test_acc
-
-        print(f"\nTest set performance for {name}:")
-        print(f"Accuracy: {test_acc:.4f}")
-        print("Confusion Matrix:")
-        print(confusion_matrix(y_test, y_pred))
-        print("Classification Report:")
-        print(classification_report(y_test, y_pred))
-
-        trained_models[name] = model
-
-    # Select best model based on test accuracy
-    best_model_name = max(test_accuracies, key=test_accuracies.get)
-    best_model = trained_models[best_model_name]
-
-    print(f"\nBest model selected: {best_model_name} with test accuracy: {test_accuracies[best_model_name]:.4f}")
-
-    return best_model, trained_models
-
-"""
-
-"""
-from sklearn.model_selection import cross_val_score, StratifiedKFold
-from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
-from src.etl.preprocessing import preprocess_data
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier, HistGradientBoostingClassifier
-#from xgboost import XGBClassifier  # remove this import
-from sklearn.neural_network import MLPClassifier
-import numpy as np
-
-def train_and_select_best_model(cv_folds=5):
-    X_train, X_test, y_train, y_test = preprocess_data()
-
-    models = {
-        "Logistic Regression": LogisticRegression(max_iter=1000),
-        "Random Forest": RandomForestClassifier(n_estimators=200, random_state=42),
-        # swap out XGBoost for HistGradientBoosting
-        "HistGradientBoosting": HistGradientBoostingClassifier(
-            max_iter=300, learning_rate=0.05, max_leaf_nodes=31, random_state=42
-        ),
-        "Neural Network": MLPClassifier(
-            hidden_layer_sizes=(64, 32), activation='relu', solver='adam',
-            max_iter=1000, random_state=42
-        )
-    }
-
-    trained_models = {}
-    test_accuracies = {}
-    skf = StratifiedKFold(n_splits=cv_folds, shuffle=True, random_state=42)
-
-    for name, model in models.items():
-        print(f"\nTraining and cross-validating: {name}")
-        cv_scores = cross_val_score(model, X_train, y_train, cv=skf, scoring='accuracy')
-        print(f"Mean CV accuracy: {np.mean(cv_scores):.4f} ± {np.std(cv_scores):.4f}")
-
-        model.fit(X_train, y_train)
-        y_pred = model.predict(X_test)
-        test_acc = accuracy_score(y_test, y_pred)
-        test_accuracies[name] = test_acc
-
-        print(f"Test accuracy for {name}: {test_acc:.4f}")
-        print(confusion_matrix(y_test, y_pred))
-        print(classification_report(y_test, y_pred))
-
-        trained_models[name] = model
-
-    best = max(test_accuracies, key=test_accuracies.get)
-    print(f"\nBest model: {best} ({test_accuracies[best]:.4f})")
-    return trained_models[best], trained_models
-"""
-
-"""
-from sklearn.model_selection import cross_val_score, StratifiedKFold
-from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
-from src.etl.preprocessing import preprocess_data
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier, HistGradientBoostingClassifier
-from sklearn.neural_network import MLPClassifier
-import numpy as np
-
-def train_and_select_best_model(cv_folds=5):
-    # unpack exactly what preprocess_data returns
-    X_train, X_test, y_train, y_test = preprocess_data()
-
-    # for readability
-    #X_train, X_test = X_train_smoted, X_test_scaled
-    #y_train, y_test = y_train_smoted, y_test
-
-    models = {
-        "Logistic Regression": LogisticRegression(max_iter=1000),
-        "Random Forest": RandomForestClassifier(n_estimators=300, random_state=42),
-        "HistGradientBoosting": HistGradientBoostingClassifier(
-            max_iter=500, learning_rate=0.05, max_leaf_nodes=31, random_state=42
-        ),
-        "Neural Network": MLPClassifier(
-            hidden_layer_sizes=(64, 32), activation='relu', solver='adam',
-            max_iter=1000, random_state=42
-        )
-    }
-
-    trained_models = {}
-    test_accuracies = {}
-    skf = StratifiedKFold(n_splits=cv_folds, shuffle=True, random_state=42)
-
-    for name, model in models.items():
-        print(f"\nTraining and cross-validating: {name}")
-        cv_scores = cross_val_score(model, X_train, y_train, cv=skf, scoring='accuracy')
-        print(f"Mean CV accuracy: {np.mean(cv_scores):.4f} ± {np.std(cv_scores):.4f}")
-
-        model.fit(X_train, y_train)
-        y_pred = model.predict(X_test)
-
-        test_acc = accuracy_score(y_test, y_pred)
-        test_accuracies[name] = test_acc
-
-        print(f"Test set performance for {name}:")
-        print(f"Accuracy: {test_acc:.4f}")
-        print("Confusion Matrix:")
-        print(confusion_matrix(y_test, y_pred))
-        print("Classification Report:")
-        print(classification_report(y_test, y_pred))
-
-        trained_models[name] = model
-
-    best = max(test_accuracies, key=test_accuracies.get)
-    print(f"\nBest model: {best} ({test_accuracies[best]:.4f})")
-    return trained_models[best], trained_models
-"""
-
-
 import os
+from dotenv import load_dotenv
 import numpy as np
 import mlflow
 import mlflow.sklearn
@@ -187,6 +14,13 @@ from src.etl.preprocessing import preprocess_data
 from mlflow.tracking import MlflowClient
 
 
+load_dotenv()
+IP_ADDRESS = os.getenv("IP_ADDRESS")
+mlflow_uri = IP_ADDRESS + ":5001"
+mlflow.set_tracking_uri(mlflow_uri)
+os.makedirs("mlruns", exist_ok=True)
+mlflow.set_registry_uri("file:./mlruns")
+# mlflow.set_registry_uri(mlflow_uri)
 
 model_registry_name = "CustomerChurnModel"
 def train_and_log_models(cv_folds=5):
@@ -211,11 +45,12 @@ def train_and_log_models(cv_folds=5):
 
     for name, model in models.items():
         with mlflow.start_run(run_name=name) as run:
-            print(f"\n🚀 Training model: {name}")
+            print(f"\n Training model: {name}")
 
             # --- Train and evaluate ---
             cv_scores = cross_val_score(model, X_train, y_train, cv=skf, scoring='accuracy')
             cv_mean, cv_std = np.mean(cv_scores), np.std(cv_scores)
+            input_example = X_train[:5]
 
             model.fit(X_train, y_train)
             y_pred = model.predict(X_test)
@@ -258,7 +93,9 @@ def train_and_log_models(cv_folds=5):
             #mlflow.sklearn.log_model(model, artifact_path="model")
 
             mlflow.sklearn.log_model(sk_model=model, 
-            artifact_path="model", registered_model_name=model_registry_name
+            name=name, registered_model_name=model_registry_name,
+            input_example=input_example,
+            signature=mlflow.models.infer_signature(X_train, y_train)
             )
 
             # --- Record result for comparison ---
@@ -271,7 +108,7 @@ def train_and_log_models(cv_folds=5):
 
     # Find the best run by test accuracy
     best_run = max(results, key=lambda x: x["test_accuracy"])
-    print(f"\n🏆 Best model: {best_run['model_name']} ({best_run['test_accuracy']:.4f})")
+    print(f"\n Best model: {best_run['model_name']} ({best_run['test_accuracy']:.4f})")
     print(f"Run ID: {best_run['run_id']}")
     return best_run
 
@@ -280,7 +117,7 @@ def train_and_log_models(cv_folds=5):
 
 def register_best_model(best_run, model_registry_name="CustomerChurnModel"):
     # Register and promote the best model automatically.
-    client = MlflowClient()
+    client = MlflowClient(mlflow_uri)
     run_id = best_run["run_id"]
 
     # Ensure registry entry exists

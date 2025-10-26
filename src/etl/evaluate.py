@@ -1,41 +1,4 @@
-"""
-from src.training.train import train_and_select_best_model
-from src.etl.preprocessing import preprocess_data
-from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
-
-def evaluate_best_model(cv_folds=5):
-    # Train all models and pick the best one
-    best_model, _ = train_and_select_best_model(cv_folds=cv_folds)
-    # Reload data
-    X_train, X_test, y_train, y_test = preprocess_data()
-
-    # Predict on the held‐out test set
-    y_pred = best_model.predict(X_test)
-
-    # Compute metrics
-    accuracy = accuracy_score(y_test, y_pred)
-    cm = confusion_matrix(y_test, y_pred)
-    report = classification_report(y_test, y_pred)
-
-    return {
-        "accuracy": accuracy,
-        "confusion_matrix": cm,
-        "classification_report": report
-    }
-
-def main():
-    results = evaluate_best_model()
-    print(f"Best model test accuracy: {results['accuracy']:.4f}")
-    print("Confusion Matrix:")
-    print(results['confusion_matrix'])
-    print("Classification Report:")
-    print(results['classification_report'])
-
-if __name__ == "__main__":
-    main()
-"""
-
-
+from dotenv import load_dotenv
 import mlflow
 from mlflow.tracking import MlflowClient
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
@@ -45,11 +8,19 @@ import seaborn as sns
 import numpy as np
 import os
 
+
+load_dotenv()
+
+IP_ADDRESS = os.getenv("IP_ADDRESS")
+mlflow_uri = IP_ADDRESS + ":5001"
+os.makedirs("mlruns", exist_ok=True)
+# mlflow.set_registry_uri("file:./mlruns")
+
 def load_production_model(model_name="CustomerChurnModel"):
     """
     Load the latest Production model from the MLflow Model Registry.
     """
-    client = MlflowClient()
+    client = MlflowClient(mlflow_uri,mlflow_uri)
     # Get all versions and find the one in Production
     versions = client.search_model_versions(f"name='{model_name}'")
     prod_version = next((v for v in versions if v.current_stage == "Production"), None)
@@ -61,49 +32,6 @@ def load_production_model(model_name="CustomerChurnModel"):
     model_uri = f"models:/{model_name}/Production"
     model = mlflow.sklearn.load_model(model_uri)
     return model, prod_version.version
-
-"""
-def evaluate_model(model, X_test, y_test, log_to_mlflow=True):
-    
-    #Evaluate the model and optionally log metrics and artifacts to MLflow.
-    
-    y_pred = model.predict(X_test)
-
-    accuracy = accuracy_score(y_test, y_pred)
-    cm = confusion_matrix(y_test, y_pred)
-    report = classification_report(y_test, y_pred, output_dict=True)
-
-    print(f"\n Model Evaluation Results:")
-    print(f"Accuracy: {accuracy:.4f}")
-    print("Confusion Matrix:")
-    print(cm)
-
-    # Log to MLflow
-    if log_to_mlflow:
-        with mlflow.start_run(run_name="Model Evaluation"):
-            mlflow.log_metric("test_accuracy", accuracy)
-
-            # Plot confusion matrix
-            plt.figure(figsize=(6, 5))
-            sns.heatmap(cm, annot=True, fmt="d", cmap="Blues")
-            plt.xlabel("Predicted")
-            plt.ylabel("True")
-            plt.title(f"Confusion Matrix (Accuracy={accuracy:.4f})")
-            os.makedirs("artifacts", exist_ok=True)
-            plt.savefig("artifacts/confusion_matrix.png")
-            mlflow.log_artifact("artifacts/confusion_matrix.png")
-
-            # Log classification report as text
-            report_text = "\n".join([f"{k}: {v}" for k, v in report.items()])
-            with open("artifacts/classification_report.txt", "w") as f:
-                f.write(report_text)
-            mlflow.log_artifact("artifacts/classification_report.txt")
-
-            mlflow.set_tag("stage", "evaluation")
-
-    return accuracy, cm, report
-"""
-
 
 
 def evaluate_model(model, X_test, y_test, log_to_mlflow=True):
