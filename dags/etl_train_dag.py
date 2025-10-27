@@ -3,6 +3,11 @@ from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.bash_operator import BashOperator
 
+
+IP_ADDRESS = os.getenv("IP_ADDRESS", "host.docker.internal")
+mlflow_uri = f"http://{IP_ADDRESS}:5001"
+mlflow.set_tracking_uri(mlflow_uri)
+
 # Default arguments for the DAG
 default_args = {
     'owner': 'student',
@@ -38,14 +43,14 @@ with DAG(
    
     train_models_task = BashOperator(
         task_id='train_models',
-        bash_command='export PYTHONPATH=/opt/airflow && python -m src.training.train',
+        bash_command='export PYTHONPATH=/opt/airflow && export IP_ADDRESS=host.docker.internal && python -m src.training.train',
     )
 
     # Task 3: Evaluate the production model
     evaluate_model_task = BashOperator(
         task_id='evaluate_model',
         # bash_command='python /opt/airflow/src/etl/evaluate.py'
-        bash_command='export PYTHONPATH=/opt/airflow && python -m src.etl.evaluate',
+        bash_command='export PYTHONPATH=/opt/airflow && export IP_ADDRESS=host.docker.internal && python -m src.etl.evaluate',
         # cwd='src/etl/evaluate.py',
     )
 
