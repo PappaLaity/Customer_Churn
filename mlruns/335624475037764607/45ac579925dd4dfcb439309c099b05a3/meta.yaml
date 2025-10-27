@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/elhadjimamadou/Documents/Customer_Churn/mlruns/335624475037764607/45ac579925dd4dfcb439309c099b05a3/artifacts
+end_time: 1761534674768
+entry_point_name: ''
+experiment_id: '335624475037764607'
+lifecycle_stage: active
+run_id: 45ac579925dd4dfcb439309c099b05a3
+run_name: NeuralNetwork_20251027_030857
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1761534590254
+status: 3
+tags: []
+user_id: elhadjimamadou

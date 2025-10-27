@@ -1,0 +1,24 @@
+{
+    "RandomForest": {
+        "recall": 0.8048128342245989,
+        "precision": 0.5154109589041096,
+        "f1_score": 0.6283924843423799,
+        "accuracy": 0.7473385379701917,
+        "best_threshold": 0.4
+    },
+    "XGBoost": {
+        "recall": 0.6176470588235294,
+        "precision": 0.5877862595419847,
+        "f1_score": 0.6023468057366362,
+        "accuracy": 0.7835344215755855,
+        "best_threshold": 0.4
+    },
+    "NeuralNetwork": {
+        "recall": 0.8796791443850267,
+        "precision": 0.431758530183727,
+        "f1": 0.579225352112676,
+        "accuracy": 0.6607523066004258,
+        "pr_auc": 0.5903437038568542,
+        "best_threshold": 0.4
+    }
+}

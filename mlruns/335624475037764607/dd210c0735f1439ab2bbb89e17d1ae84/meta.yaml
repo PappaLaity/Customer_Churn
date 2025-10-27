@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/elhadjimamadou/Documents/Customer_Churn/mlruns/335624475037764607/dd210c0735f1439ab2bbb89e17d1ae84/artifacts
+end_time: 1761531757047
+entry_point_name: ''
+experiment_id: '335624475037764607'
+lifecycle_stage: active
+run_id: dd210c0735f1439ab2bbb89e17d1ae84
+run_name: nn_pipeline
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1761531752775
+status: 3
+tags: []
+user_id: elhadjimamadou

@@ -1,0 +1,15 @@
+creation_timestamp: 1761531726516
+current_stage: None
+deployment_job_state: null
+description: null
+last_updated_timestamp: 1761531726516
+model_id: m-1b5f1d5a687247578ec16dcb622a2cdd
+name: Churn_nn_pipeline
+run_id: 47b4f6c80f3c4f3499b731fc69160a09
+run_link: null
+source: models:/m-1b5f1d5a687247578ec16dcb622a2cdd
+status: READY
+status_message: null
+storage_location: file:///Users/elhadjimamadou/Documents/Customer_Churn/mlruns/335624475037764607/models/m-1b5f1d5a687247578ec16dcb622a2cdd/artifacts
+user_id: null
+version: 7

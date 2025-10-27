@@ -1,0 +1,22 @@
+artifact_path: file:///Users/elhadjimamadou/Documents/Customer_Churn/mlruns/335624475037764607/models/m-b5359fad762d465e991c62fa8a5df4b3/artifacts
+flavors:
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.pkl
+    predict_fn: predict
+    python_version: 3.13.2
+  sklearn:
+    code: null
+    pickled_model: model.pkl
+    serialization_format: cloudpickle
+    sklearn_version: 1.7.2
+mlflow_version: 3.5.1
+model_id: m-b5359fad762d465e991c62fa8a5df4b3
+model_size_bytes: 246329
+model_uuid: m-b5359fad762d465e991c62fa8a5df4b3
+prompts: null
+run_id: fe9ae4942aa743659c53a5c9f56cd090
+utc_time_created: '2025-10-27 02:03:59.401566'

@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/elhadjimamadou/Documents/Customer_Churn/mlruns/335624475037764607/5581af9614d441c1a63389edba6ca8e5/artifacts
+end_time: 1761531728704
+entry_point_name: ''
+experiment_id: '335624475037764607'
+lifecycle_stage: active
+run_id: 5581af9614d441c1a63389edba6ca8e5
+run_name: xgb_pipeline
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1761531726572
+status: 3
+tags: []
+user_id: elhadjimamadou

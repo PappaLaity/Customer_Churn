@@ -1,0 +1,15 @@
+creation_timestamp: 1761527050399
+current_stage: None
+deployment_job_state: null
+description: null
+last_updated_timestamp: 1761527050399
+model_id: m-714f94b3a07d4d68a7fa7d722eda5947
+name: Churn_nn_scaler_threshold
+run_id: a9eddcd2bf464654900847d88329a40b
+run_link: null
+source: models:/m-714f94b3a07d4d68a7fa7d722eda5947
+status: READY
+status_message: null
+storage_location: file:///Users/elhadjimamadou/Documents/Customer_Churn/mlruns/335624475037764607/models/m-714f94b3a07d4d68a7fa7d722eda5947/artifacts
+user_id: null
+version: 1

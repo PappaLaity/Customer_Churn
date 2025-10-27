@@ -1,0 +1,15 @@
+creation_timestamp: 1761531761756
+current_stage: None
+deployment_job_state: null
+description: null
+last_updated_timestamp: 1761531761756
+model_id: m-2fd98202f7024b639fb0e3ef94da9af8
+name: Churn_rf_pipeline
+run_id: 8cb51571b3f343379fa9dfa74802f7ad
+run_link: null
+source: models:/m-2fd98202f7024b639fb0e3ef94da9af8
+status: READY
+status_message: null
+storage_location: file:///Users/elhadjimamadou/Documents/Customer_Churn/mlruns/335624475037764607/models/m-2fd98202f7024b639fb0e3ef94da9af8/artifacts
+user_id: null
+version: 5

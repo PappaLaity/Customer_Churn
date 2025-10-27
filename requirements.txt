@@ -15,3 +15,6 @@ pymysql
 pwdlib[argon2]
 python-jose[cryptography]
 prometheus-fastapi-instrumentator
+optuna
+xgboost
+libomp

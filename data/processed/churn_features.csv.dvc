@@ -1,5 +1,0 @@
-outs:
-- md5: 83823a98f356917cd4e109a149e81780
-  size: 432464
-  hash: md5
-  path: churn_features.csv

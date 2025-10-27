@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/elhadjimamadou/Documents/Customer_Churn/mlruns/335624475037764607/6f3eb42dbc2b4b39b90829c610a4b2a2/artifacts
+end_time: 1761527045065
+entry_point_name: ''
+experiment_id: '335624475037764607'
+lifecycle_stage: active
+run_id: 6f3eb42dbc2b4b39b90829c610a4b2a2
+run_name: capable-auk-759
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1761527044966
+status: 3
+tags: []
+user_id: elhadjimamadou

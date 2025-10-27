@@ -1,0 +1,14 @@
+artifact_path: file:///Users/elhadjimamadou/Documents/Customer_Churn/mlruns/335624475037764607/models/m-714f94b3a07d4d68a7fa7d722eda5947/artifacts
+flavors:
+  sklearn:
+    code: null
+    pickled_model: model.pkl
+    serialization_format: cloudpickle
+    sklearn_version: 1.7.2
+mlflow_version: 3.5.1
+model_id: m-714f94b3a07d4d68a7fa7d722eda5947
+model_size_bytes: 4
+model_uuid: m-714f94b3a07d4d68a7fa7d722eda5947
+prompts: null
+run_id: a9eddcd2bf464654900847d88329a40b
+utc_time_created: '2025-10-27 01:04:08.709642'

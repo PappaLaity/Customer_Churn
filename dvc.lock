@@ -1,0 +1,75 @@
+schema: '2.0'
+stages:
+  preprocess:
+    cmd: PYTHONPATH=. python3 src/etl/preprocessing.py
+    deps:
+    - path: data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv
+      hash: md5
+      md5: 0f9de68e012bd3aed5fa7cdc9fc421af
+      size: 977501
+    - path: src/etl/preprocessing.py
+      hash: md5
+      md5: fd970c9e3cfdc807dc628e3d5c9a5b51
+      size: 3563
+    outs:
+    - path: data/processed/churn_features.csv
+      hash: md5
+      md5: 83823a98f356917cd4e109a149e81780
+      size: 432464
+    - path: data/processed/clean.csv
+      hash: md5
+      md5: b5faaa0cf0adc33361689ac64fe32de5
+      size: 885515
+  train:
+    cmd: PYTHONPATH=. python3 src/training/train.py --rf_threshold 0.4 
+      --xgb_threshold 0.4 --nn_threshold 0.4
+    deps:
+    - path: data/processed/churn_features.csv
+      hash: md5
+      md5: 83823a98f356917cd4e109a149e81780
+      size: 432464
+    - path: src/training/train.py
+      hash: md5
+      md5: 92c38683fe2a20cb02630273ab679147
+      size: 27657
+    outs:
+    - path: models/nn_pipeline.pkl
+      hash: md5
+      md5: 80f65e940a5d533807d2f4b3dc2dab71
+      size: 51232
+    - path: models/rf_pipeline.pkl
+      hash: md5
+      md5: ef4955fd2eba01e9dc7d15503bec877c
+      size: 424040
+    - path: models/training_results.json
+      hash: md5
+      md5: 24667846e020763bcfc9a3c09a2aa1d3
+      size: 685
+    - path: models/xgb_pipeline.pkl
+      hash: md5
+      md5: 3615cfc9b25c718cc15ccd89fd3223a2
+      size: 246717
+  log_models:
+    cmd: PYTHONPATH=. python3 src/etl/mlflows_scripts/log_models.py
+    deps:
+    - path: models/nn_pipeline.pkl
+      hash: md5
+      md5: 80f65e940a5d533807d2f4b3dc2dab71
+      size: 51232
+    - path: models/rf_pipeline.pkl
+      hash: md5
+      md5: ef4955fd2eba01e9dc7d15503bec877c
+      size: 424040
+    - path: models/xgb_pipeline.pkl
+      hash: md5
+      md5: 3615cfc9b25c718cc15ccd89fd3223a2
+      size: 246717
+    - path: src/etl/mlflows_scripts/log_models.py
+      hash: md5
+      md5: 6fb8ba36877cd343c1cbffeed7702d47
+      size: 6125
+    outs:
+    - path: logs/mlflow.log
+      hash: md5
+      md5: 0c2deec742cd6a5aedb32400cce93914
+      size: 637

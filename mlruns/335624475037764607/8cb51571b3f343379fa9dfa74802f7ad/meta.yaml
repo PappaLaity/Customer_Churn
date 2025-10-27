@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/elhadjimamadou/Documents/Customer_Churn/mlruns/335624475037764607/8cb51571b3f343379fa9dfa74802f7ad/artifacts
+end_time: 1761531761806
+entry_point_name: ''
+experiment_id: '335624475037764607'
+lifecycle_stage: active
+run_id: 8cb51571b3f343379fa9dfa74802f7ad
+run_name: rf_pipeline
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1761531759433
+status: 3
+tags: []
+user_id: elhadjimamadou

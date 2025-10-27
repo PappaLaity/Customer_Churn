@@ -1,0 +1,10 @@
+artifact_location: file:///Users/elhadjimamadou/Documents/Customer_Churn/mlruns/335624475037764607/models/m-6bfa7b0fdb564d579e0948f706788860/artifacts
+creation_timestamp: 1761530395470
+experiment_id: '335624475037764607'
+last_updated_timestamp: 1761530399140
+model_id: m-6bfa7b0fdb564d579e0948f706788860
+model_type: null
+name: nn_model
+source_run_id: ae5bd8098af6417aa6f703f41e633f7b
+status: 2
+status_message: null

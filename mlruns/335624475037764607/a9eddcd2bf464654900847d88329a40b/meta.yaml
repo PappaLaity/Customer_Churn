@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/elhadjimamadou/Documents/Customer_Churn/mlruns/335624475037764607/a9eddcd2bf464654900847d88329a40b/artifacts
+end_time: 1761527050405
+entry_point_name: ''
+experiment_id: '335624475037764607'
+lifecycle_stage: active
+run_id: a9eddcd2bf464654900847d88329a40b
+run_name: nn_scaler_threshold
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1761527048692
+status: 4
+tags: []
+user_id: elhadjimamadou

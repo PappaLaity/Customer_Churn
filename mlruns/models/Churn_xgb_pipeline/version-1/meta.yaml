@@ -1,0 +1,15 @@
+creation_timestamp: 1761530641427
+current_stage: Archived
+deployment_job_state: null
+description: null
+last_updated_timestamp: 1761531730976
+model_id: m-b5359fad762d465e991c62fa8a5df4b3
+name: Churn_xgb_pipeline
+run_id: fe9ae4942aa743659c53a5c9f56cd090
+run_link: null
+source: models:/m-b5359fad762d465e991c62fa8a5df4b3
+status: READY
+status_message: null
+storage_location: file:///Users/elhadjimamadou/Documents/Customer_Churn/mlruns/335624475037764607/models/m-b5359fad762d465e991c62fa8a5df4b3/artifacts
+user_id: null
+version: 1
