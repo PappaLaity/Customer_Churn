@@ -197,8 +197,4 @@ if __name__ == "__main__":
     best_run = train_and_log_models(cv_folds=5)
 
     # Automatically register and promote the best one
-<<<<<<< HEAD
     register_best_model(best_run, model_registry_name="CustomerChurnModel")
-=======
-    register_best_model(best_run, model_registry_name="CustomerChurnModel")
->>>>>>> 620d0d6eebcbaeaa56490167990996ece8c000dc
