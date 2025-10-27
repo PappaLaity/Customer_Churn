@@ -57,12 +57,9 @@ services:
       dockerfile: Dockerfile.mlflow
     container_name: mlflow
     volumes:
-      - ./mlruns:/mlflow  # Mount a local directory for artifacts
-      # - ./artifacts:/artifacts
+      - ./mlruns:/mlflow
     ports:
       - "5001:5000"
-    # networks:
-    #   - customer_churn_default
     restart: unless-stopped
 
 
@@ -89,9 +86,6 @@ services:
       - grafana-storage:/var/lib/grafana
     restart: unless-stopped
 
-# networks:
-#   customer_churn_default:
-#     name: customer_churn_default
 volumes:
   db_data:
   grafana-storage:
