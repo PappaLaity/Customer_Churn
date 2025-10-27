@@ -42,11 +42,14 @@ services:
       airflow scheduler
       "
     environment:
-      - AIRFLOW_HOME=/opt/airflow
+      #- AIRFLOW_HOME=/opt/airflow
+      - IP_ADDRESS=host.docker.internal
     volumes:
       - ./dags:/opt/airflow/dags
-      - ./data:/opt/airflow/data
+      # - ./data:/opt/airflow/data
       - ./models:/opt/airflow/models
+      - ./Data:/opt/airflow/Data
+    env_file: .env
     ports:
       - "8080:8080"
     restart: on-failure

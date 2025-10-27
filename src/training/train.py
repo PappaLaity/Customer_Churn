@@ -15,8 +15,13 @@ from mlflow.tracking import MlflowClient
 
 
 load_dotenv()
-IP_ADDRESS = os.getenv("IP_ADDRESS")
-mlflow_uri = IP_ADDRESS + ":5001"
+# IP_ADDRESS = os.getenv("IP_ADDRESS","http://mlflow")
+# mlflow_uri = IP_ADDRESS + ":5001"
+
+IP_ADDRESS = os.getenv("IP_ADDRESS", "host.docker.internal")  # Use host.docker.internal for Docker
+mlflow_uri = f"http://{IP_ADDRESS}:5001"
+
+# mlflow_uri = "http://mlflow:5001"
 mlflow.set_tracking_uri(mlflow_uri)
 os.makedirs("mlruns", exist_ok=True)
 mlflow.set_registry_uri("file:./mlruns")
