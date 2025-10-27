@@ -20,6 +20,7 @@ WORKDIR /opt/airflow
 
 COPY dags ./dags
 COPY src ./src
+# COPY Data ./Data
 
 USER airflow
 COPY requirements-airflow.txt .
