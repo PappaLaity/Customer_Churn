@@ -130,7 +130,7 @@ async def predict_churn(data=None):
     # Votre logique de prédiction
     # result = your_model.predict(data)
     result = random.randint(0, 1)
-
+    time.sleep(5)
     # Enregistrer les métriques
     prediction_counter.labels(
         model_version="v1.0", prediction_result="churn" if result == 1 else "no_churn"
