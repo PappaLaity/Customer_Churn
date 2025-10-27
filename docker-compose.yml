@@ -92,9 +92,6 @@ services:
       - grafana-storage:/var/lib/grafana
     restart: unless-stopped
 
-# networks:
-#   customer_churn_default:
-#     name: customer_churn_default
 volumes:
   db_data:
   grafana-storage:

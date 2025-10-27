@@ -13,15 +13,10 @@ from sklearn.neural_network import MLPClassifier
 from src.etl.preprocessing import preprocess_data
 from mlflow.tracking import MlflowClient
 
-
 load_dotenv()
-# IP_ADDRESS = os.getenv("IP_ADDRESS","http://mlflow")
-# mlflow_uri = IP_ADDRESS + ":5001"
 
 IP_ADDRESS = os.getenv("IP_ADDRESS", "host.docker.internal")  # Use host.docker.internal for Docker
 mlflow_uri = f"http://{IP_ADDRESS}:5001"
-
-# mlflow_uri = "http://mlflow:5001"
 mlflow.set_tracking_uri(mlflow_uri)
 os.makedirs("mlruns", exist_ok=True)
 mlflow.set_registry_uri("file:./mlruns")
@@ -94,16 +89,6 @@ def train_and_log_models(cv_folds=5):
             if os.path.exists("scaler.pkl"):
                 mlflow.log_artifact("scaler.pkl")
 
-            # --- Log model ---
-            #mlflow.sklearn.log_model(model, artifact_path="model")
-
-            mlflow.sklearn.log_model(sk_model=model, 
-            name=name, registered_model_name=model_registry_name,
-            input_example=input_example,
-            signature=mlflow.models.infer_signature(X_train, y_train)
-            )
-
-            # --- Record result for comparison ---
             results.append({
                 "model_name": name,
                 "test_accuracy": test_acc,
@@ -111,86 +96,35 @@ def train_and_log_models(cv_folds=5):
                 "run_id": run.info.run_id
             })
 
-    # Find the best run by test accuracy
     best_run = max(results, key=lambda x: x["test_accuracy"])
     print(f"\n Best model: {best_run['model_name']} ({best_run['test_accuracy']:.4f})")
     print(f"Run ID: {best_run['run_id']}")
     return best_run
-
-
-
 
 def register_best_model(best_run, model_registry_name="CustomerChurnModel"):
     # Register and promote the best model automatically.
     client = MlflowClient(mlflow_uri)
     run_id = best_run["run_id"]
 
-    # Ensure registry entry exists
     try:
         client.create_registered_model(model_registry_name)
     except Exception:
         pass  # already exists
 
-    # Register new version
     version = client.create_model_version(
         name=model_registry_name,
         source=f"runs:/{run_id}/model",
         run_id=run_id
     )
 
-    # Update metadata
-    client.update_model_version(
-        name=model_registry_name,
-        version=version.version,
-        description=f"Auto-registered {best_run['model_name']} "
-                    f"with test accuracy {best_run['test_accuracy']:.4f}"
-    )
-    client.set_model_version_tag(
-        name=model_registry_name,
-        version=version.version,
-        key="model_name",
-        value=best_run["model_name"]
-    )
-
-    # Promote to Staging
-    """
-    #client.transition_model_version_stage(
-     #   name=model_registry_name,
-      #  version=version.version,
-       # stage="Staging",
-        #archive_existing_versions=True)
-"""
-
-    # Programmatically Promote the Model to Production
     client.transition_model_version_stage(
     name=model_registry_name,
     version=version.version,
     stage="Production",  # Change from "Staging" to "Production"
     archive_existing_versions=True
     )
-    
-    # Verify the Model in the Registry
-    #from mlflow.tracking import MlflowClient
-
-    #client = MlflowClient()
-    models = client.search_model_versions(f"name='CustomerChurnModel'")
-    for model in models:
-        print(f"Version: {model.version}, Stage: {model.current_stage}")
-
-        print(f"Registered '{model_registry_name}' version {version.version} "
-          f"→ promoted to Staging.")
     return version.version
 
-
-
-
 if __name__ == "__main__":
-    # Train and automatically log all models
     best_run = train_and_log_models(cv_folds=5)
-
-    # Automatically register and promote the best one
     register_best_model(best_run, model_registry_name="CustomerChurnModel")
-
-
-
-
