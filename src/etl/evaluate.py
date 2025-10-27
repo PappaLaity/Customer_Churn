@@ -11,9 +11,8 @@ import os
 
 load_dotenv()
 
-IP_ADDRESS = os.getenv("IP_ADDRESS","http://mlflow")
-mlflow_uri = IP_ADDRESS + ":5001"
-# mlflow_uri = "http://mlflow:5001"
+mlflow_uri = os.getenv("MLFLOW_URI","http://mlflow:5000")
+mlflow.set_tracking_uri(mlflow_uri)
 os.makedirs("mlruns", exist_ok=True)
 # mlflow.set_registry_uri("file:./mlruns")
 
