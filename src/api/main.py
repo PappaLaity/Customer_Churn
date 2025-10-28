@@ -3,6 +3,7 @@ from fastapi import Depends, FastAPI, HTTPException, requests
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBearer
 from fastapi.openapi.utils import get_openapi
+import mlflow
 import pandas as pd
 from prometheus_fastapi_instrumentator import Instrumentator
 from src.api.entities.customerInput import InputCustomer
@@ -19,6 +20,12 @@ import time
 app = FastAPI(title="Customer Churn Prediction")
 
 Instrumentator().instrument(app).expose(app)
+
+mlflow.set_tracking_uri("http://mlflow:5000")
+
+# model = mlflow.pyfunc.load_model("models:/CustomerChurnModel/Production")
+model_A = mlflow.pyfunc.load_model("models:/CustomerChurnModel/Production")
+model_B = mlflow.pyfunc.load_model("models:/CustomerChurnModel/Staging")
 
 churn = ["No", "Yes"]
 init_db()
@@ -96,11 +103,12 @@ async def check_healh():
 async def submit_survey(input: InputCustomer = None):
 
     # Data Validation
+    data = input
     # Prepare Data for Prediction
     # Make Prediction
     # Prepare Input and Prediction
+    prediction = predict_churn(data)
     # Store it in the production data
-    prediction = predict_churn()
 
     return {"success": "Thanky you for your submission"}
 
@@ -130,6 +138,7 @@ async def predict_churn(data=None):
     # Votre logique de prédiction
     # result = your_model.predict(data)
     result = random.randint(0, 1)
+    result = predict(data)
     time.sleep(5)
     # Enregistrer les métriques
     prediction_counter.labels(
@@ -139,3 +148,23 @@ async def predict_churn(data=None):
     prediction_duration.observe(time.time() - start_time)
 
     return result
+
+
+# @app.post("/predict")
+async def predict(data: dict):
+    df = pd.DataFrame([data])
+    model_choice = "A" if random.random() < 0.8 else "B"
+
+    start = time.time()
+    preds = model_A.predict(df) if model_choice == "A" else model_B.predict(df)
+    latency = time.time() - start
+
+    # Log locally or send to MLflow for analysis
+    mlflow.log_metric("latency", latency)
+    mlflow.log_param("model_used", model_choice)
+
+    return {
+        "model": "Production" if model_choice == "A" else "Staging",
+        "prediction": preds.tolist(),
+        "latency": latency,
+    }
