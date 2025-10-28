@@ -20,7 +20,7 @@ def load_production_model(model_name="CustomerChurnModel"):
     """
     Load the latest Production model from the MLflow Model Registry.
     """
-    client = MlflowClient(mlflow_uri,mlflow_uri)
+    client = MlflowClient()
     # Get all versions and find the one in Production
     versions = client.search_model_versions(f"name='{model_name}'")
     prod_version = next((v for v in versions if v.current_stage == "Production"), None)

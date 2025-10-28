@@ -2,6 +2,8 @@
 from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.bash_operator import BashOperator
+import os
+import mlflow
 
 
 IP_ADDRESS = os.getenv("IP_ADDRESS", "host.docker.internal")
