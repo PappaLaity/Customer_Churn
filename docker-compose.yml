@@ -10,6 +10,8 @@ services:
       - "5432:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
+    networks:
+      - churn_network
 
   fastapi:
     build:
@@ -30,6 +32,8 @@ services:
            python src/api/core/seed.py &&
            uvicorn src.api.main:app --host 0.0.0.0 --port 8000"
     restart: unless-stopped
+    networks:
+      - churn_network
 
   airflow:
     build:
@@ -45,27 +49,38 @@ services:
       "
     environment:
       - AIRFLOW_HOME=/opt/airflow
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
     volumes:
       - ./dags:/opt/airflow/dags
-      - ./data:/opt/airflow/data
       - ./models:/opt/airflow/models
+      - ./Data:/opt/airflow/Data
+      - ./mlruns:/opt/airflow/mlruns
+      - ./mlruns:/mlflow
+    env_file: .env
     ports:
       - "8080:8080"
     restart: on-failure
-
+    networks:
+      - churn_network
   mlflow:
     build:
       context: .
       dockerfile: Dockerfile.mlflow
     container_name: mlflow
+    environment:
+      - MLFLOW_BACKEND_STORE_URI=sqlite:////mlflow_db/mlflow.db
+      - MLFLOW_DEFAULT_ARTIFACT_ROOT=/mlflow/artifacts
+      - MLFLOW_HOST=0.0.0.0
+      - MLFLOW_ALLOWED_HOSTS=*
+      - MLFLOW_ALLOW_MULTIPLE_HOSTS=true
     volumes:
-      - ./mlruns:/mlflow  # Mount a local directory for artifacts
-      # - ./artifacts:/artifacts
+      - ./mlflow_db:/mlflow_db
+      - ./mlruns:/mlflow/artifacts
     ports:
       - "5001:5000"
-    # networks:
-    #   - customer_churn_default
     restart: unless-stopped
+    networks:
+      - churn_network
 
 
   prometheus:
@@ -80,6 +95,8 @@ services:
     ports:
       - "9090:9090"
     restart: unless-stopped
+    networks:
+      - churn_network
 
   grafana:
     image: grafana/grafana:latest
@@ -95,11 +112,14 @@ services:
       - grafana-storage:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning
     restart: unless-stopped
+    networks:
+      - churn_network
 
-# networks:
-#   customer_churn_default:
-#     name: customer_churn_default
 volumes:
   db_data:
   grafana-storage:
   prometheus-data:
+
+networks:
+  churn_network:
+    driver: bridge
