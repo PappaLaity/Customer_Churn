@@ -23,9 +23,8 @@ Instrumentator().instrument(app).expose(app)
 
 mlflow.set_tracking_uri("http://mlflow:5000")
 
-# model = mlflow.pyfunc.load_model("models:/CustomerChurnModel/Production")
-model_A = mlflow.pyfunc.load_model("models:/CustomerChurnModel/Production")
-model_B = mlflow.pyfunc.load_model("models:/CustomerChurnModel/Staging")
+# model_A = mlflow.pyfunc.load_model("models:/CustomerChurnModel/Production")
+# model_B = mlflow.pyfunc.load_model("models:/CustomerChurnModel/Staging")
 
 churn = ["No", "Yes"]
 init_db()
@@ -40,13 +39,6 @@ async def home():
 async def get_customers_infos():
     infos = []
     file_path = Path("Data/production/customer_production_data.csv")
-
-    # if Production Data Exist load data
-    #   - Data/production/customer_production_data.csv
-    #   - load it from bottom to top
-    # else
-    #   - return empty table
-
     if file_path.exists():
         try:
             df = pd.read_csv(file_path)
@@ -94,11 +86,6 @@ async def check_healh():
     return {"check": "I'm ok! No worry"}
 
 
-# async def predict_churn(data):
-#     prediction = 1
-#     pass
-
-
 @app.post("/survey/submit")
 async def submit_survey(input: InputCustomer = None):
 
@@ -138,7 +125,7 @@ async def predict_churn(data=None):
     # Votre logique de prédiction
     # result = your_model.predict(data)
     result = random.randint(0, 1)
-    result = predict(data)
+    # result = predict(data)
     time.sleep(5)
     # Enregistrer les métriques
     prediction_counter.labels(
