@@ -12,6 +12,19 @@ services:
       - db_data:/var/lib/postgresql/data
     networks:
       - churn_network
+  mlflow_db:
+    image: postgres:15
+    container_name: mlflow_db
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mlflow_db
+    volumes:
+      - mlflow_db_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"  # Port interne 5432 exposé sur 5433 localement
+    networks:
+      - churn_network
 
   fastapi:
     build:
@@ -22,6 +35,8 @@ services:
       DATABASE_URL: postgresql+psycopg2://user:password@db:5432/churn_db
     depends_on:
       - db
+    volumes:
+      - ./Data:/app/Data
     ports:
       - "8000:8000"
     env_file: .env
@@ -52,8 +67,11 @@ services:
       - ./dags:/opt/airflow/dags
       - ./models:/opt/airflow/models
       - ./Data:/opt/airflow/Data
-      - ./mlruns:/opt/airflow/mlruns
-      - ./mlruns:/mlflow
+      # - ./mlruns:/opt/airflow/mlruns
+      # - ./mlruns:/mlflow/artifacts
+      - ./mlflow_artifacts:/mlflow/artifacts 
+    depends_on:
+      - mlflow
     env_file: .env
     ports:
       - "8080:8080"
@@ -65,15 +83,11 @@ services:
       context: .
       dockerfile: Dockerfile.mlflow
     container_name: mlflow
-    environment:
-      - MLFLOW_BACKEND_STORE_URI=sqlite:////mlflow_db/mlflow.db
-      - MLFLOW_DEFAULT_ARTIFACT_ROOT=/mlflow/artifacts
-      - MLFLOW_HOST=0.0.0.0
-      - MLFLOW_ALLOWED_HOSTS=*
-      - MLFLOW_ALLOW_MULTIPLE_HOSTS=true
+    depends_on:
+      - mlflow_db
     volumes:
-      - ./mlflow_db:/mlflow_db
-      - ./mlruns:/mlflow/artifacts
+      - ./mlflow_artifacts:/mlflow/artifacts 
+      # - ./mlruns:/mlflow/artifacts
     ports:
       - "5001:5000"
     restart: unless-stopped
@@ -86,6 +100,10 @@ services:
     container_name: prometheus
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
     ports:
       - "9090:9090"
     restart: unless-stopped
@@ -104,6 +122,7 @@ services:
       - prometheus
     volumes:
       - grafana-storage:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
     restart: unless-stopped
     networks:
       - churn_network
@@ -111,6 +130,9 @@ services:
 volumes:
   db_data:
   grafana-storage:
+  prometheus-data:
+  mlflow_db_data:
+  mlflow_artifacts:
 
 networks:
   churn_network:

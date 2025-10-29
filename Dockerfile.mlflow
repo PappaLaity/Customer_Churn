@@ -1,34 +1,62 @@
+# FROM python:3.12-slim
+
+# WORKDIR /mlflow
+
+# # RUN apt-get update && \
+# #     apt-get install -y curl git && \
+# #     apt-get clean && \
+# #     rm -rf /var/lib/apt/lists/*
+
+# # Installer MLflow et dépendances
+# RUN pip install --no-cache-dir \
+#     mlflow \
+#     psycopg2-binary \
+#     boto3
+
+# # Créer le dossier pour les artefacts et donner les droits à l'utilisateur airflow
+# RUN useradd -ms /bin/bash airflow
+# RUN mkdir -p /mlflow/artifacts /mlflow/mlflow.db && chown -R airflow:airflow /mlflow
+
+# USER airflow
+
+# ENV MLFLOW_ALLOW_MULTIPLE_HOSTS=true
+# ENV MLFLOW_BACKEND_STORE_URI=sqlite:////mlflow/mlflow.db
+# ENV MLFLOW_DEFAULT_ARTIFACT_ROOT=/mlflow/artifacts
+# ENV MLFLOW_HOST=0.0.0.0
+# ENV MLFLOW_ALLOWED_HOSTS="mlflow,localhost,*"
+
+# EXPOSE 5000
+
+# CMD ["mlflow", "server", \
+#      "--backend-store-uri", "/mlflow/mlflow.db", \
+#      "--default-artifact-root", "/mlflow/artifacts", \
+#      "--allowed-hosts", "mlflow,localhost,*", \
+#      "--host", "0.0.0.0", \
+#      "--port", "5000"]
+
 FROM python:3.12-slim
 
 WORKDIR /mlflow
 
-# RUN apt-get update && \
-#     apt-get install -y curl git && \
-#     apt-get clean && \
-#     rm -rf /var/lib/apt/lists/*
-
 # Installer MLflow et dépendances
-RUN pip install --no-cache-dir \
-    mlflow \
-    psycopg2-binary \
-    boto3
+RUN pip install --no-cache-dir mlflow psycopg2-binary boto3
 
-# Créer le dossier pour les artefacts et donner les droits à l'utilisateur airflow
+# Créer dossier artefacts
 RUN useradd -ms /bin/bash airflow
-RUN mkdir -p /mlflow/artifacts /mlflow/mlflow.db && chown -R airflow:airflow /mlflow
+RUN mkdir -p /mlflow/artifacts && chown -R airflow:airflow /mlflow
 
 USER airflow
 
 ENV MLFLOW_ALLOW_MULTIPLE_HOSTS=true
-ENV MLFLOW_BACKEND_STORE_URI=sqlite:////mlflow/mlflow.db
-ENV MLFLOW_DEFAULT_ARTIFACT_ROOT=/mlflow/artifacts
+ENV MLFLOW_BACKEND_STORE_URI=postgresql+psycopg2://user:password@mlflow_db:5432/mlflow_db
+# ENV MLFLOW_DEFAULT_ARTIFACT_ROOT=/mlflow/artifacts
+# ENV MLFLOW_DEFAULT_ARTIFACT_ROOT=/mlflow
 ENV MLFLOW_HOST=0.0.0.0
-ENV MLFLOW_ALLOWED_HOSTS="mlflow,localhost,*"
 
 EXPOSE 5000
 
 CMD ["mlflow", "server", \
-     "--backend-store-uri", "/mlflow/mlflow.db", \
+     "--backend-store-uri", "postgresql+psycopg2://user:password@mlflow_db:5432/mlflow_db", \
      "--default-artifact-root", "/mlflow/artifacts", \
      "--allowed-hosts", "mlflow,localhost,*", \
      "--host", "0.0.0.0", \
