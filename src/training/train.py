@@ -17,10 +17,7 @@ from mlflow.tracking import MlflowClient
 load_dotenv()
 mlflow_uri = os.getenv("MLFLOW_URI", "http://mlflow:5000")
 mlflow.set_tracking_uri(mlflow_uri)
-
-os.makedirs("mlruns", exist_ok=True)
-mlflow.set_registry_uri("file:./mlruns")
-# mlflow.set_registry_uri(mlflow_uri)
+mlflow.set_registry_uri(mlflow_uri)
 
 model_registry_name = "CustomerChurnModel"
 
@@ -55,7 +52,7 @@ def train_and_log_models(cv_folds=5):
     for name, model in models.items():
         with mlflow.start_run(run_name=name) as run:
             print(f"\n Training model: {name}")
-
+            registry_name = model_registry_name + "_" + name
             # --- Train and evaluate ---
             cv_scores = cross_val_score(
                 model, X_train, y_train, cv=skf, scoring="accuracy"
@@ -105,13 +102,17 @@ def train_and_log_models(cv_folds=5):
                 mlflow.log_artifact("scaler.pkl")
 
             # --- Log model ---
-            mlflow.sklearn.log_model(
+            model_info = mlflow.sklearn.log_model(
                 sk_model=model,
-                name=name,
-                registered_model_name=model_registry_name,
+                name=name,  # "model",
+                # registered_model_name=model_registry_name,
+                registered_model_name=registry_name,
                 input_example=input_example,
                 signature=mlflow.models.infer_signature(X_train, y_train),
             )
+            # mlflow.register_model(
+            #     model_uri=model_info.model_uri, name=name
+            # )
 
             # --- Record result for comparison ---
             results.append(
@@ -120,6 +121,8 @@ def train_and_log_models(cv_folds=5):
                     "test_accuracy": test_acc,
                     "cv_mean": cv_mean,
                     "run_id": run.info.run_id,
+                    "registery_model_name": registry_name,
+                    "info": model_info,
                 }
             )
 
@@ -129,68 +132,71 @@ def train_and_log_models(cv_folds=5):
     print(f"Run ID: {best_run['run_id']}")
     return best_run
 
-
 def register_best_model(best_run, model_registry_name="CustomerChurnModel"):
-    # Register and promote the best model automatically.
-    client = MlflowClient(mlflow_uri)
+    """Register and promote the best model to Production."""
+    client = MlflowClient()
     run_id = best_run["run_id"]
-
+    
     # Ensure registry entry exists
     try:
         client.create_registered_model(model_registry_name)
-    except Exception:
-        pass  # already exists
+        print(f"Created new registered model: {model_registry_name}")
+    except Exception as e:
+        print(f"Model registry already exists: {model_registry_name}")
 
     # Register new version
     version = client.create_model_version(
-        name=model_registry_name, source=f"runs:/{run_id}/model", run_id=run_id
+        name=model_registry_name,
+        source=f"runs:/{run_id}/model",
+        run_id=run_id
     )
+    print(f"Registered version {version.version}")
 
     # Update metadata
     client.update_model_version(
         name=model_registry_name,
         version=version.version,
         description=f"Auto-registered {best_run['model_name']} "
-        f"with test accuracy {best_run['test_accuracy']:.4f}",
+                    f"with test accuracy {best_run['test_accuracy']:.4f}",
     )
+
+    # Add tags
     client.set_model_version_tag(
         name=model_registry_name,
         version=version.version,
         key="model_name",
         value=best_run["model_name"],
     )
+    client.set_model_version_tag(
+        name=model_registry_name,
+        version=version.version,
+        key="test_accuracy",
+        value=str(best_run["test_accuracy"]),
+    )
+    client.set_model_version_tag(
+        name=model_registry_name,
+        version=version.version,
+        key="cv_mean",
+        value=str(best_run["cv_mean"]),
+    )
 
-    # Promote to Staging
-    """
-    #client.transition_model_version_stage(
-     #   name=model_registry_name,
-      #  version=version.version,
-       # stage="Staging",
-        #archive_existing_versions=True)
-    """
-
-    # Programmatically Promote the Model to Production
+    # Promote directly to Production (skip Staging if not needed)
     client.transition_model_version_stage(
         name=model_registry_name,
         version=version.version,
-        stage="Production",  # Change from "Staging" to "Production"
+        stage="Production",
         archive_existing_versions=True,
     )
+    print(f"Promoted version {version.version} to Production")
 
-    # Verify the Model in the Registry
-    # from mlflow.tracking import MlflowClient
-
-    # client = MlflowClient()
-    models = client.search_model_versions(f"name='CustomerChurnModel'")
+    # Verify all versions
+    models = client.search_model_versions(f"name='{model_registry_name}'")
+    print(f"\nModel Registry Status:")
     for model in models:
-        print(f"Version: {model.version}, Stage: {model.current_stage}")
+        print(f" Version {model.version}: {model.current_stage} "
+              f"(Created: {model.creation_timestamp})")
 
-        print(
-            f"Registered '{model_registry_name}' version {version.version} "
-            f"→ promoted to Staging."
-        )
     return version.version
-
 
 if __name__ == "__main__":
     # Train and automatically log all models
