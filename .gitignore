@@ -209,4 +209,5 @@ __marimo__/
 mlflow
 mlruns/*
 artifacts/*
+mlflow_artifacts/*
 # encoders.pkl # Remove model
