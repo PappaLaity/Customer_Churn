@@ -35,6 +35,23 @@ async def home():
     return {"msg": "Customer Churn System"}
 
 
+@app.get("/models")
+async def get_models():
+    models = []
+    models = mlflow.search_model_versions(filter_string="name='CustomerChurnModel'", max_results=1000)
+    return {
+        "models": [
+            {
+                "version": m.version,
+                "current_stage": m.current_stage,
+                "creation_timestamp": m.creation_timestamp,
+                "last_updated_timestamp": m.last_updated_timestamp,
+            }
+            for m in models
+        ]
+    }
+
+
 @app.get("/customers/infos", dependencies=[Depends(verify_api_key)])
 async def get_customers_infos():
     infos = []
@@ -143,7 +160,7 @@ async def predict(data: dict):
     model_choice = "A" if random.random() < 0.8 else "B"
 
     start = time.time()
-    preds = model_A.predict(df) if model_choice == "A" else model_B.predict(df)
+    # preds = model_A.predict(df) if model_choice == "A" else model_B.predict(df)
     latency = time.time() - start
 
     # Log locally or send to MLflow for analysis
@@ -152,6 +169,6 @@ async def predict(data: dict):
 
     return {
         "model": "Production" if model_choice == "A" else "Staging",
-        "prediction": preds.tolist(),
+        # "prediction": preds.tolist(),
         "latency": latency,
     }
