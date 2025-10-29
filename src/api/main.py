@@ -28,6 +28,8 @@ async def check_healh():
 app.include_router(users.router)
 app.include_router(auth.router)
 
+# Expose Prometheus metrics
+Instrumentator().instrument(app).expose(app)
 
 
 # security = HTTPBearer(auto_error=False)

@@ -1,0 +1,12 @@
+{
+  "title": "API Monitoring Dashboard",
+  "panels": [
+    {
+      "type": "graph",
+      "title": "Request Latency (s)",
+      "targets": [
+        { "expr": "http_request_duration_seconds_sum" }
+      ]
+    }
+  ]
+}
