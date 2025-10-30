@@ -1,7 +1,7 @@
-import random
 from fastapi import Depends, FastAPI, HTTPException, requests
 from fastapi.responses import JSONResponse
-from fastapi.security import HTTPBearer
+import os
+import random
 from fastapi.openapi.utils import get_openapi
 import mlflow
 import pandas as pd
@@ -27,7 +27,9 @@ mlflow.set_tracking_uri("http://mlflow:5000")
 # model_B = mlflow.pyfunc.load_model("models:/CustomerChurnModel/Staging")
 
 churn = ["No", "Yes"]
-init_db()
+ENV = os.getenv("ENV", "dev")
+if ENV != "test":
+    init_db()
 
 
 @app.get("/")
