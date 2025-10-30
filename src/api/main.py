@@ -1,3 +1,4 @@
+import os
 from fastapi import Depends, FastAPI
 from fastapi.security import HTTPBearer
 from fastapi.openapi.utils import get_openapi
@@ -12,8 +13,11 @@ app = FastAPI(title="Customer Churn Prediction")
 
 Instrumentator().instrument(app).expose(app)
 
-
-init_db()
+# Only initialize the database on app import when not running tests.
+# Tests set ENV="test" in `tests/conftest.py` before importing the app.
+ENV = os.getenv("ENV", "dev")
+if ENV != "test":
+    init_db()
 
 @app.get("/")
 async def home():
