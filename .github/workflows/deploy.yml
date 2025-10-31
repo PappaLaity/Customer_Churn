@@ -1,4 +1,4 @@
-name: 🚀 Deploy to Azure VM
+name: Deploy to Azure VM
 
 on:
   push:
@@ -10,23 +10,23 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📥 Checkout repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: 🐳 Build Docker images
+      - name: Build Docker images
         run: |
           docker compose build
 
       # (Optionnel) Push vers Docker Hub
-      - name: 🔐 Login to Docker Hub
+      - name: Login to Docker Hub
         if: env.DOCKERHUB_USERNAME != ''
         run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
-      - name: 📦 Push Docker images
+      - name: Push Docker images
         if: env.DOCKERHUB_USERNAME != ''
         run: docker compose push
 
-      - name: 📡 Deploy to Azure VM
+      - name: Deploy to Azure VM
         uses: appleboy/ssh-action@v0.1.10
         with:
           host: ${{ secrets.AZURE_HOST }}
