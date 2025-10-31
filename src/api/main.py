@@ -7,6 +7,8 @@ from src.api.core.security import verify_api_key
 from src.api.routes import users,auth
 from src.api.core.database import init_db
 from pydantic import BaseModel
+# from prometheus_client import Counter, Histogram, Gauge
+# import time
 
 
 app = FastAPI(title="Customer Churn Prediction")
@@ -34,28 +36,36 @@ app.include_router(auth.router)
 
 
 
-# security = HTTPBearer(auto_error=False)
+# # Métriques personnalisées
+# prediction_counter = Counter(
+#     'churn_predictions_total',
+#     'Total number of churn predictions',
+#     ['model_version', 'prediction_result']
+# )
 
-# def custom_openapi():
-#     if app.openapi_schema:
-#         return app.openapi_schema
-#     openapi_schema = get_openapi(
-#         title="Customer Churn API",
-#         version="1.0.0",
-#         description="API sécurisée avec JWT Bearer Token",
-#         routes=app.routes,
-#     )
-#     openapi_schema["components"]["securitySchemes"] = {
-#         "BearerAuth": {
-#             "type": "http",
-#             "scheme": "bearer",
-#             "bearerFormat": "JWT"
-#         }
-#     }
-#     for path in openapi_schema["paths"].values():
-#         for method in path.values():
-#             method.setdefault("security", [{"BearerAuth": []}])
-#     app.openapi_schema = openapi_schema
-#     return app.openapi_schema
+# prediction_duration = Histogram(
+#     'churn_prediction_duration_seconds',
+#     'Time spent processing prediction'
+# )
 
-# app.openapi = custom_openapi
+# active_users = Gauge(
+#     'churn_api_active_users',
+#     'Number of active users'
+# )
+
+# # Exemple d'utilisation dans vos endpoints
+# async def predict_churn(data):
+#     start_time = time.time()
+    
+#     # Votre logique de prédiction
+#     result = your_model.predict(data)
+    
+#     # Enregistrer les métriques
+#     prediction_counter.labels(
+#         model_version='v1.0',
+#         prediction_result='churn' if result == 1 else 'no_churn'
+#     ).inc()
+    
+#     prediction_duration.observe(time.time() - start_time)
+    
+#     return result
