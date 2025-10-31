@@ -1,3 +1,151 @@
+# services:
+#   db:
+#     image: postgres:15
+#     container_name: churn_db
+#     environment:
+#       POSTGRES_USER: user
+#       POSTGRES_PASSWORD: password
+#       POSTGRES_DB: churn_db
+#     ports:
+#       - "5432:5432"
+#     volumes:
+#       - db_data:/var/lib/postgresql/data
+#     networks:
+#       - churn_network
+#   mlflow_db:
+#     image: postgres:15
+#     container_name: mlflow_db
+#     environment:
+#       POSTGRES_USER: user
+#       POSTGRES_PASSWORD: password
+#       POSTGRES_DB: mlflow_db
+#     volumes:
+#       - mlflow_db_data:/var/lib/postgresql/data
+#     ports:
+#       - "5433:5432"  # Port interne 5432 exposé sur 5433 localement
+#     networks:
+#       - churn_network
+
+#   fastapi:
+#     build:
+#       context: .
+#       dockerfile: Dockerfile.api
+#     container_name: churn_api
+#     environment:
+#       DATABASE_URL: postgresql+psycopg2://user:password@db:5432/churn_db
+#     depends_on:
+#       - db
+#     volumes:
+#       - ./Data:/app/Data
+#     ports:
+#       - "8000:8000"
+#     env_file: .env
+#     command: >
+#       sh -c "alembic upgrade head &&
+#            python src/api/core/seed.py &&
+#            uvicorn src.api.main:app --host 0.0.0.0 --port 8000"
+#     restart: unless-stopped
+#     networks:
+#       - churn_network
+
+#   airflow:
+#     build:
+#       context: .
+#       dockerfile: Dockerfile.airflow
+#     container_name: airflow
+#     entrypoint: >
+#       bash -c "
+#       airflow db migrate &&
+#       airflow users create -u admin -p admin -f telco -l company -r Admin -e admin@telco.com &&
+#       airflow webserver & sleep 10 &&
+#       airflow scheduler
+#       "
+#     environment:
+#       - AIRFLOW_HOME=/opt/airflow
+#       - MLFLOW_TRACKING_URI=http://mlflow:5000
+#     volumes:
+#       - ./dags:/opt/airflow/dags
+#       - ./models:/opt/airflow/models
+#       - ./Data:/opt/airflow/Data
+#       # - ./mlruns:/opt/airflow/mlruns
+#       # - ./mlruns:/mlflow/artifacts
+#       #- ./mlflow_artifacts:/opt/airflow/mlflow_artifacts
+#       - ./mlflow_artifacts:/mlflow/artifacts
+    
+#     depends_on:
+#       - mlflow
+#     env_file: .env
+#     ports:
+#       - "8080:8080"
+#     restart: on-failure
+#     networks:
+#       - churn_network
+#   mlflow:
+#     build:
+#       context: .
+#       dockerfile: Dockerfile.mlflow
+#     container_name: mlflow
+#     depends_on:
+#       - mlflow_db
+#     volumes:
+#       - ./mlflow_artifacts:/mlflow/artifacts
+#       #- ./mlflow_artifacts:/opt/airflow/mlflow_artifacts
+
+      
+
+#       # - ./mlruns:/mlflow/artifacts
+#     ports:
+#       - "5001:5000"
+#     restart: unless-stopped
+#     networks:
+#       - churn_network
+
+
+#   prometheus:
+#     image: prom/prometheus:latest
+#     container_name: prometheus
+#     volumes:
+#       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+#       - prometheus-data:/prometheus
+#     command:
+#       - '--config.file=/etc/prometheus/prometheus.yml'
+#       - '--storage.tsdb.path=/prometheus'
+#     ports:
+#       - "9090:9090"
+#     restart: unless-stopped
+#     networks:
+#       - churn_network
+
+#   grafana:
+#     image: grafana/grafana:latest
+#     container_name: grafana
+#     ports:
+#       - "3000:3000"
+#     environment:
+#       - GF_SECURITY_ADMIN_USER=admin
+#       - GF_SECURITY_ADMIN_PASSWORD=admin
+#     depends_on:
+#       - prometheus
+#     volumes:
+#       - grafana-storage:/var/lib/grafana
+#       - ./grafana/provisioning:/etc/grafana/provisioning
+#     restart: unless-stopped
+#     networks:
+#       - churn_network
+
+# volumes:
+#   db_data:
+#   grafana-storage:
+#   prometheus-data:
+#   mlflow_db_data:
+#   mlflow_artifacts:
+
+# networks:
+#   churn_network:
+#     driver: bridge
+
+
+
 services:
   db:
     image: postgres:15
