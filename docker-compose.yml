@@ -69,7 +69,9 @@ services:
       - ./Data:/opt/airflow/Data
       # - ./mlruns:/opt/airflow/mlruns
       # - ./mlruns:/mlflow/artifacts
-      - ./mlflow_artifacts:/mlflow/artifacts 
+      #- ./mlflow_artifacts:/opt/airflow/mlflow_artifacts
+      - ./mlflow_artifacts:/mlflow/artifacts
+    
     depends_on:
       - mlflow
     env_file: .env
@@ -86,7 +88,11 @@ services:
     depends_on:
       - mlflow_db
     volumes:
-      - ./mlflow_artifacts:/mlflow/artifacts 
+      - ./mlflow_artifacts:/mlflow/artifacts
+      #- ./mlflow_artifacts:/opt/airflow/mlflow_artifacts
+
+      
+
       # - ./mlruns:/mlflow/artifacts
     ports:
       - "5001:5000"

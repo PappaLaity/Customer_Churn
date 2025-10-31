@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 import mlflow
 from mlflow.tracking import MlflowClient
-from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report, precision_score, recall_score, f1_score
 from src.etl.preprocessing import preprocess_data
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -67,8 +67,11 @@ def load_production_model(model_name="CustomerChurnModel"):
 
     model_uri = f"models:/{model_name}/{prod_version.version}"
     print(f"Model URI: {model_uri}")
-    
-    model = mlflow.sklearn.load_model(model_uri)
+    try:
+        model = mlflow.sklearn.load_model(model_uri)
+    except Exception as e:
+        print(f"Error loading model: {e}")
+        raise
     return model, prod_version.version
 
 def evaluate_model(model, X_test, y_test, log_to_mlflow=True):
@@ -78,12 +81,18 @@ def evaluate_model(model, X_test, y_test, log_to_mlflow=True):
     y_pred = model.predict(X_test)
 
     accuracy = accuracy_score(y_test, y_pred)
+    precision = precision_score(y_test, y_pred, average="weighted")
+    recall = recall_score(y_test, y_pred, average="weighted")
+    f1 = f1_score(y_test, y_pred, average="weighted")
     cm = confusion_matrix(y_test, y_pred)
     report = classification_report(y_test, y_pred, output_dict=True)
 
     # Print confusion matrix and classification report
     print(f"\n Model Evaluation Results:")
     print(f"Accuracy: {accuracy:.4f}")
+    print(f"Precision: {precision:.4f}")
+    print(f"Recall: {recall:.4f}")
+    print(f"F1 Score: {f1:.4f}")
     print("Confusion Matrix:")
     print(cm)
     print("Classification Report:")
@@ -112,7 +121,7 @@ def evaluate_model(model, X_test, y_test, log_to_mlflow=True):
 
             mlflow.set_tag("stage", "evaluation")
 
-    return accuracy, cm, report
+    return accuracy, precision, recall, f1, cm, report
 
 
 def main():
@@ -123,9 +132,12 @@ def main():
     model, version = load_production_model(model_name="CustomerChurnModel")
 
     # Evaluate and log results
-    evaluate_model(model, X_test, y_test, log_to_mlflow=True)
+    accuracy, precision, recall, f1, cm, report = evaluate_model(model, X_test, y_test, log_to_mlflow=True)
+
 
     print(f"\n Evaluation complete for Production model version {version}")
+    print(f"Final Metrics - Accuracy: {accuracy:.4f}, Precision: {precision:.4f}, Recall: {recall:.4f}, F1 Score: {f1:.4f}")
+
 
 
 if __name__ == "__main__":

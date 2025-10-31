@@ -12,6 +12,9 @@ from sklearn.ensemble import RandomForestClassifier, HistGradientBoostingClassif
 from sklearn.neural_network import MLPClassifier
 from src.etl.preprocessing import preprocess_data
 from mlflow.tracking import MlflowClient
+from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score, f1_score
+#from mlflow.models import ModelSignature
+#from mlflow.types.schema import Schema, ColSpec
 
 
 load_dotenv()
@@ -43,7 +46,7 @@ def train_and_log_models(cv_folds=5):
             max_iter=1000,
             random_state=42,
         ),
-    }
+    } 
 
     mlflow.set_experiment("Customer_Churn_Training")
     skf = StratifiedKFold(n_splits=cv_folds, shuffle=True, random_state=42)
@@ -64,6 +67,11 @@ def train_and_log_models(cv_folds=5):
             y_pred = model.predict(X_test)
             test_acc = accuracy_score(y_test, y_pred)
 
+            # Calculate precision, recall, and F1 score
+            precision = precision_score(y_test, y_pred, average="weighted")
+            recall = recall_score(y_test, y_pred, average="weighted")
+            f1 = f1_score(y_test, y_pred, average="weighted")
+
             # --- Log params, metrics, tags ---
             mlflow.log_params(model.get_params())
             mlflow.log_metrics(
@@ -71,6 +79,9 @@ def train_and_log_models(cv_folds=5):
                     "cv_accuracy_mean": cv_mean,
                     "cv_accuracy_std": cv_std,
                     "test_accuracy": test_acc,
+                    "test_precision": precision,
+                    "test_recall": recall,
+                    "test_f1_score": f1,
                 }
             )
             mlflow.set_tags(
@@ -100,12 +111,21 @@ def train_and_log_models(cv_folds=5):
                 mlflow.log_artifact("encoders.pkl")
             if os.path.exists("scaler.pkl"):
                 mlflow.log_artifact("scaler.pkl")
+            
+            # --- Define and log model signature ---
+
+            # input_schema = Schema([ColSpec("double", "feature1"), ColSpec("double", "feature2")])
+            # output_schema = Schema([ColSpec("integer")])
+            # signature = ModelSignature(inputs=input_schema, outputs=output_schema)
 
             # --- Log model ---
+            input_example = X_train[:5]  # Select the first 5 rows of the training data
+
             model_info = mlflow.sklearn.log_model(
                 sk_model=model,
                 name=name,  # "model",
                 # registered_model_name=model_registry_name,
+                #artifact_path= "mlflow_artifacts/1/models",
                 registered_model_name=registry_name,
                 input_example=input_example,
                 signature=mlflow.models.infer_signature(X_train, y_train),
@@ -119,6 +139,9 @@ def train_and_log_models(cv_folds=5):
                 {
                     "model_name": name,
                     "test_accuracy": test_acc,
+                    "test_precision": precision,
+                    "test_recall": recall,
+                    "test_f1_score": f1,
                     "cv_mean": cv_mean,
                     "run_id": run.info.run_id,
                     "registery_model_name": registry_name,
