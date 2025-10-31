@@ -15,3 +15,11 @@ pymysql
 pwdlib[argon2]
 python-jose[cryptography]
 prometheus-fastapi-instrumentator
+imblearn
+xgboost
+seaborn
+joblib
+imbalanced-learn
+psycopg2-binary
+pydantic[email]
+httpx

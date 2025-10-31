@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import EmailStr
+from pydantic import ConfigDict, EmailStr
 from sqlmodel import Column, Field, SQLModel, String
 from src.api.utils.enum.UserRole import UserRole
 from pydantic import BaseModel
@@ -32,9 +32,7 @@ class UserRead(BaseModel):
     email: EmailStr
     phone: str
     role: UserRole
-
-    class Config:
-        from_attributes = True  # important pour compatibilité SQLModel
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserUpdate(BaseModel):
