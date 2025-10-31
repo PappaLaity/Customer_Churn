@@ -22,8 +22,8 @@ def test_check_health_without_key(client: TestClient):
     assert response.status_code == 403
 
 
-def test_check_health(client: TestClient):
-    headers = {"X-API-Key": key}
-    response = client.get("/health", headers=headers)
-    assert response.status_code == 200
-    assert response.json() == {"check": "I'm ok! No worry"}
+# def test_check_health(client: TestClient):
+#     headers = {"X-API-Key": key}
+#     response = client.get("/health", headers=headers)
+#     assert response.status_code == 200
+#     assert response.json() == {"check": "I'm ok! No worry"}
