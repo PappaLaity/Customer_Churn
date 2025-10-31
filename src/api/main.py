@@ -1,6 +1,11 @@
+<<<<<<< HEAD
 import random
 from fastapi import Depends, FastAPI, HTTPException, requests
 from fastapi.responses import JSONResponse
+=======
+import os
+from fastapi import Depends, FastAPI
+>>>>>>> 8584bc81a3473af872c290fb198ff1b9138614ad
 from fastapi.security import HTTPBearer
 from fastapi.openapi.utils import get_openapi
 import mlflow
@@ -21,6 +26,7 @@ app = FastAPI(title="Customer Churn Prediction")
 
 Instrumentator().instrument(app).expose(app)
 
+<<<<<<< HEAD
 mlflow.set_tracking_uri("http://mlflow:5000")
 
 # model_A = mlflow.pyfunc.load_model("models:/CustomerChurnModel/Production")
@@ -28,6 +34,13 @@ mlflow.set_tracking_uri("http://mlflow:5000")
 
 churn = ["No", "Yes"]
 init_db()
+=======
+# Only initialize the database on app import when not running tests.
+# Tests set ENV="test" in `tests/conftest.py` before importing the app.
+ENV = os.getenv("ENV", "dev")
+if ENV != "test":
+    init_db()
+>>>>>>> 8584bc81a3473af872c290fb198ff1b9138614ad
 
 
 @app.get("/")
