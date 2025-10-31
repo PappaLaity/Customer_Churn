@@ -1,3 +1,4 @@
+import os
 import random
 from fastapi import Depends, FastAPI, HTTPException, requests
 from fastapi.responses import JSONResponse
@@ -24,10 +25,12 @@ Instrumentator().instrument(app).expose(app)
 mlflow.set_tracking_uri("http://mlflow:5000")
 
 # model_A = mlflow.pyfunc.load_model("models:/CustomerChurnModel/Production")
-# model_B = mlflow.pyfunc.load_model("models:/CustomerChurnModel/Staging")
 
 churn = ["No", "Yes"]
 init_db()
+ENV = os.getenv("ENV", "dev")
+if ENV != "test":
+    init_db()
 
 
 @app.get("/")
@@ -143,7 +146,7 @@ async def predict(data: dict):
     model_choice = "A" if random.random() < 0.8 else "B"
 
     start = time.time()
-    preds = model_A.predict(df) if model_choice == "A" else model_B.predict(df)
+    # preds = model_A.predict(df) if model_choice == "A" else model_B.predict(df)
     latency = time.time() - start
 
     # Log locally or send to MLflow for analysis
@@ -152,6 +155,6 @@ async def predict(data: dict):
 
     return {
         "model": "Production" if model_choice == "A" else "Staging",
-        "prediction": preds.tolist(),
+        # "prediction": preds.tolist(),
         "latency": latency,
     }

@@ -210,4 +210,5 @@ mlflow
 mlruns/*
 artifacts/*
 mlflow_artifacts/*
+test.db
 # encoders.pkl # Remove model
