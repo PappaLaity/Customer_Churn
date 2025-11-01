@@ -22,7 +22,7 @@ services:
     volumes:
       - mlflow_db_data:/var/lib/postgresql/data
     ports:
-      - "5433:5432"  # Port interne 5432 exposé sur 5433 localement
+      - "5433:5432" 
     networks:
       - churn_network
 
@@ -36,7 +36,7 @@ services:
     depends_on:
       - db
     volumes:
-      - ./Data:/app/Data
+      - ./data:/app/data
     ports:
       - "8000:8000"
     env_file: .env
@@ -66,10 +66,12 @@ services:
     volumes:
       - ./dags:/opt/airflow/dags
       - ./models:/opt/airflow/models
-      - ./Data:/opt/airflow/Data
-      # - ./mlruns:/opt/airflow/mlruns
-      # - ./mlruns:/mlflow/artifacts
-      - ./mlflow_artifacts:/mlflow/artifacts 
+      - ./data:/opt/airflow/data
+      - ./.git:/opt/airflow/.git
+      - ./.dvc:/opt/airflow/.dvc
+      - ./remote:/opt/airflow/remote
+      - ./mlflow_artifacts:/mlflow/artifacts
+    
     depends_on:
       - mlflow
     env_file: .env
@@ -86,8 +88,8 @@ services:
     depends_on:
       - mlflow_db
     volumes:
-      - ./mlflow_artifacts:/mlflow/artifacts 
-      # - ./mlruns:/mlflow/artifacts
+      - ./mlflow_artifacts:/mlflow/artifacts
+      
     ports:
       - "5001:5000"
     restart: unless-stopped
@@ -137,3 +139,5 @@ volumes:
 networks:
   churn_network:
     driver: bridge
+
+
