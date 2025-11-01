@@ -36,7 +36,7 @@ services:
     depends_on:
       - db
     volumes:
-      - ./Data:/app/Data
+      - ./data:/app/data
     ports:
       - "8000:8000"
     env_file: .env
@@ -66,7 +66,7 @@ services:
     volumes:
       - ./dags:/opt/airflow/dags
       - ./models:/opt/airflow/models
-      - ./Data:/opt/airflow/Data
+      - ./data:/opt/airflow/data
       - ./mlflow_artifacts:/mlflow/artifacts
     
     depends_on:
