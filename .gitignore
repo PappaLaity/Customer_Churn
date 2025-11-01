@@ -212,4 +212,5 @@ artifacts
 mlflow_artifacts
 test.db
 models
-# encoders.pkl # Remove model
+encoders.pkl
+# Remove model
