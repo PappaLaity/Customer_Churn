@@ -1,4 +1,4 @@
-# Dockerfile.api
+# Dockerfile.api and Dockerfile for Monitoring Service
 FROM python:3.12-slim
 
 WORKDIR /app
@@ -9,18 +9,25 @@ RUN pip install -r requirements.txt
 COPY alembic.ini .
 COPY migrations/ ./migrations/
 
-
+# Copy the source code into the container
 COPY src/api ./src/api
 # COPY models ./models
 # COPY src/utils ./src/utils 
 
+# Copy the configuration (grafana and prometheuses) files
+COPY grafana/ ./grafana/
+COPY prometheus/ ./prometheus/
+
+
+
 ENV PYTHONPATH=/app
-<<<<<<< HEAD
 #ENV API_KEY_SECRET = ${{secrets.API_KEY_SECRET}}
 ENV API_KEY_SECRET = SECRET_KEY
-=======
-# ENV API_KEY_SECRET = ${{secrets.API_KEY_SECRET}}
->>>>>>> 9c38ed639212f20288a20d9662c9dad7091327b5
+
+# Expose the necessary ports (if applicable)
 EXPOSE 8000
 
 # CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+
+
