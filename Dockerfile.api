@@ -15,7 +15,8 @@ COPY src/api ./src/api
 # COPY src/utils ./src/utils 
 
 ENV PYTHONPATH=/app
-# ENV API_KEY_SECRET = ${{secrets.API_KEY_SECRET}}
+#ENV API_KEY_SECRET = ${{secrets.API_KEY_SECRET}}
+ENV API_KEY_SECRET = SECRET_KEY
 EXPOSE 8000
 
 # CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]

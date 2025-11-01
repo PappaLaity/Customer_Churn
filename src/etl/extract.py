@@ -6,6 +6,7 @@ def load(filepath=None):
         base = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
         # filepath = os.path.join(base, 'Data', 'WA_Fn-UseC_-Telco-Customer-Churn.csv')
         filepath = os.path.join(os.getenv("AIRFLOW_HOME", "/opt/airflow"), "Data", "WA_Fn-UseC_-Telco-Customer-Churn.csv")
+       
 
 
     if not os.path.exists(filepath):

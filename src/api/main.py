@@ -22,12 +22,14 @@ app = FastAPI(title="Customer Churn Prediction")
 
 Instrumentator().instrument(app).expose(app)
 
+
 mlflow.set_tracking_uri("http://mlflow:5000")
 
 # model_A = mlflow.pyfunc.load_model("models:/CustomerChurnModel/Production")
 
 churn = ["No", "Yes"]
-init_db()
+# Only initialize the database on app import when not running tests.
+# Tests set ENV="test" in `tests/conftest.py` before importing the app.
 ENV = os.getenv("ENV", "dev")
 if ENV != "test":
     init_db()
