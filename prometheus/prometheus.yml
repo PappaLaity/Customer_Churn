@@ -5,26 +5,11 @@ global:
 scrape_configs:
   - job_name: 'prometheus'
     static_configs:
-      - targets: ['localhost:9090']  #Replace with your monitoring service endpoint
+      - targets: ['localhost:9090']
 
   - job_name: 'fastapi'
     scrape_interval: 5s
     static_configs:
       - targets: ['fastapi:8000']
     metrics_path: '/metrics'
-
-
-
-alerting:
-  alertmanagers:
-    - static_configs:
-        - targets:
-            - 'localhost:9093'  # Replace with your Alertmanager endpoint
-
-rule_files:
-  - "alert_rules.yml"  # Specify alert rules file if needed
-
-
-
-
-
+    

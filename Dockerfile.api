@@ -14,11 +14,6 @@ COPY src/api ./src/api
 # COPY models ./models
 # COPY src/utils ./src/utils 
 
-# Copy the configuration (grafana and prometheuses) files
-COPY grafana/ ./grafana/
-COPY prometheus/ ./prometheus/
-
-
 
 ENV PYTHONPATH=/app
 #ENV API_KEY_SECRET = ${{secrets.API_KEY_SECRET}}
