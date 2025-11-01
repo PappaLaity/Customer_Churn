@@ -14,22 +14,11 @@ from src.api.core.database import init_db
 from pathlib import Path
 from pydantic import BaseModel
 
-from prometheus_client import Counter, Histogram, Gauge
-import time
-
-
 app = FastAPI(title="Customer Churn Prediction")
 
 Instrumentator().instrument(app).expose(app)
 
-
-mlflow.set_tracking_uri("http://mlflow:5000")
-
-# model_A = mlflow.pyfunc.load_model("models:/CustomerChurnModel/Production")
-
-churn = ["No", "Yes"]
 # Only initialize the database on app import when not running tests.
-# Tests set ENV="test" in `tests/conftest.py` before importing the app.
 ENV = os.getenv("ENV", "dev")
 if ENV != "test":
     init_db()
@@ -94,13 +83,6 @@ async def check_healh():
 @app.post("/survey/submit")
 async def submit_survey(input: InputCustomer = None):
 
-    # Data Validation
-    data = input
-    # Prepare Data for Prediction
-    # Make Prediction
-    # Prepare Input and Prediction
-    prediction = predict_churn(data)
-    # Store it in the production data
 
     return {"success": "Thanky you for your submission"}
 
@@ -116,9 +98,6 @@ prediction_counter = Counter(
     ["model_version", "prediction_result"],
 )
 
-prediction_duration = Histogram(
-    "churn_prediction_duration_seconds", "Time spent processing prediction"
-)
 
 active_users = Gauge("churn_api_active_users", "Number of active users")
 
@@ -142,18 +121,11 @@ async def predict_churn(data=None):
     return result
 
 
-# @app.post("/predict")
-async def predict(data: dict):
-    df = pd.DataFrame([data])
-    model_choice = "A" if random.random() < 0.8 else "B"
 
     start = time.time()
     # preds = model_A.predict(df) if model_choice == "A" else model_B.predict(df)
     latency = time.time() - start
 
-    # Log locally or send to MLflow for analysis
-    mlflow.log_metric("latency", latency)
-    mlflow.log_param("model_used", model_choice)
 
     return {
         "model": "Production" if model_choice == "A" else "Staging",
