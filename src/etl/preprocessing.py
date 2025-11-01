@@ -10,6 +10,7 @@ import numpy as np
 
 def preprocess_data():
     df = load()
+    
     # Convert missing value TotalCharges, ' ', by 0.0
     #df['TotalCharges'] = df['TotalCharges'].replace(' ', "0.0")
     # Convert TotalCharges to numeric, forcing errors to NaN for blanks

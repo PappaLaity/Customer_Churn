@@ -3,6 +3,7 @@ fastapi
 pydantic
 uvicorn
 pytest
+dvc
 python-dotenv
 pandas
 numpy

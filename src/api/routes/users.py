@@ -11,7 +11,7 @@ pwd_hash = PasswordHash.recommended()
 router = APIRouter(prefix="/users", tags=["Users"])
 
 
-@router.post("/", response_model=UserRead)
+@router.post("/", response_model=UserRead, dependencies=[Depends(verify_api_key)])
 def create_user(user_data: UserCreate):
     with Session(engine) as session:
         existing = session.exec(
@@ -36,7 +36,7 @@ def create_user(user_data: UserCreate):
         return user
 
 
-@router.get("/", response_model=list[UserRead],dependencies=[Depends(verify_api_key)])
+@router.get("/", response_model=list[UserRead], dependencies=[Depends(verify_api_key)])
 def list_users():
     with Session(engine) as session:
         users = session.exec(select(User)).all()

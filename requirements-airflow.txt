@@ -5,3 +5,9 @@ numpy
 scikit-learn
 matplotlib
 requests
+imblearn
+mlflow
+seaborn
+xgboost
+joblib
+imbalanced-learn
