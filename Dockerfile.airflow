@@ -28,3 +28,6 @@ USER airflow
 COPY requirements-airflow.txt .
 
 RUN pip install -r requirements-airflow.txt
+
+
+
