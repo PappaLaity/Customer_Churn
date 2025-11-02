@@ -22,7 +22,6 @@ RUN apt-get update && apt-get install -y git
 
 COPY dags ./dags
 COPY src ./src
-# COPY Data ./Data
 
 USER airflow
 COPY requirements-airflow.txt .
