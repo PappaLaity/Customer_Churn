@@ -10,21 +10,6 @@ services:
       - "5432:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
-    networks:
-      - churn_network
-  mlflow_db:
-    image: postgres:15
-    container_name: mlflow_db
-    environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: mlflow_db
-    volumes:
-      - mlflow_db_data:/var/lib/postgresql/data
-    ports:
-      - "5433:5432" 
-    networks:
-      - churn_network
 
   fastapi:
     build:
@@ -35,8 +20,6 @@ services:
       DATABASE_URL: postgresql+psycopg2://user:password@db:5432/churn_db
     depends_on:
       - db
-    volumes:
-      - ./data:/app/data
     ports:
       - "8000:8000"
     env_file: .env
@@ -45,8 +28,6 @@ services:
            python src/api/core/seed.py &&
            uvicorn src.api.main:app --host 0.0.0.0 --port 8000"
     restart: unless-stopped
-    networks:
-      - churn_network
 
   airflow:
     build:
@@ -62,39 +43,53 @@ services:
       "
     environment:
       - AIRFLOW_HOME=/opt/airflow
-      - MLFLOW_TRACKING_URI=http://mlflow:5000
     volumes:
       - ./dags:/opt/airflow/dags
-      - ./models:/opt/airflow/models
       - ./data:/opt/airflow/data
-      - ./.git:/opt/airflow/.git
-      - ./.dvc:/opt/airflow/.dvc
-      - ./remote:/opt/airflow/remote
-      - ./mlflow_artifacts:/mlflow/artifacts
-    
-    depends_on:
-      - mlflow
-    env_file: .env
+      - ./models:/opt/airflow/models
     ports:
       - "8080:8080"
     restart: on-failure
-    networks:
-      - churn_network
+
   mlflow:
     build:
       context: .
       dockerfile: Dockerfile.mlflow
     container_name: mlflow
-    depends_on:
-      - mlflow_db
     volumes:
-      - ./mlflow_artifacts:/mlflow/artifacts
-      
+      - ./mlruns:/mlflow  # Mount a local directory for artifacts
+      # - ./artifacts:/artifacts
     ports:
       - "5001:5000"
+    # networks:
+    #   - customer_churn_default
     restart: unless-stopped
-    networks:
-      - churn_network
+
+  mlflow_exporter_train:
+    image: prometheuscommunity/mlflow-exporter:latest
+    container_name: mlflow_exporter_train
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5001
+      - METRICS_PORT=9100
+      - MODEL_NAME=CustomerChurnModel
+    ports:
+      - "9100:9100"
+    depends_on:
+      - mlflow
+    restart: unless-stopped
+
+  mlflow_exporter_eval:
+    image: prometheuscommunity/mlflow-exporter:latest
+    container_name: mlflow_exporter_eval
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5001
+      - METRICS_PORT=9101
+      - MODEL_NAME=CustomerChurnModel
+    ports:
+      - "9101:9101"
+    depends_on:
+      - mlflow
+    restart: unless-stopped
 
 
   prometheus:
@@ -102,15 +97,9 @@ services:
     container_name: prometheus
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-      - prometheus-data:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
     ports:
       - "9090:9090"
     restart: unless-stopped
-    networks:
-      - churn_network
 
   grafana:
     image: grafana/grafana:latest
@@ -125,19 +114,14 @@ services:
     volumes:
       - grafana-storage:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning
-    restart: unless-stopped
-    networks:
-      - churn_network
+      - ./grafana/dashboards:/etc/grafana/dashboards
+    restart: unless-stopped  
 
+# networks:
+#   customer_churn_default:
+#     name: customer_churn_default
 volumes:
   db_data:
   grafana-storage:
-  prometheus-data:
-  mlflow_db_data:
-  mlflow_artifacts:
-
-networks:
-  churn_network:
-    driver: bridge
 
 
