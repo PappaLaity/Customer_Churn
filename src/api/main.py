@@ -1,3 +1,4 @@
+import asyncio
 import os
 import random
 from fastapi import Depends, FastAPI, HTTPException, requests
@@ -24,7 +25,68 @@ Instrumentator().instrument(app).expose(app)
 
 mlflow.set_tracking_uri("http://mlflow:5000")
 
-# model_A = mlflow.pyfunc.load_model("models:/CustomerChurnModel/Production")
+model_name = "CustomerChurnModel"
+
+
+
+def load_model(model_name="CustomerChurnModel"):
+    model_A = None
+    model_B = None
+    stag_version = None
+    stag_source = None
+    prod_version = None
+    prod_source = None
+    models = mlflow.search_model_versions(
+        filter_string="name='CustomerChurnModel'", max_results=1000
+    )
+    for m in models:
+        if m.current_stage == "Production":
+            prod_version = m.version
+            prod_source = m.source
+        if m.current_stage == "Staging":
+            stag_version = m.version
+            stag_source = m.source
+
+    print(f"Production model version: {prod_version}, source: {prod_source}")
+    print(f"Staging model version: {stag_version}, source: {stag_source}")
+    try:
+        if prod_source:
+            model_A = mlflow.sklearn.load_model(prod_source)
+            print(f"Loaded Production model version: {prod_source}")
+        if stag_source:
+            model_B = mlflow.sklearn.load_model(stag_source)
+            print(f"Loaded Production model version: {stag_source}")
+    except Exception as e:
+        print(f"Error loading model: {e}")
+        raise
+    return model_A, model_B, prod_version, stag_version,prod_source,stag_source
+
+model_A, model_B, prod_version, stag_version,prod_source,stag_source = load_model(model_name)
+
+@app.post("/reload")
+def manual_reload():
+    load_model(model_name)
+    return {"message": f"Modèle version {prod_version} rechargé manuellement"}
+
+
+# async def model_reloader(interval: int = 300):
+#     """Tâche asynchrone qui recharge le modèle toutes les 'interval' secondes (300s = 5min)."""
+#     await asyncio.sleep(5)
+#     while True:
+#         try:
+#             load_model(model_name)
+#         except Exception as e:
+#             print(f"Erreur lors du rechargement périodique: {e}")
+#         await asyncio.sleep(interval)
+
+
+# @app.on_event("startup")
+# async def startup_event():
+    """Au démarrage, charge le modèle et lance la boucle de rechargement."""
+    load_model(model_name)
+    asyncio.create_task(model_reloader(interval=300))  # 300 secondes = 5 min
+
+
 
 churn = ["No", "Yes"]
 ENV = os.getenv("ENV", "dev")
@@ -37,10 +99,20 @@ async def home():
     return {"msg": "Customer Churn System"}
 
 
+@app.get("/model/version", dependencies=[Depends(verify_api_key)])
+async def get_model_version():
+    return {
+        "production_model_version": prod_version,
+        "staging_model_version": stag_version,
+    }
+
+
 @app.get("/models")
 async def get_models():
     models = []
-    models = mlflow.search_model_versions(filter_string="name='CustomerChurnModel'", max_results=1000)
+    models = mlflow.search_model_versions(
+        filter_string="name='CustomerChurnModel'", max_results=1000
+    )
     return {
         "models": [
             {
@@ -48,6 +120,8 @@ async def get_models():
                 "current_stage": m.current_stage,
                 "creation_timestamp": m.creation_timestamp,
                 "last_updated_timestamp": m.last_updated_timestamp,
+                "source": m.source,
+                "run_id": m.run_id,
             }
             for m in models
         ]
@@ -57,7 +131,7 @@ async def get_models():
 @app.get("/customers/infos", dependencies=[Depends(verify_api_key)])
 async def get_customers_infos():
     infos = []
-    file_path = Path("Data/production/customer_production_data.csv")
+    file_path = Path("data/production/production.csv")
     if file_path.exists():
         try:
             df = pd.read_csv(file_path)
@@ -174,3 +248,41 @@ async def predict(data: dict):
         # "prediction": preds.tolist(),
         "latency": latency,
     }
+
+
+@app.post("/predict/test", dependencies=[Depends(verify_api_key)])
+async def predict_churn_test(sample: InputCustomer):
+
+    # sample = {
+    #     "Contract": 0,
+    #     "tenure": 1,
+    #     "OnlineSecurity": 0,
+    #     "TechSupport": 0,
+    #     "TotalCharges": 29.85,
+    #     "OnlineBackup": 2,
+    #     "MonthlyCharges": 29.85,
+    #     "PaperlessBilling": 1,
+    # }
+
+    # Charger le modèle
+
+    # Si input_data est un dict, on le convertit en DataFrame
+    # if isinstance(sample, dict):
+    #     df = pd.DataFrame([sample])
+    # else:
+    #     df = sample.copy()
+
+    df = pd.DataFrame([sample.model_dump()])
+
+    # S'assurer que les colonnes sont dans le même ordre que celles du modèle
+    # (tu peux adapter en fonction du preprocessing)
+
+    # Faire la prédiction
+    result = model_A.predict(df)
+    prediction = model_A.predict(df)[0]
+    probability = model_A.predict_proba(df)[0][1]
+
+    print(f"Prediction: {churn[prediction]}, Probability of Churn: {probability:.4f}, Result: {result}")
+
+    return {"prediction": int(prediction), "probability": round(float(probability), 4)}
+    # return {"prediction": prediction, "probability": probability, "input": sample}
