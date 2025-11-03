@@ -37,6 +37,11 @@ services:
       - db
     volumes:
       - ./data:/app/data
+      - ./.git:/app/.git
+      - ./.dvc:/app/.dvc
+      - ./remote:/app/remote
+      - ./mlflow_artifacts:/mlflow/artifacts
+
     ports:
       - "8000:8000"
     env_file: .env
@@ -55,6 +60,7 @@ services:
     container_name: airflow
     entrypoint: >
       bash -c "
+      rm -f /opt/airflow/airflow-webserver.pid && 
       airflow db migrate &&
       airflow users create -u admin -p admin -f telco -l company -r Admin -e admin@telco.com &&
       airflow webserver & sleep 10 &&
