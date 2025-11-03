@@ -13,10 +13,10 @@ scrape_configs:
       - targets: ["airflow-webserver:8080"]
 
   # Connect to Airflow metrics exporter    
-  - job_name: 'airflow'
-    metrics_path: /metrics
-    static_configs:
-      - targets: ['airflow-exporter:9112']
+  #- job_name: 'airflow-metrics'
+   # metrics_path: /metrics
+    #static_configs:
+     # - targets: ['airflow-exporter:9112']
 
   - job_name: 'mlflow_train'
     metrics_path: /metrics

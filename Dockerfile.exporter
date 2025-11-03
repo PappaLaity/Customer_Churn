@@ -5,7 +5,7 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY mlflow_prometheus_exporter.py .
+COPY src/mlflow_prometheus_exporter.py .
 
 ENV EXPORTER_PORT=9100
 
