@@ -37,6 +37,9 @@ services:
       - db
     volumes:
       - ./data:/app/data
+      - ./.git:/app/.git
+      - ./.dvc:/app/.dvc
+      - ./remote:/app/remote
       - ./mlflow_artifacts:/mlflow/artifacts
 
     ports:
