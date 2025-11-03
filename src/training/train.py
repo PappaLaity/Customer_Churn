@@ -6,6 +6,7 @@ import mlflow
 import mlflow.sklearn
 import matplotlib.pyplot as plt
 import seaborn as sns
+from mlflow.models.signature import infer_signature
 from sklearn.model_selection import cross_val_score, StratifiedKFold
 from sklearn.metrics import accuracy_score, confusion_matrix
 from sklearn.linear_model import LogisticRegression
@@ -76,12 +77,12 @@ def train_and_log_models(cv_folds=5):
             mlflow.log_params(model.get_params())
             mlflow.log_metrics(
                 {
-                    "cv_accuracy_mean": cv_mean,
-                    "cv_accuracy_std": cv_std,
-                    "test_accuracy": test_acc,
-                    "test_precision": precision,
-                    "test_recall": recall,
-                    "test_f1_score": f1,
+                   "cv_accuracy_mean": float(np.array(cv_mean).item()),
+                     "cv_accuracy_std":   float(np.array(cv_std).item()),
+                     "test_accuracy":     float(np.array(test_acc).item()),
+                     "test_precision":    float(np.array(precision).item()),
+                          "test_recall":       float(np.array(recall).item()),
+                             "test_f1_score":     float(np.array(f1).item()),
                 }
             )
             mlflow.set_tags(
@@ -116,14 +117,14 @@ def train_and_log_models(cv_folds=5):
 
             # --- Log model ---
             input_example = X_train[:5]  # Select the first 5 rows of the training data
-
+            signature = infer_signature(X_train, y_train)
             model_info = mlflow.sklearn.log_model(
                 sk_model=model,
                 # artifact_path="model",
                 name="model",
                 registered_model_name=registry_name,
                 input_example=input_example,
-                signature=mlflow.models.infer_signature(X_train, y_train),
+                signature=signature,
             )
 
             # --- Record result for comparison ---
