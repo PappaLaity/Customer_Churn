@@ -1,7 +1,8 @@
 import asyncio
 import os
 import random
-from fastapi import Depends, FastAPI, HTTPException, requests
+import subprocess
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, requests
 from fastapi.concurrency import asynccontextmanager
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBearer
@@ -30,6 +31,10 @@ async def lifespan(app: FastAPI):
 
     if ENV != "test":
         init_db()
+
+    print("Pulling DVC data...")
+    subprocess.run(["dvc", "pull", "-v"], check=True)
+    print("DVC data synchronized.")
 
     app.state.model_A = None
     app.state.model_B = None
@@ -145,7 +150,7 @@ async def check_healh():
 
 
 @app.post("/survey/submit")
-async def submit_survey(input: InputCustomer = None):
+async def submit_survey(input: InputCustomer , background_tasks:BackgroundTasks):
 
     file_path = Path("data/production/production.csv")
     # Data Validation
@@ -162,7 +167,7 @@ async def submit_survey(input: InputCustomer = None):
     else:
         df.to_csv(file_path, index=False)
     # Store it in the production data
-
+    background_tasks.add_task(dvc_push_background)
     return {"success": "Thanky you for your submission"}
 
 
@@ -296,3 +301,18 @@ async def model_reloader(interval: int = 300):
         except Exception as e:
             print(f"Erreur lors du rechargement périodique: {e}")
         await asyncio.sleep(interval)
+
+    
+async def dvc_push_background():
+    """Exécute un `dvc push` sans bloquer le thread principal."""
+    process = await asyncio.create_subprocess_exec(
+        "dvc", "push", "-v",
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE
+    )
+    stdout, stderr = await process.communicate()
+
+    if process.returncode == 0:
+        print("[DVC] Push successful:\n", stdout.decode())
+    else:
+        print("[DVC] Push failed:\n", stderr.decode())
