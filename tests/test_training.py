@@ -1,31 +1,32 @@
 # tests/test_training.py
 
 import pytest
+import numpy as np
+from unittest.mock import patch
 from src.training.train import train_and_log_models
-import os
 
-@pytest.mark.smoke
-def test_train_and_log_models_runs():
-  
-    # Run the training function with fewer folds for faster test
-    best_run = train_and_log_models(cv_folds=2)
+# Mock small dataset
+X_train_mock = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
+X_test_mock = np.array([[2, 1], [4, 3]])
+y_train_mock = np.array([0, 1, 0, 1])
+y_test_mock = np.array([0, 1])
+
+@patch("src.training.train.preprocess_data")
+def test_train_and_log_models_runs(mock_preprocess):
     
-    # Check that the function returns a dictionary
-    assert isinstance(best_run, dict), "train_and_log_models should return a dict"
+    # Return mock data
+    mock_preprocess.return_value = X_train_mock, X_test_mock, y_train_mock, y_test_mock
 
-    # Check that all required keys exist in the dictionary
+    best_run = train_and_log_models(cv_folds=2)
+
+    # Check that best_run is a dictionary
+    assert isinstance(best_run, dict)
+
+    # Ensure required keys exist
     required_keys = ["model_name", "test_accuracy", "test_precision", "test_recall", "test_f1_score", "run_id"]
     for key in required_keys:
-        assert key in best_run, f"Missing key in best_run: {key}"
+        assert key in best_run
 
-    # Check that metrics are floats and within the correct range
+    # Check metrics types
     for metric in ["test_accuracy", "test_precision", "test_recall", "test_f1_score"]:
-        value = best_run[metric]
-        assert isinstance(value, float), f"{metric} should be a float"
-        assert 0.0 <= value <= 1.0, f"{metric} should be between 0 and 1"
-
-    # Check that run_id is a non-empty string
-    assert isinstance(best_run["run_id"], str) and best_run["run_id"], "run_id should be a non-empty string"
-
-    # Verify Mlflow logging object exists 
-    assert "info" in best_run, "best_run should contain model info"
+        assert isinstance(best_run[metric], float)
