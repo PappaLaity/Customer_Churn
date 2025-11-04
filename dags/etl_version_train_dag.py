@@ -115,7 +115,8 @@ with DAG(
             commit_cmd = [
                 'git',
                 'commit',
-                '-m', 'Update data version via Airflow DAG'
+                '-m', 'Update data version via Airflow DAG',
+                "--allow-empty"
             ]
             result = subprocess.run(
                 commit_cmd,
