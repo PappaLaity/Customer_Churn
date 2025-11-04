@@ -1,18 +1,4 @@
 # Dockerfile.airflow
-# FROM apache/airflow:2.9.0-python3.11
-
-# USER root
-# WORKDIR /opt/airflow
-
-# COPY requirements.txt .
-# RUN pip install -r requirements.txt
-
-# COPY dags ./dags
-# COPY src ./src
-
-# USER airflow
-
-# Dockerfile.airflow
 FROM apache/airflow:2.10.2-python3.11
 
 USER root
@@ -22,7 +8,6 @@ RUN apt-get update && apt-get install -y git
 
 COPY dags ./dags
 COPY src ./src
-# COPY Data ./Data
 
 USER airflow
 COPY requirements-airflow.txt .
