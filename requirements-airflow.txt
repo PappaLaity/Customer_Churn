@@ -11,3 +11,4 @@ seaborn
 xgboost
 joblib
 imbalanced-learn
+dvc
