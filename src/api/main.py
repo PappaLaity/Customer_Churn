@@ -25,9 +25,9 @@ model_name = "CustomerChurnModel"
 churn = ["No", "Yes"]
 ENV = os.getenv("ENV", "dev")
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-
 
     if ENV != "test":
         init_db()
@@ -62,6 +62,7 @@ Instrumentator().instrument(app).expose(app)
 
 mlflow.set_tracking_uri("http://mlflow:5000")
 mlflow.set_experiment("Production_Customer_Churn_API")
+
 
 @app.get("/")
 async def home():
@@ -150,22 +151,41 @@ async def check_healh():
 
 
 @app.post("/survey/submit")
-async def submit_survey(input: InputCustomer , background_tasks:BackgroundTasks):
+async def submit_survey(input: InputCustomer, background_tasks: BackgroundTasks):
 
     file_path = Path("data/production/production.csv")
     # Data Validation
     data = input
     result = await predict_churn(data)
     # Make Prediction
-    df = pd.DataFrame([data.model_dump()])
-    # df["Churn"] = churn[result]
+    customer_data = input.model_dump(by_alias=True)
+    customer_data["Churn"] = int(result)
+    df = pd.DataFrame([customer_data])
     df["Churn"] = result
-    if file_path.exists():
-        df_existing = pd.read_csv(file_path)
-        df_combined = pd.concat([df_existing, df], ignore_index=True)
-        df_combined.to_csv(file_path, index=False)
+
+    csv_columns = [
+        "tenure",
+        "InternetService_Fiber optic",
+        "Contract_Two year",
+        "PaymentMethod_Electronic check",
+        "No_internet_service",
+        "TotalCharges",
+        "MonthlyCharges",
+        "PaperlessBilling",
+        "Churn",
+    ]
+
+    # Vérifier si le fichier existe ET non vide
+    if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
+        try:
+            df_existing = pd.read_csv(file_path)
+        except pd.errors.EmptyDataError:
+            df_existing = pd.DataFrame(columns=csv_columns)
     else:
-        df.to_csv(file_path, index=False)
+        df_existing = pd.DataFrame(columns=csv_columns)
+
+    df_combined = pd.concat([df_existing, df], ignore_index=True)
+    df_combined.to_csv(file_path, index=False)
     # Store it in the production data
     background_tasks.add_task(dvc_push_background)
     return {"success": "Thanky you for your submission"}
@@ -214,7 +234,11 @@ async def predict(data: InputCustomer):
         model_choice = "A"
 
     start = time.time()
-    preds = app.state.model_A.predict(df) if model_choice == "A" else app.state.model_B.predict(df)
+    preds = (
+        app.state.model_A.predict(df)
+        if model_choice == "A"
+        else app.state.model_B.predict(df)
+    )
     # result = model_A.predict(df)[0]
     print(f"Predicted result: {preds[0]}")
     latency = time.time() - start
@@ -302,13 +326,15 @@ async def model_reloader(interval: int = 300):
             print(f"Erreur lors du rechargement périodique: {e}")
         await asyncio.sleep(interval)
 
-    
+
 async def dvc_push_background():
     """Exécute un `dvc push` sans bloquer le thread principal."""
     process = await asyncio.create_subprocess_exec(
-        "dvc", "push", "-v",
+        "dvc",
+        "push",
+        "-v",
         stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE
+        stderr=asyncio.subprocess.PIPE,
     )
     stdout, stderr = await process.communicate()
 
