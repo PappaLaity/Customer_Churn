@@ -237,8 +237,16 @@ def preprocess_data():
     X_test_scaled = scaler.transform(X_test)
 
     # Apply SMOTE to the training data
-    # smote = SMOTE(random_state=42)
-    # X_train_smoted, y_train_smoted = smote.fit_resample(X_train_scaled, y_train)
+    smote = SMOTE(random_state=42)
+    X_train_smoted, y_train_smoted = smote.fit_resample(X_train_scaled, y_train)
+
+    # # Save the SMOTE data for reference
+    # pd.DataFrame(X_train_smoted, columns=X.columns).to_csv("/opt/airflow/data/preprocessed/X_train_smoted.csv", index=False)
+    # pd.DataFrame(y_train_smoted, columns=["Churn"]).to_csv("/opt/airflow/data/preprocessed/y_train_smoted.csv", index=False)
+    # # Rename for clarity
+    # y_train_smoted = y_train_smoted.reset_index(drop=True)
+    # X_train_smoted = pd.DataFrame(X_train_smoted, columns=X.columns).reset_index(drop=True)
+    
 
     # Save scaler and encoders
     with open("/opt/airflow/models/scaler.pkl", "wb") as f:
@@ -247,10 +255,12 @@ def preprocess_data():
         with open("/opt/airflow/models/encoders.pkl", "wb") as f:
             pickle.dump(encoders, f)
 
-    return X_train_scaled, X_test_scaled, y_train, y_test
+    #return X_train_scaled, X_test_scaled, y_train, y_test
+
+    return X_train_smoted, X_test_scaled, y_train_smoted, y_test
 
 
-if __name__ == "__main__":
-    # quick local check
-    Xtr, Xte, ytr, yte = preprocess_data()
-    print("Preprocessing complete.", Xtr.shape, Xte.shape, ytr.shape, yte.shape)
+# if __name__ == "__main__":
+#     # quick local check
+#     X_train, X_test, y_train, y_test = preprocess_data()
+#     print("Preprocessing complete.", X_train.shape, X_test.shape, y_train.shape, y_test.shape)
