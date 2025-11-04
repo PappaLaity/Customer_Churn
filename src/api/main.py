@@ -1,15 +1,3 @@
-<<<<<<< HEAD
-import asyncio
-import os
-import random
-import subprocess
-from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, requests
-from fastapi.concurrency import asynccontextmanager
-from fastapi.responses import JSONResponse
-from fastapi.security import HTTPBearer
-import mlflow
-import pandas as pd
-=======
 import os
 import asyncio
 import random
@@ -24,7 +12,6 @@ from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException
 from fastapi.concurrency import asynccontextmanager
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBearer
->>>>>>> c482010ed2bde15877c82ed74c3d8189c86b4adf
 from prometheus_fastapi_instrumentator import Instrumentator
 from prometheus_client import Counter, Gauge, Histogram
 
@@ -39,13 +26,6 @@ from src.api.core.database import init_db
 from src.api.core.security import verify_api_key
 from src.api.entities.customerInput import InputCustomer
 from src.api.routes import auth, users
-<<<<<<< HEAD
-from pydantic import BaseModel
-
-from prometheus_client import Counter, Histogram, Gauge
-import time
-=======
->>>>>>> c482010ed2bde15877c82ed74c3d8189c86b4adf
 
 
 ENV = os.getenv("ENV", "dev")
@@ -85,19 +65,11 @@ async def lifespan(app: FastAPI):
         task.cancel()
 
 
-<<<<<<< HEAD
-# Crée ton application FastAPI avec lifespan
-app = FastAPI(description="Customer Churn Prediction", lifespan=lifespan)
-=======
 app = FastAPI(title="Customer Churn Prediction", lifespan=lifespan)
->>>>>>> c482010ed2bde15877c82ed74c3d8189c86b4adf
 
 # Expose default HTTP metrics at /metrics
 Instrumentator().instrument(app).expose(app)
 
-<<<<<<< HEAD
-mlflow.set_tracking_uri("http://mlflow:5000")
-=======
 
 # --- MLflow pyfunc model for batch predictions ---
 _model = None
@@ -154,7 +126,6 @@ class PredictPayload(BaseModel):
 
 class BaselinePayload(BaseModel):
     numeric: Dict[str, List[float]] = {}
->>>>>>> c482010ed2bde15877c82ed74c3d8189c86b4adf
 
 
 @app.get("/")
@@ -236,28 +207,6 @@ async def check_health():
     return {"check": "I'm ok! No worry"}
 
 
-<<<<<<< HEAD
-@app.post("/survey/submit")
-async def submit_survey(input: InputCustomer , background_tasks:BackgroundTasks):
-
-    file_path = Path("data/production/production.csv")
-    # Data Validation
-    data = input
-    result = await predict_churn(data)
-    # Make Prediction
-    df = pd.DataFrame([data.model_dump()])
-    # df["Churn"] = churn[result]
-    df["Churn"] = result
-    if file_path.exists():
-        df_existing = pd.read_csv(file_path)
-        df_combined = pd.concat([df_existing, df], ignore_index=True)
-        df_combined.to_csv(file_path, index=False)
-    else:
-        df.to_csv(file_path, index=False)
-    # Store it in the production data
-    background_tasks.add_task(dvc_push_background)
-    return {"success": "Thanky you for your submission"}
-=======
 @app.post("/monitoring/baseline", dependencies=[Depends(verify_api_key)])
 async def set_baseline(payload: BaselinePayload):
     global _baseline_numeric_sorted
@@ -265,7 +214,6 @@ async def set_baseline(payload: BaselinePayload):
         f: np.sort(np.asarray(vals, dtype=float)) for f, vals in payload.numeric.items()
     }
     return {"status": "ok", "features": list(_baseline_numeric_sorted.keys())}
->>>>>>> c482010ed2bde15877c82ed74c3d8189c86b4adf
 
 
 @app.get("/monitoring/baseline", dependencies=[Depends(verify_api_key)])
@@ -285,40 +233,6 @@ async def predict(payload: PredictPayload):
         PREDICTION_ERRORS.labels(model_version=model_version, error_type="bad_input").inc()
         raise HTTPException(status_code=400, detail=f"Invalid input: {e}")
 
-<<<<<<< HEAD
-active_users = Gauge("churn_api_active_users", "Number of active users")
-
-
-# # Exemple d'utilisation dans vos endpoints
-async def predict_churn(data=None):
-    start_time = time.time()
-
-    results = await predict(data)
-    result = results["prediction"]
-    # Enregistrer les métriques
-    prediction_counter.labels(
-        model_version="v1.0", prediction_result="churn" if result == 1 else "no_churn"
-    ).inc()
-
-    prediction_duration.observe(time.time() - start_time)
-
-    return result
-
-
-async def predict(data: InputCustomer):
-
-    df = pd.DataFrame([data.model_dump()])
-    if app.state.model_A and app.state.model_B:
-        model_choice = "A" if random.random() < 0.8 else "B"
-    else:
-        model_choice = "A"
-
-    start = time.time()
-    preds = app.state.model_A.predict(df) if model_choice == "A" else app.state.model_B.predict(df)
-    # result = model_A.predict(df)[0]
-    print(f"Predicted result: {preds[0]}")
-    latency = time.time() - start
-=======
     # Optionally separate labels
     y_true = None
     if payload.label_key and payload.label_key in df.columns:
@@ -335,7 +249,6 @@ async def predict(data: InputCustomer):
     except Exception as e:
         PREDICTION_ERRORS.labels(model_version=model_version, error_type="inference").inc()
         raise HTTPException(status_code=500, detail=f"Inference failed: {e}")
->>>>>>> c482010ed2bde15877c82ed74c3d8189c86b4adf
 
     # Drift computation (numeric only, if baseline present)
     if _baseline_numeric_sorted:
@@ -351,13 +264,6 @@ async def predict(data: InputCustomer):
         except Exception:
             pass
 
-<<<<<<< HEAD
-    return {
-        "model": "Production" if model_choice == "A" else "Staging",
-        "prediction": preds[0],
-        "latency": latency,
-    }
-=======
     # Online accuracy if label provided
     global _total_with_label, _correct_with_label
     if y_true is not None:
@@ -443,7 +349,6 @@ def _ks_d_stat(a_sorted: np.ndarray, b_sorted: np.ndarray) -> float:
 # Include other routers
 app.include_router(users.router)
 app.include_router(auth.router)
->>>>>>> c482010ed2bde15877c82ed74c3d8189c86b4adf
 
 
 def load_model(model_name: str = "CustomerChurnModel"):
