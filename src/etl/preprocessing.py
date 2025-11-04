@@ -16,36 +16,74 @@ def preprocess_data():
     # Convert TotalCharges to numeric, forcing errors to NaN for blanks
     df["TotalCharges"] = pd.to_numeric(df["TotalCharges"], errors="coerce")
 
-    # Replace missing TotalCharges with the corresponding MonthlyCharges
+    # Replace missing TotalCharges with the corresponding MonthlyCharges because TotalCharges is almost MonthlyCharges * tenure
     # df['TotalCharges'].fillna(df['MonthlyCharges'], inplace=True)
+
     df["TotalCharges"] = df["TotalCharges"].fillna(df["MonthlyCharges"])
 
-    df["TotalCharges"] = df["TotalCharges"].astype(float)
+    # Ensure TotalCharges is float
+    df["TotalCharges"] = df["TotalCharges"].astype(float) 
 
-    # Identify colums with object type for label encoding
-    columns_object = df.select_dtypes(include=["object"]).columns
+    # Binary categorical columns (2 unique values)
+    binary_cols = [
+        "gender",
+        "Partner",
+        "Dependents",
+        "PhoneService",
+        "PaperlessBilling",
+        "Churn",
+        ] 
+   # Now map 'Yes'/'No' and Male/Female to 1/0
+    df[binary_cols] = df[binary_cols].replace({"Yes": 1, "No": 0, "Female": 0, "Male": 1})
+    df = df[binary_cols]
+    
+    # Multiple categorical columns (more than 2 unique values)
+    multi_cat_cols = [
+        "MultipleLines",
+        "InternetService",
+        "OnlineSecurity",
+        "OnlineBackup",
+        "DeviceProtection",
+        "TechSupport",
+        "StreamingTV",
+        "StreamingMovies",
+        "Contract",
+        "PaymentMethod",
+    ]
+    # Apply one-hot encoding to multiple categorical columns
+    df = pd.get_dummies(df, columns=multi_cat_cols, drop_first=True)
 
-    # Initialize dictionary to save encoders
-    encoders = {}
+    # # Identify colums with object type for label encoding
+    # columns_object = df.select_dtypes(include=["object"]).columns
 
-    # Apply label encoder and store encoders
-    for column in columns_object:
-        encoder = LabelEncoder()
-        df[column] = encoder.fit_transform(df[column])
-        encoders[column] = encoder
+    # # Initialize dictionary to save encoders
+    # encoders = {}
+
+    # # Apply label encoder and store encoders
+    # for column in columns_object:
+    #     encoder = LabelEncoder()
+    #     df[column] = encoder.fit_transform(df[column])
+    #     encoders[column] = encoder
+
+    # Save the preprocessed data
     df.to_csv("/opt/airflow/data/preprocessed/preprocessed.csv", index=False)
-    # Save the encoders to a pickle file
-    with open("/opt/airflow/models/encoders.pkl", "wb") as f:
-        pickle.dump(encoders, f)
+
+    # # Save the encoders to a pickle file
+    # with open("/opt/airflow/models/encoders.pkl", "wb") as f:
+    #     pickle.dump(encoders, f)
 
     # Select important features based on correlation analysis
     corr = df.corr()["Churn"].abs().sort_values(ascending=False)
-    important = corr[abs(corr) > 0.18].index.tolist()
+    important_features = corr[abs(corr) > 0.18].index.tolist()
 
-    df = df[important]
-    # df = df[important_features.tolist() + ['Churn']]
+    df = df[important_features]
 
-    df.to_csv("/opt/airflow/data/features/features.csv", index=False)
+    # Save features data for use in feature store
+    df.to_csv("/opt/airflow/data/features/features.csv", index=False) 
+
+    # Keep only important features and target variable for model training
+    df = df[important_features.tolist() + ['Churn']] 
+
 
     # Split features and target
 
