@@ -61,7 +61,7 @@ app = FastAPI(description="Customer Churn Prediction", lifespan=lifespan)
 Instrumentator().instrument(app).expose(app)
 
 mlflow.set_tracking_uri("http://mlflow:5000")
-
+mlflow.set_experiment("Production_Customer_Churn_API")
 
 @app.get("/")
 async def home():

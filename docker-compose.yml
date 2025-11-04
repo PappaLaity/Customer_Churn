@@ -39,6 +39,7 @@ services:
       - ./data:/app/data
       - ./.git:/app/.git
       - ./.dvc:/app/.dvc
+      - ./.gitignore:/app/.gitignore
       - ./remote:/app/remote
       - ./mlflow_artifacts:/mlflow/artifacts
 
@@ -75,6 +76,7 @@ services:
       - ./data:/opt/airflow/data
       - ./.git:/opt/airflow/.git
       - ./.dvc:/opt/airflow/.dvc
+      - ./.gitignore:/opt/airflow/.gitignore
       - ./remote:/opt/airflow/remote
       - ./mlflow_artifacts:/mlflow/artifacts
     
