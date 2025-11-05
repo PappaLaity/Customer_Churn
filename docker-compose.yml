@@ -225,9 +225,6 @@ services:
       - ./dags:/opt/airflow/dags
       - ./models:/opt/airflow/models
       - ./data:/opt/airflow/data
-      - ./.git:/opt/airflow/.git
-      - ./.dvc:/opt/airflow/.dvc
-      - ./remote:/opt/airflow/remote
       - ./mlflow_artifacts:/mlflow/artifacts
     
     depends_on:
@@ -298,5 +295,7 @@ volumes:
 networks:
   churn_network:
     driver: bridge
+
+
 
 

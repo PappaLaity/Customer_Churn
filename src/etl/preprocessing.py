@@ -194,10 +194,10 @@ def preprocess_data():
     if "Churn" in df.columns and df["Churn"].dtype == object:
         df["Churn"] = df["Churn"].replace({"Yes": 1, "No": 0}).astype(int)
 
-    # Create output directories
-    os.makedirs("/opt/airflow/data/preprocessed", exist_ok=True)
-    os.makedirs("/opt/airflow/data/features", exist_ok=True)
-    os.makedirs("/opt/airflow/models", exist_ok=True)
+    # # Create output directories
+    # os.makedirs("/opt/airflow/data/preprocessed", exist_ok=True)
+    # os.makedirs("/opt/airflow/data/features", exist_ok=True)
+    # os.makedirs("/opt/airflow/models", exist_ok=True)
 
     # Save full preprocessed dataframe for inspection
     df.to_csv("/opt/airflow/data/preprocessed/preprocessed.csv", index=False)
@@ -205,7 +205,13 @@ def preprocess_data():
     # If target missing, raise
     if "Churn" not in df.columns:
         raise KeyError("Target column 'Churn' not found after preprocessing.")
-
+    
+    # Package 'No internet service' related columns into a single feature
+    internet_cols = [c for c in df.columns if "No internet service" in c or "InternetService_No" in c]
+    if internet_cols:
+        df["No_internet_service"] = df[internet_cols].any(axis=1).astype(int)
+        df.drop(columns=internet_cols, inplace=True)
+        
     # Feature selection by correlation with target
     corr = df.corr()["Churn"].abs().sort_values(ascending=False)
     # Keep features with absolute correlation > 0.18 (excluding Churn itself)
