@@ -13,3 +13,19 @@ Assume you have docker already installed in your computer:
 - Setup Environment file according to different Variables 
 - Run `docker compose up --build -d`
 
+- FastAPI [API](http://localhost:8000)
+
+    - A default User Admin is created when launch api
+    - You can manipulate endpoint by using api given when you logged to api
+    - email: admin@example.com
+    - password:admin
+
+- Airflow [Airflow](http://localhost:8080)
+    - Login: admin
+    - Password: admin
+      
+- Mlflow [Mlflow](http://localhost:5001)
+  
+- Grafana [Grafana](http://localhost:3000)
+    - login: admin
+    - password: admin
