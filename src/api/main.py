@@ -5,7 +5,6 @@ import subprocess
 from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, requests
 from fastapi.concurrency import asynccontextmanager
 from fastapi.responses import JSONResponse
-from fastapi.security import HTTPBearer
 import mlflow
 import pandas as pd
 from prometheus_fastapi_instrumentator import Instrumentator
@@ -14,8 +13,7 @@ from src.api.core.security import verify_api_key
 from src.api.routes import users, auth
 from src.api.core.database import init_db
 from pathlib import Path
-from pydantic import BaseModel
-
+from fastapi.middleware.cors import CORSMiddleware
 from prometheus_client import Counter, Histogram, Gauge
 import time
 
@@ -59,6 +57,18 @@ async def lifespan(app: FastAPI):
 app = FastAPI(description="Customer Churn Prediction", lifespan=lifespan)
 
 Instrumentator().instrument(app).expose(app)
+
+origins = [
+    "http://localhost:8081"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,  # ou ["*"] pour autoriser tous
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 mlflow.set_tracking_uri("http://mlflow:5000")
 mlflow.set_experiment("Production_Customer_Churn_API")
