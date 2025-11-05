@@ -175,9 +175,9 @@ async def submit_survey(input: InputCustomer, background_tasks: BackgroundTasks)
 
     csv_columns = [
         "tenure",
-        "InternetService_Fiber optic",
-        "Contract_Two year",
-        "PaymentMethod_Electronic check",
+        "InternetService_Fiber_optic",
+        "Contract_Two_year",
+        "PaymentMethod_Electronic_check",
         "No_internet_service",
         "TotalCharges",
         "MonthlyCharges",
