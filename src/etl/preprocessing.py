@@ -205,7 +205,12 @@ def preprocess_data():
     # If target missing, raise
     if "Churn" not in df.columns:
         raise KeyError("Target column 'Churn' not found after preprocessing.")
-
+    # 
+    internet_cols = [c for c in df.columns if "No internet service" in c or "InternetService_No" in c]
+    if internet_cols:
+        df["No_internet_service"] = df[internet_cols].any(axis=1).astype(int)
+        df.drop(columns=internet_cols, inplace=True)
+    
     # Feature selection by correlation with target
     corr = df.corr()["Churn"].abs().sort_values(ascending=False)
     # Keep features with absolute correlation > 0.18 (excluding Churn itself)
