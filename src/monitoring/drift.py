@@ -3,6 +3,7 @@ import json
 import numpy as np
 import pandas as pd
 from typing import Dict, Any
+from pandas.errors import EmptyDataError, ParserError
 
 
 def _ensure_dir(path: str):
@@ -62,7 +63,28 @@ def detect_drift(
     - Returns a report dict with per-column PSI and a global drift flag.
     """
     baseline = pd.read_csv(baseline_path)
-    production = pd.read_csv(production_path)
+
+    # Robustly handle missing/empty/invalid production file
+    try:
+        if not os.path.exists(production_path) or os.path.getsize(production_path) == 0:
+            raise EmptyDataError("Production data file missing or empty")
+        production = pd.read_csv(production_path)
+        if production.empty:
+            raise EmptyDataError("Production dataframe is empty")
+    except (EmptyDataError, FileNotFoundError, ParserError) as e:
+        report = {
+            "numeric_columns": [],
+            "psi_threshold": psi_threshold,
+            "per_column_psi": {},
+            "mean_psi": 0.0,
+            "max_psi": 0.0,
+            "is_drift": False,
+            "reason": f"skipped drift: {str(e)}",
+        }
+        _ensure_dir(report_path)
+        with open(report_path, "w") as f:
+            json.dump(report, f, indent=2)
+        return report
 
     # Intersect numeric columns
     num_cols = list(set(_numeric_columns(baseline)).intersection(_numeric_columns(production)))

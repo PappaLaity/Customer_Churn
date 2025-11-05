@@ -16,6 +16,10 @@ MLFLOW_URI = os.getenv("MLFLOW_URI", "http://mlflow:5000")
 
 
 def run_drift_detection(**context):
+    # Ensure project code is importable for PythonOperator
+    import sys
+    if "/opt/airflow" not in sys.path:
+        sys.path.insert(0, "/opt/airflow")
     # Lazy import to avoid scheduler import issues
     from src.monitoring.drift import detect_drift
 
@@ -63,7 +67,7 @@ with DAG(
     dag_id='customer_churn_drift_retrain',
     default_args=default_args,
     description='Detect drift, retrain accordingly, and deploy to MLflow Staging',
-    schedule_interval=timedelta(hours=6),
+    schedule_interval=timedelta(hours=1),
     catchup=False,
     tags=['customer_churn', 'ml', 'drift', 'retraining'],
 ) as dag:
