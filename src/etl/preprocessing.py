@@ -113,6 +113,7 @@
 
 
 
+import logging
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 import pickle
@@ -178,6 +179,10 @@ def preprocess_data():
 
     # Encode any remaining object columns (excluding target 'Churn') with LabelEncoder
     object_cols = [c for c in df.select_dtypes(include=["object"]).columns if c != "Churn"]
+    binary_cols = [c for c in columns_object if df[c].dropna().nunique() == 2]
+    multi_cols = [c for c in columns_object if df[c].dropna().nunique() > 2]
+
+    # Initialize dictionary to save encoders
     encoders = {}
     for col in object_cols:
         le = LabelEncoder()
@@ -194,12 +199,38 @@ def preprocess_data():
     if "Churn" in df.columns and df["Churn"].dtype == object:
         df["Churn"] = df["Churn"].replace({"Yes": 1, "No": 0}).astype(int)
 
-    # Create output directories
-    os.makedirs("/opt/airflow/data/preprocessed", exist_ok=True)
-    os.makedirs("/opt/airflow/data/features", exist_ok=True)
-    os.makedirs("/opt/airflow/models", exist_ok=True)
+    # # Create output directories
+    # os.makedirs("/opt/airflow/data/preprocessed", exist_ok=True)
+    # os.makedirs("/opt/airflow/data/features", exist_ok=True)
+    # os.makedirs("/opt/airflow/models", exist_ok=True)
 
     # Save full preprocessed dataframe for inspection
+    # Apply label encoder and store encoders
+    for column in binary_cols:
+        encoder = LabelEncoder()
+        df[column] = encoder.fit_transform(df[column])
+        encoders[column] = encoder
+    
+    bool_cols = df.select_dtypes(include=["bool"]).columns
+    df[bool_cols] = df[bool_cols].astype(int)
+    if bool_cols.any():
+        logging.info(f"Converted boolean columns to int: {bool_cols.tolist()}")
+
+    if multi_cols:
+        df = pd.get_dummies(df, columns=multi_cols, drop_first=True)
+        logging.info(f"One-hot encoded columns: {multi_cols}")
+    
+    internet_cols = [c for c in df.columns if "No internet service" in c or "InternetService_No" in c]
+    if internet_cols:
+        df["No_internet_service"] = df[internet_cols].any(axis=1).astype(int)
+        df.drop(columns=internet_cols, inplace=True)
+        logging.info("Merged 'No internet service' columns")
+
+    if "MultipleLines_No phone service" in df.columns:
+        df["No_phone_service"] = df["MultipleLines_No phone service"].astype(int)
+        df.drop(columns=["MultipleLines_No phone service"], inplace=True)
+        logging.info("Merged 'No phone service' column")
+
     df.to_csv("/opt/airflow/data/preprocessed/preprocessed.csv", index=False)
 
     # If target missing, raise
@@ -270,3 +301,4 @@ def preprocess_data():
 #     # quick local check
 #     X_train, X_test, y_train, y_test = preprocess_data()
 #     print("Preprocessing complete.", X_train.shape, X_test.shape, y_train.shape, y_test.shape)
+    return X_train_scaled, X_test_scaled, y_train, y_test

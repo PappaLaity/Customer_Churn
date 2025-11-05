@@ -194,14 +194,20 @@ def register_best_model(best_run, model_registry_name="CustomerChurnModel"):
         value=str(best_run["cv_mean"]),
     )
 
+    prod_models = client.search_model_versions(f"name='{model_registry_name}' and current_stage='Production'")
+    if not prod_models:
+        status = "Production"
+    else:
+        status = "Staging"
+    
     # Promote directly to Production (skip Staging if not needed)
     client.transition_model_version_stage(
         name=model_registry_name,
         version=version.version,
-        stage="Production",
+        stage=status,
         archive_existing_versions=True,
     )
-    print(f"Promoted version {version.version} to Production")
+    print(f"Promoted version {version.version} to {status} stage")
 
     # Verify all versions
     models = client.search_model_versions(f"name='{model_registry_name}'")
