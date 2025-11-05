@@ -69,6 +69,7 @@ def preprocess_data():
 
     df = df[important]
     # df = df[important_features.tolist() + ['Churn']]
+    df.columns = [col.strip().replace(" ", "_") for col in df.columns]
 
     df.to_csv("/opt/airflow/data/features/features.csv", index=False)
 
