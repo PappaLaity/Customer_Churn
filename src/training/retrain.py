@@ -114,6 +114,7 @@ def _train_and_log_from_arrays(X_train, X_test, y_train, y_test) -> Dict[str, An
             precision = float(precision_score(y_test, y_pred, average="weighted"))
             recall = float(recall_score(y_test, y_pred, average="weighted"))
             f1 = float(f1_score(y_test, y_pred, average="weighted"))
+            cm = confusion_matrix(y_test, y_pred)
 
             mlflow.log_metrics(
                 {
@@ -124,6 +125,15 @@ def _train_and_log_from_arrays(X_train, X_test, y_train, y_test) -> Dict[str, An
                     "test_recall": recall,
                     "test_f1_score": f1,
                 }
+            )
+            
+            # Log confusion matrix as a dict for easy access
+            mlflow.log_dict(
+                {
+                    "confusion_matrix": cm.tolist(),
+                    "labels": ["Not Churned", "Churned"]
+                },
+                "confusion_matrix.json"
             )
 
             mlflow.set_tags(
