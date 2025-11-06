@@ -66,7 +66,8 @@ services:
       airflow db migrate &&
       airflow users create -u admin -p admin -f telco -l company -r Admin -e admin@telco.com &&
       airflow webserver & sleep 10 &&
-      airflow scheduler
+      airflow scheduler & sleep 10 &&
+      airflow dags trigger Customer_Churn_DVC_pipeline && tail -f /dev/null
       "
     environment:
       - AIRFLOW_HOME=/opt/airflow

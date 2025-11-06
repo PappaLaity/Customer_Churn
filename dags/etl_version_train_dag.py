@@ -15,7 +15,7 @@ import logging
 default_args = {
     'owner': 'mlops_team',
     'depends_on_past': False,
-    'start_date': datetime(2024, 1, 1),
+    'start_date': datetime(2026, 11, 6),
     'email_on_failure': False,
     'email_on_retry': False,
     'retries': 1,
@@ -27,7 +27,7 @@ with DAG(
     'Customer_Churn_DVC_pipeline',
     default_args=default_args,
     description='Preprocess, version, train, and evaluate customer churn models',
-    schedule_interval=timedelta(hours=1),
+    schedule_interval="@once",
     catchup=False,
     tags=['customer_churn', 'ml', 'pipeline','dvc'],
 ) as dag:
