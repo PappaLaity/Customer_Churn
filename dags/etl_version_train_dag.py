@@ -2,9 +2,10 @@
 from datetime import datetime, timedelta
 import shutil
 from airflow import DAG
-from airflow.operators.bash_operator import BashOperator
 # from airflow.operators.bash_operator import BashOperator
-from airflow.operators.python_operator import PythonOperator
+# from airflow.operators.python_operator import PythonOperator
+from airflow.operators.bash import BashOperator
+from airflow.operators.python import PythonOperator
 from airflow.exceptions import AirflowException
 
 import os
@@ -15,7 +16,7 @@ import logging
 default_args = {
     'owner': 'mlops_team',
     'depends_on_past': False,
-    'start_date': datetime(2026, 11, 6),
+    'start_date': datetime(2024, 11, 6),
     'email_on_failure': False,
     'email_on_retry': False,
     'retries': 1,

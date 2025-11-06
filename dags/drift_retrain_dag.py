@@ -155,7 +155,7 @@ with DAG(
     dag_id='customer_churn_drift_retrain',
     default_args=default_args,
     description='Detect drift, retrain accordingly, and deploy to MLflow Staging',
-    schedule_interval=timedelta(hours=1),
+    schedule_interval=timedelta(weeks=1),
     catchup=False,
     tags=['customer_churn', 'ml', 'drift', 'retraining'],
 ) as dag:
