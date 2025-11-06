@@ -393,7 +393,9 @@ async def model_reloader(interval: int = 300):
 
 async def dvc_push_background():
     process = await asyncio.create_subprocess_exec(
-        "dvc", "push", "-v",
+        "dvc",
+        "push",
+        "-v",
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
