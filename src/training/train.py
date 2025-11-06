@@ -119,8 +119,7 @@ def train_and_log_models(cv_folds=5):
 
             model_info = mlflow.sklearn.log_model(
                 sk_model=model,
-                # artifact_path="model",
-                name="model",
+                artifact_path="model",
                 registered_model_name=registry_name,
                 input_example=input_example,
                 signature=mlflow.models.infer_signature(X_train, y_train),

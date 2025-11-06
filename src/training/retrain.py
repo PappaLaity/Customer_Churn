@@ -25,6 +25,9 @@ from sklearn.neural_network import MLPClassifier
 
 from imblearn.over_sampling import SMOTE
 
+import matplotlib.pyplot as plt
+import seaborn as sns
+
 # Reuse existing preprocessing when training from raw features
 from src.etl.preprocessing import preprocess_data
 
@@ -127,14 +130,17 @@ def _train_and_log_from_arrays(X_train, X_test, y_train, y_test) -> Dict[str, An
                 }
             )
             
-            # Log confusion matrix as a dict for easy access
-            mlflow.log_dict(
-                {
-                    "confusion_matrix": cm.tolist(),
-                    "labels": ["Not Churned", "Churned"]
-                },
-                "confusion_matrix.json"
-            )
+            # Log confusion matrix plot
+            plt.figure(figsize=(6, 4))
+            sns.heatmap(cm, annot=True, fmt="d", cmap="Blues")
+            plt.title(f"Confusion Matrix - {name}")
+            plt.xlabel("Predicted")
+            plt.ylabel("Actual")
+            plot_path = f"confusion_matrix_{name.replace(' ', '_')}.png"
+            plt.savefig(plot_path)
+            plt.close()
+            mlflow.log_artifact(plot_path)
+            os.remove(plot_path)
 
             mlflow.set_tags(
                 {
@@ -147,7 +153,7 @@ def _train_and_log_from_arrays(X_train, X_test, y_train, y_test) -> Dict[str, An
 
             model_info = mlflow.sklearn.log_model(
                 sk_model=model,
-                name="model",
+                artifact_path="model",
                 registered_model_name=f"{REGISTRY_NAME}_{name}",
                 input_example=X_train[:5],
                 signature=mlflow.models.infer_signature(X_train, y_train),
@@ -210,8 +216,19 @@ def train_features_only() -> int:
 
 
 def train_combined(features_path: str, production_path: str) -> int:
-    features_df = pd.read_csv(features_path)
-    prod_df = pd.read_csv(production_path) if os.path.exists(production_path) else pd.DataFrame()
+    try:
+        features_df = pd.read_csv(features_path)
+    except (pd.errors.EmptyDataError, FileNotFoundError) as e:
+        print(f"[ERROR] Features file is empty or not found: {e}")
+        raise
+    
+    prod_df = pd.DataFrame()
+    if os.path.exists(production_path):
+        try:
+            prod_df = pd.read_csv(production_path)
+        except pd.errors.EmptyDataError:
+            print("[WARN] Production CSV file exists but is empty.")
+            prod_df = pd.DataFrame()
 
     if prod_df.empty:
         print("[WARN] Production data not found or empty. Falling back to features-only training.")

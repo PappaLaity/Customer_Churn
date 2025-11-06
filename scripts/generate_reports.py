@@ -142,7 +142,7 @@ def main():
     for alert in summary.get('alerts', []):
         print(f"    [{alert['severity']}] {alert['type']}: {alert['message']}")
     
-    print(f"\n✅ All reports generated successfully in: {output_dir}")
+    print(f"\n All reports generated successfully in: {output_dir}")
 
 
 if __name__ == "__main__":

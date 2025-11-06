@@ -17,7 +17,7 @@ sys.path.insert(0, str(project_root))
 
 def check_imports():
     """Check that all required packages can be imported."""
-    print("🔍 Checking imports...")
+    print(" Checking imports...")
     
     required_imports = {
         'evidently': 'Evidently AI',
@@ -30,9 +30,9 @@ def check_imports():
     for module, name in required_imports.items():
         try:
             __import__(module)
-            print(f"  ✅ {name}")
+            print(f"   {name}")
         except ImportError:
-            print(f"  ❌ {name} - NOT INSTALLED")
+            print(f"   {name} - NOT INSTALLED")
             missing.append(module)
     
     return len(missing) == 0, missing
@@ -40,7 +40,7 @@ def check_imports():
 
 def check_files():
     """Check that all required files exist."""
-    print("\n📁 Checking files...")
+    print("\n Checking files...")
     
     required_files = {
         'src/monitoring/drift.py': 'Drift detection module',
@@ -56,9 +56,9 @@ def check_files():
     for file_path, description in required_files.items():
         full_path = project_root / file_path
         if full_path.exists():
-            print(f"  ✅ {description}: {file_path}")
+            print(f"   {description}: {file_path}")
         else:
-            print(f"  ❌ {description}: {file_path} - NOT FOUND")
+            print(f"   {description}: {file_path} - NOT FOUND")
             missing.append(file_path)
     
     return len(missing) == 0, missing
@@ -66,7 +66,7 @@ def check_files():
 
 def check_module_imports():
     """Check that custom modules can be imported."""
-    print("\n🔌 Checking custom modules...")
+    print("\n Checking custom modules...")
     
     modules_to_check = [
         ('src.monitoring.drift', 'detect_drift'),
@@ -80,9 +80,9 @@ def check_module_imports():
         try:
             module = __import__(module_name, fromlist=[function_name])
             func = getattr(module, function_name)
-            print(f"  ✅ {module_name}.{function_name}")
+            print(f"   {module_name}.{function_name}")
         except Exception as e:
-            print(f"  ❌ {module_name}.{function_name} - ERROR: {e}")
+            print(f"   {module_name}.{function_name} - ERROR: {e}")
             errors.append((module_name, function_name, str(e)))
     
     return len(errors) == 0, errors
@@ -90,7 +90,7 @@ def check_module_imports():
 
 def check_dag_integration():
     """Check that DAG has the generate_reports task."""
-    print("\n🔄 Checking DAG integration...")
+    print("\n Checking DAG integration...")
     
     dag_path = project_root / 'dags' / 'drift_retrain_dag.py'
     
@@ -109,21 +109,21 @@ def check_dag_integration():
         missing = []
         for check_name, search_string in checks.items():
             if search_string in dag_content:
-                print(f"  ✅ {check_name}")
+                print(f"   {check_name}")
             else:
-                print(f"  ❌ {check_name} - NOT FOUND")
+                print(f"   {check_name} - NOT FOUND")
                 missing.append(check_name)
         
         return len(missing) == 0, missing
     
     except Exception as e:
-        print(f"  ❌ Error reading DAG file: {e}")
+        print(f"   Error reading DAG file: {e}")
         return False, [str(e)]
 
 
 def run_simple_test():
     """Run a simple test to verify functionality."""
-    print("\n🧪 Running simple functionality test...")
+    print("\n Running simple functionality test...")
     
     try:
         import pandas as pd
@@ -153,22 +153,22 @@ def run_simple_test():
             )
             
             if os.path.exists(summary_path):
-                print("  ✅ Summary report generated successfully")
-                print(f"  ✅ Alerts count: {len(summary.get('alerts', []))}")
+                print("   Summary report generated successfully")
+                print(f"   Alerts count: {len(summary.get('alerts', []))}")
                 return True, None
             else:
-                print("  ❌ Summary report file not created")
+                print("   Summary report file not created")
                 return False, "Report file not created"
     
     except Exception as e:
-        print(f"  ❌ Test failed: {e}")
+        print(f"   Test failed: {e}")
         return False, str(e)
 
 
 def main():
     """Run all verification checks."""
     print("=" * 60)
-    print("🚀 Customer Churn Monitoring Setup Verification")
+    print(" Customer Churn Monitoring Setup Verification")
     print("=" * 60)
     
     results = {}
@@ -182,12 +182,12 @@ def main():
     
     # Summary
     print("\n" + "=" * 60)
-    print("📊 VERIFICATION SUMMARY")
+    print(" VERIFICATION SUMMARY")
     print("=" * 60)
     
     all_passed = True
     for check_name, (passed, details) in results.items():
-        status = "✅ PASS" if passed else "❌ FAIL"
+        status = " PASS" if passed else " FAIL"
         print(f"{status} - {check_name.replace('_', ' ').title()}")
         if not passed and details:
             print(f"     Issues: {details}")
@@ -196,15 +196,15 @@ def main():
     print("=" * 60)
     
     if all_passed:
-        print("✅ ALL CHECKS PASSED!")
-        print("\n🎉 Your monitoring system is ready to use!")
+        print(" ALL CHECKS PASSED!")
+        print("\n Your monitoring system is ready to use!")
         print("\nNext steps:")
         print("  1. Run manual report: python scripts/generate_reports.py --help")
         print("  2. Test DAG: airflow dags test customer_churn_drift_retrain")
         print("  3. Read docs: cat docs/MONITORING.md")
         return 0
     else:
-        print("❌ SOME CHECKS FAILED")
+        print(" SOME CHECKS FAILED")
         print("\nPlease review the errors above and:")
         print("  1. Install missing packages: pip install -r requirements.txt")
         print("  2. Check file paths and permissions")
