@@ -42,9 +42,9 @@ MODEL_STAGE = os.getenv("MODEL_STAGE", "Production")
 mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
 
 
-# Lifespan: init DB, sync DVC data, preload models, schedule periodic reload
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+
     if ENV != "test":
         init_db()
 
@@ -77,6 +77,7 @@ app = FastAPI(title="Customer Churn Prediction", lifespan=lifespan)
 # Expose default HTTP metrics at /metrics
 Instrumentator().instrument(app).expose(app)
 
+mlflow.set_experiment("Production_Customer_Churn_API")
 
 # --- MLflow pyfunc model for batch predictions ---
 _model = None
@@ -162,6 +163,11 @@ async def get_models():
                 "last_updated_timestamp": m.last_updated_timestamp,
                 "source": m.source,
                 "run_id": m.run_id,
+                "description": m.description,
+                "model_name": m.tags.get("model_name"),
+                "cv_mean":  m.tags.get("cv_mean"),
+                "test_accuracy": m.tags.get("test_accuracy"),
+                "run_id": m.run_id,
             }
             for m in models
         ]
@@ -175,7 +181,9 @@ async def get_customers_infos():
         try:
             df = pd.read_csv(file_path)
             if df.empty:
-                return JSONResponse(content={"status": "success", "data": [], "count": 0})
+                return JSONResponse(
+                    content={"status": "success", "data": [], "count": 0}
+                )
 
             df_reversed = df.iloc[::-1].reset_index(drop=True)
             data = df_reversed.to_dict(orient="records")
@@ -197,7 +205,9 @@ async def get_customers_infos():
                 }
             )
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Error reading production data: {str(e)}")
+            raise HTTPException(
+                status_code=500, detail=f"Error reading production data: {str(e)}"
+            )
     else:
         return JSONResponse(
             content={
@@ -237,7 +247,9 @@ async def predict(payload: PredictPayload):
     try:
         df = pd.DataFrame(payload.instances)
     except Exception as e:
-        PREDICTION_ERRORS.labels(model_version=model_version, error_type="bad_input").inc()
+        PREDICTION_ERRORS.labels(
+            model_version=model_version, error_type="bad_input"
+        ).inc()
         raise HTTPException(status_code=400, detail=f"Invalid input: {e}")
 
     # Optionally separate labels
@@ -254,7 +266,9 @@ async def predict(payload: PredictPayload):
         PREDICTION_LATENCY.labels(model_version=model_version).observe(duration)
         PREDICTION_REQUESTS.labels(model_version=model_version).inc()
     except Exception as e:
-        PREDICTION_ERRORS.labels(model_version=model_version, error_type="inference").inc()
+        PREDICTION_ERRORS.labels(
+            model_version=model_version, error_type="inference"
+        ).inc()
         raise HTTPException(status_code=500, detail=f"Inference failed: {e}")
 
     # Drift computation (numeric only, if baseline present)
@@ -262,7 +276,9 @@ async def predict(payload: PredictPayload):
         try:
             num_df = df.select_dtypes(include=[np.number])
             for col in num_df.columns:
-                FEATURE_MEAN.labels(feature=col).set(float(np.nanmean(num_df[col].to_numpy())))
+                FEATURE_MEAN.labels(feature=col).set(
+                    float(np.nanmean(num_df[col].to_numpy()))
+                )
                 if col in _baseline_numeric_sorted:
                     sample_sorted = np.sort(num_df[col].to_numpy(dtype=float))
                     if sample_sorted.size > 0:
@@ -293,22 +309,48 @@ async def submit_survey(input: InputCustomer, background_tasks: BackgroundTasks)
     duration = time.time() - start
 
     # Log metrics
-    PREDICTION_LATENCY.labels(model_version=str(app.state.prod_version or _model_version)).observe(duration)
-    PREDICTION_REQUESTS.labels(model_version=str(app.state.prod_version or _model_version)).inc()
+    PREDICTION_LATENCY.labels(
+        model_version=str(app.state.prod_version or _model_version)
+    ).observe(duration)
+    PREDICTION_REQUESTS.labels(
+        model_version=str(app.state.prod_version or _model_version)
+    ).inc()
 
     # Append to production CSV
     file_path = Path("data/production/production.csv")
-    df = pd.DataFrame([input.model_dump()])
-    df["Churn"] = result["prediction"]
-    if file_path.exists():
-        df_existing = pd.read_csv(file_path)
-        df_combined = pd.concat([df_existing, df], ignore_index=True)
-        df_combined.to_csv(file_path, index=False)
-    else:
-        file_path.parent.mkdir(parents=True, exist_ok=True)
-        df.to_csv(file_path, index=False)
+    # Data Validation
+    data = input
+    result = await predict_churn(data)
+    # Make Prediction
+    customer_data = input.model_dump(by_alias=True)
+    customer_data["Churn"] = int(result)
+    df = pd.DataFrame([customer_data])
+    df["Churn"] = result
 
-    # DVC push in background
+    csv_columns = [
+        "tenure",
+        "InternetService_Fiber_optic",
+        "Contract_Two_year",
+        "PaymentMethod_Electronic_check",
+        "No_internet_service",
+        "TotalCharges",
+        "MonthlyCharges",
+        "PaperlessBilling",
+        "Churn",
+    ]
+
+    # Vérifier si le fichier existe ET non vide
+    if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
+        try:
+            df_existing = pd.read_csv(file_path)
+        except pd.errors.EmptyDataError:
+            df_existing = pd.DataFrame(columns=csv_columns)
+    else:
+        df_existing = pd.DataFrame(columns=csv_columns)
+
+    df_combined = pd.concat([df_existing, df], ignore_index=True)
+    df_combined.to_csv(file_path, index=False)
+    # Store it in the production data
     background_tasks.add_task(dvc_push_background)
     return {"success": "Thanky you for your submission"}
 
@@ -316,7 +358,10 @@ async def submit_survey(input: InputCustomer, background_tasks: BackgroundTasks)
 async def predict_single(data: InputCustomer) -> Dict[str, Any]:
     df = pd.DataFrame([data.model_dump()])
     model_choice = "A"
-    if getattr(app.state, "model_A", None) is not None and getattr(app.state, "model_B", None) is not None:
+    if (
+        getattr(app.state, "model_A", None) is not None
+        and getattr(app.state, "model_B", None) is not None
+    ):
         model_choice = "A" if random.random() < 0.8 else "B"
 
     start = time.time()
@@ -358,7 +403,67 @@ app.include_router(users.router)
 app.include_router(auth.router)
 
 
-def load_model(model_name: str = "CustomerChurnModel"):
+# # Métriques personnalisées
+prediction_counter = Counter(
+    "churn_predictions_total",
+    "Total number of churn predictions",
+    ["model_version", "prediction_result"],
+)
+
+prediction_duration = Histogram(
+    "churn_prediction_duration_seconds", "Time spent processing prediction"
+)
+
+active_users = Gauge("churn_api_active_users", "Number of active users")
+
+
+# # Exemple d'utilisation dans vos endpoints
+async def predict_churn(data=None):
+    start_time = time.time()
+
+    results = await predict(data)
+    result = results["prediction"]
+    # Enregistrer les métriques
+    prediction_counter.labels(
+        model_version="v1.0", prediction_result="churn" if result == 1 else "no_churn"
+    ).inc()
+
+    prediction_duration.observe(time.time() - start_time)
+
+    return result
+
+
+async def predict(data: InputCustomer):
+
+    df = pd.DataFrame([data.model_dump()])
+    if app.state.model_A and app.state.model_B:
+        model_choice = "A" if random.random() < 0.8 else "B"
+    else:
+        model_choice = "A"
+
+    start = time.time()
+    preds = (
+        app.state.model_A.predict(df)
+        if model_choice == "A"
+        else app.state.model_B.predict(df)
+    )
+    # result = model_A.predict(df)[0]
+    print(f"Predicted result: {preds[0]}")
+    latency = time.time() - start
+
+    # Log locally or send to MLflow for analysis
+    mlflow.log_metric("latency", latency)
+    mlflow.log_param("model_used", model_choice)
+
+    return {
+        "model": "Production" if model_choice == "A" else "Staging",
+        "prediction": preds[0],
+        "latency": latency,
+    }
+
+
+def load_model(model_name="CustomerChurnModel"):
+
     models = mlflow.search_model_versions(
         filter_string=f"name='{model_name}'", max_results=1000
     )
@@ -400,7 +505,9 @@ async def model_reloader(interval: int = 300):
 
 async def dvc_push_background():
     process = await asyncio.create_subprocess_exec(
-        "dvc", "push", "-v",
+        "dvc",
+        "push",
+        "-v",
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
