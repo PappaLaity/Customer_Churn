@@ -42,6 +42,14 @@ const routes = [
     // this generates a separate chunk (about.[hash].js) for this route
     // which is lazy-loaded when the route is visited.
     component: () => import(/* webpackChunkName: "about" */ '../views/CustomerInfos.vue')
+  },
+  {
+    path: '/users',
+    name: 'users',
+    // route level code-splitting
+    // this generates a separate chunk (about.[hash].js) for this route
+    // which is lazy-loaded when the route is visited.
+    component: () => import(/* webpackChunkName: "about" */ '../views/users/UserView.vue')
   }
 ]
 
@@ -51,7 +59,7 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  const protectedRoutes = ['dashboard', 'about', 'customers-dashboard']
+  const protectedRoutes = ['dashboard', 'about', 'customers-dashboard', 'users']
   const token = localStorage.getItem('api-key')
 
   if (protectedRoutes.includes(to.name) && !token) {
