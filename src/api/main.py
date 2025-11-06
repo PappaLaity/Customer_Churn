@@ -1,3 +1,4 @@
+import asyncio
 import os
 import asyncio
 import random
@@ -26,8 +27,14 @@ from src.api.core.database import init_db
 from src.api.core.security import verify_api_key
 from src.api.entities.customerInput import InputCustomer
 from src.api.routes import auth, users
+from pydantic import BaseModel
 
+app = FastAPI(title="Customer Churn Prediction")
 
+# Expose default HTTP metrics at /metrics
+Instrumentator().instrument(app).expose(app)
+
+# Only initialize the database on app import when not running tests.
 ENV = os.getenv("ENV", "dev")
 MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI", "http://mlflow:5000")
 MODEL_NAME = os.getenv("MODEL_REGISTRY_NAME", "CustomerChurnModel")
