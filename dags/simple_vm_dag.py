@@ -5,10 +5,6 @@ import os
 import mlflow
 
 
-IP_ADDRESS = os.getenv("IP_ADDRESS", "host.docker.internal")
-mlflow_uri = f"http://{IP_ADDRESS}:5001"
-mlflow.set_tracking_uri(mlflow_uri)
-
 # Default arguments for the DAG
 default_args = {
     'owner': 'student',
