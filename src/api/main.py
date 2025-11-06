@@ -456,7 +456,7 @@ async def predict(data: InputCustomer):
 
     df = pd.DataFrame([data.model_dump()])
     if app.state.model_A and app.state.model_B:
-        model_choice = "A" if random.random() < 0.8 else "B"
+        model_choice = "A" if random.random() < 0.5 else "B"
     else:
         model_choice = "A"
 
