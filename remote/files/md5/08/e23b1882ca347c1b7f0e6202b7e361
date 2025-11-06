@@ -1,0 +1,3 @@
+tenure,InternetService_Fiber_optic,Contract_Two_year,PaymentMethod_Electronic_check,No_internet_service,TotalCharges,MonthlyCharges,PaperlessBilling,Churn
+0.0,True,True,True,0,0.0,0.0,0,1
+5.0,True,False,True,1,123422.0,234.0,1,0
