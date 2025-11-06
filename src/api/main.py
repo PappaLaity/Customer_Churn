@@ -30,10 +30,6 @@ from src.api.entities.customerInput import InputCustomer
 from src.api.routes import auth, users
 from pydantic import BaseModel
 
-app = FastAPI(title="Customer Churn Prediction")
-
-# Expose default HTTP metrics at /metrics
-Instrumentator().instrument(app).expose(app)
 
 # Only initialize the database on app import when not running tests.
 ENV = os.getenv("ENV", "dev")
@@ -46,9 +42,9 @@ mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
 mlflow.set_experiment("Production_Customer_Churn_API")
 
 
+# Lifespan: init DB, sync DVC data, preload models, schedule periodic reload
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-
     if ENV != "test":
         init_db()
 
@@ -365,11 +361,10 @@ async def submit_survey(input: InputCustomer, background_tasks: BackgroundTasks)
         except pd.errors.EmptyDataError:
             df_existing = pd.DataFrame(columns=csv_columns)
     else:
-        df_existing = pd.DataFrame(columns=csv_columns)
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+        df.to_csv(file_path, index=False)
 
-    df_combined = pd.concat([df_existing, df], ignore_index=True)
-    df_combined.to_csv(file_path, index=False)
-    # Store it in the production data
+    # DVC push in background
     background_tasks.add_task(dvc_push_background)
     return {"success": "Thanky you for your submission"}
 

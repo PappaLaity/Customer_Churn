@@ -93,6 +93,7 @@ services:
       - ./dags:/opt/airflow/dags
       - ./models:/opt/airflow/models
       - ./data:/opt/airflow/data
+      - ./logs:/opt/airflow/logs
       - ./.git:/opt/airflow/.git
       - ./.dvc:/opt/airflow/.dvc
       - ./.gitignore:/opt/airflow/.gitignore

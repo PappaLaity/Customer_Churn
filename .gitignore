@@ -235,3 +235,4 @@ __pycache__/
 
 # Docker
 *.pid
+data

@@ -36,13 +36,15 @@ with DAG(
     import subprocess
 
     def pull_dvc_data():
+        repo_dir = '/opt/airflow'
         result = subprocess.run(
             ["dvc", "pull", "-v"],
+            cwd=repo_dir,
             capture_output=True,
             text=True
         )
         if result.returncode != 0:
-            raise Exception(f"DVC failed: {result.stderr}")
+            raise AirflowException(f"DVC pull failed:\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}")
         print(result.stdout)
 
     dvc_pull_task= PythonOperator(

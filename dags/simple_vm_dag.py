@@ -8,6 +8,16 @@ from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
 from airflow.operators.bash_operator import BashOperator
 
+# # Default arguments for the DAG
+default_args = {
+    'owner': 'student',
+    'depends_on_past': False,
+    'start_date': datetime(2024, 1, 1),
+    'email_on_failure': False,
+    'email_on_retry': False,
+    'retries': 1,
+    'retry_delay': timedelta(minutes=5),
+}
 
 def print_system_info():
     """Print system information to demonstrate we're running on VM"""
@@ -52,17 +62,6 @@ def calculate_simple_stats():
     
     return avg
 
-
-# Default arguments for the DAG
-default_args = {
-    'owner': 'student',
-    'depends_on_past': False,
-    'start_date': datetime(2024, 1, 1),
-    'email_on_failure': False,
-    'email_on_retry': False,
-    'retries': 1,
-    'retry_delay': timedelta(minutes=5),
-}
 
 # Define the DAG
 with DAG(
