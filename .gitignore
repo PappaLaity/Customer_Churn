@@ -234,4 +234,4 @@ __pycache__/
 *.pyd
 
 # Docker
-*.pid
+venv_alibi/
