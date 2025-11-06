@@ -37,10 +37,13 @@ Instrumentator().instrument(app).expose(app)
 
 # Only initialize the database on app import when not running tests.
 ENV = os.getenv("ENV", "dev")
+
+
 MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI", "http://mlflow:5000")
 MODEL_NAME = os.getenv("MODEL_REGISTRY_NAME", "CustomerChurnModel")
 MODEL_STAGE = os.getenv("MODEL_STAGE", "Production")
 mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+mlflow.set_experiment("Production_Customer_Churn_API")
 
 
 @asynccontextmanager
@@ -84,14 +87,12 @@ origins = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,  # ou ["*"] pour autoriser tous
+    allow_origins=["*"], #origins
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-mlflow.set_tracking_uri("http://mlflow:5000")
-mlflow.set_experiment("Production_Customer_Churn_API")
 
 # --- MLflow pyfunc model for batch predictions ---
 _model = None
@@ -319,9 +320,13 @@ async def predict(payload: PredictPayload):
 async def submit_survey(input: InputCustomer, background_tasks: BackgroundTasks):
     # Predict single record using A/B models if available, else pyfunc model
     start = time.time()
-    result = await predict_single(input)
+    result_1 = await predict_single(input)
     duration = time.time() - start
+    result = result_1["prediction"]
+    # print(result_1)
 
+    mlflow.log_metric("latency", result_1["latency"])
+    mlflow.log_param("model_used", result_1["model"])
     # Log metrics
     PREDICTION_LATENCY.labels(
         model_version=str(app.state.prod_version or _model_version)
@@ -333,8 +338,8 @@ async def submit_survey(input: InputCustomer, background_tasks: BackgroundTasks)
     # Append to production CSV
     file_path = Path("data/production/production.csv")
     # Data Validation
-    data = input
-    result = await predict_churn(data)
+    # data = input
+    # result = await predict_churn(data)
     # Make Prediction
     customer_data = input.model_dump(by_alias=True)
     customer_data["Churn"] = int(result)
