@@ -239,6 +239,7 @@ export default {
         }
 
         localStorage.setItem('api-key', data.api_key)
+        localStorage.setItem('user-id', data.user.id)
 
         this.$router.push('/dashboard')
       } catch (err) {
