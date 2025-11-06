@@ -326,6 +326,11 @@ def preprocess_data():
     if internet_cols:
         df["No_internet_service"] = df[internet_cols].any(axis=1).astype(int)
         df.drop(columns=internet_cols, inplace=True)
+    
+    if "MultipleLines_No phone service" in df.columns:
+        df["No_phone_service"] = df["MultipleLines_No phone service"].astype(int)
+        df.drop(columns=["MultipleLines_No phone service"], inplace=True)
+        logging.info("Merged 'No phone service' column")
         
     # Feature selection by correlation with target
     corr = df.corr()["Churn"].abs().sort_values(ascending=False)
@@ -338,6 +343,7 @@ def preprocess_data():
 
     # Save features list and feature file
     features_df = df[important_features + ["Churn"]]
+    features_df.columns = [col.strip().replace(" ", "_") for col in features_df.columns]
     features_df.to_csv("/opt/airflow/data/features/features.csv", index=False)
 
     # Keep only selected features + target for training
@@ -376,7 +382,6 @@ def preprocess_data():
         with open("/opt/airflow/models/encoders.pkl", "wb") as f:
             pickle.dump(encoders, f)
 
-    #return X_train_scaled, X_test_scaled, y_train, y_test
 
     return X_train_smoted, X_test_scaled, y_train_smoted, y_test
 

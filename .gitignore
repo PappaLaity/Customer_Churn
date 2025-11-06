@@ -214,7 +214,7 @@ test.db
 models
 encoders.pkl
 # Remove model
-/data
+data
 # Airflow
 airflow.db
 airflow.cfg

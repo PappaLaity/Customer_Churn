@@ -1,3 +1,4 @@
+import asyncio
 import os
 import asyncio
 import random
@@ -26,8 +27,10 @@ from src.api.core.database import init_db
 from src.api.core.security import verify_api_key
 from src.api.entities.customerInput import InputCustomer
 from src.api.routes import auth, users
+from pydantic import BaseModel
 
 
+# Only initialize the database on app import when not running tests.
 ENV = os.getenv("ENV", "dev")
 MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI", "http://mlflow:5000")
 MODEL_NAME = os.getenv("MODEL_REGISTRY_NAME", "CustomerChurnModel")
@@ -155,6 +158,11 @@ async def get_models():
                 "last_updated_timestamp": m.last_updated_timestamp,
                 "source": m.source,
                 "run_id": m.run_id,
+                "description": m.description,
+                "model_name": m.tags.get("model_name"),
+                "cv_mean":  m.tags.get("cv_mean"),
+                "test_accuracy": m.tags.get("test_accuracy"),
+                "run_id": m.run_id,
             }
             for m in models
         ]
@@ -168,7 +176,9 @@ async def get_customers_infos():
         try:
             df = pd.read_csv(file_path)
             if df.empty:
-                return JSONResponse(content={"status": "success", "data": [], "count": 0})
+                return JSONResponse(
+                    content={"status": "success", "data": [], "count": 0}
+                )
 
             df_reversed = df.iloc[::-1].reset_index(drop=True)
             data = df_reversed.to_dict(orient="records")
@@ -190,7 +200,9 @@ async def get_customers_infos():
                 }
             )
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Error reading production data: {str(e)}")
+            raise HTTPException(
+                status_code=500, detail=f"Error reading production data: {str(e)}"
+            )
     else:
         return JSONResponse(
             content={
@@ -230,7 +242,9 @@ async def predict(payload: PredictPayload):
     try:
         df = pd.DataFrame(payload.instances)
     except Exception as e:
-        PREDICTION_ERRORS.labels(model_version=model_version, error_type="bad_input").inc()
+        PREDICTION_ERRORS.labels(
+            model_version=model_version, error_type="bad_input"
+        ).inc()
         raise HTTPException(status_code=400, detail=f"Invalid input: {e}")
 
     # Optionally separate labels
@@ -247,7 +261,9 @@ async def predict(payload: PredictPayload):
         PREDICTION_LATENCY.labels(model_version=model_version).observe(duration)
         PREDICTION_REQUESTS.labels(model_version=model_version).inc()
     except Exception as e:
-        PREDICTION_ERRORS.labels(model_version=model_version, error_type="inference").inc()
+        PREDICTION_ERRORS.labels(
+            model_version=model_version, error_type="inference"
+        ).inc()
         raise HTTPException(status_code=500, detail=f"Inference failed: {e}")
 
     # Drift computation (numeric only, if baseline present)
@@ -255,7 +271,9 @@ async def predict(payload: PredictPayload):
         try:
             num_df = df.select_dtypes(include=[np.number])
             for col in num_df.columns:
-                FEATURE_MEAN.labels(feature=col).set(float(np.nanmean(num_df[col].to_numpy())))
+                FEATURE_MEAN.labels(feature=col).set(
+                    float(np.nanmean(num_df[col].to_numpy()))
+                )
                 if col in _baseline_numeric_sorted:
                     sample_sorted = np.sort(num_df[col].to_numpy(dtype=float))
                     if sample_sorted.size > 0:
@@ -286,8 +304,12 @@ async def submit_survey(input: InputCustomer, background_tasks: BackgroundTasks)
     duration = time.time() - start
 
     # Log metrics
-    PREDICTION_LATENCY.labels(model_version=str(app.state.prod_version or _model_version)).observe(duration)
-    PREDICTION_REQUESTS.labels(model_version=str(app.state.prod_version or _model_version)).inc()
+    PREDICTION_LATENCY.labels(
+        model_version=str(app.state.prod_version or _model_version)
+    ).observe(duration)
+    PREDICTION_REQUESTS.labels(
+        model_version=str(app.state.prod_version or _model_version)
+    ).inc()
 
     # Append to production CSV
     file_path = Path("data/production/production.csv")
@@ -309,7 +331,10 @@ async def submit_survey(input: InputCustomer, background_tasks: BackgroundTasks)
 async def predict_single(data: InputCustomer) -> Dict[str, Any]:
     df = pd.DataFrame([data.model_dump()])
     model_choice = "A"
-    if getattr(app.state, "model_A", None) is not None and getattr(app.state, "model_B", None) is not None:
+    if (
+        getattr(app.state, "model_A", None) is not None
+        and getattr(app.state, "model_B", None) is not None
+    ):
         model_choice = "A" if random.random() < 0.8 else "B"
 
     start = time.time()

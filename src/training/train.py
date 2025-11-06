@@ -194,7 +194,10 @@ def register_best_model(best_run, model_registry_name="CustomerChurnModel"):
         value=str(best_run["cv_mean"]),
     )
 
-    prod_models = client.search_model_versions(f"name='{model_registry_name}' and current_stage='Production'")
+    
+    versions = client.search_model_versions(f"name='{model_registry_name}'")
+    prod_models = [v for v in versions if getattr(v, "current_stage", None) == "Production"]
+
     if not prod_models:
         status = "Production"
     else:
