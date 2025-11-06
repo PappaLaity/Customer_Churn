@@ -156,6 +156,11 @@ async def get_models():
                 "last_updated_timestamp": m.last_updated_timestamp,
                 "source": m.source,
                 "run_id": m.run_id,
+                "description": m.description,
+                "model_name": m.tags.get("model_name"),
+                "cv_mean":  m.tags.get("cv_mean"),
+                "test_accuracy": m.tags.get("test_accuracy"),
+                "run_id": m.run_id,
             }
             for m in models
         ]
