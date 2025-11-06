@@ -60,7 +60,14 @@ services:
       context: .
       dockerfile: Dockerfile.airflow
     container_name: airflow
-    entrypoint: ["/start_airflow.sh"]
+    entrypoint: >
+      bash -c "
+      rm -f /opt/airflow/airflow-webserver.pid && 
+      airflow db migrate &&
+      airflow users create -u admin -p admin -f telco -l company -r Admin -e admin@telco.com &&
+      airflow webserver & sleep 10 &&
+      airflow scheduler
+      "
     environment:
       - AIRFLOW_HOME=/opt/airflow
       - MLFLOW_TRACKING_URI=http://mlflow:5000
@@ -81,7 +88,6 @@ services:
       - ./.gitignore:/opt/airflow/.gitignore
       - ./remote:/opt/airflow/remote
       - ./mlflow_artifacts:/mlflow/artifacts
-      - ./start_airflow.sh:/start_airflow.sh
     depends_on:
       - mlflow
     env_file: .env
