@@ -36,8 +36,48 @@ jobs:
             cd /home/${{ secrets.AZURE_USER }}/Customer_Churn || git clone https://github.com/PappaLaity/Customer_Churn.git Customer_Churn
             cd Customer_Churn
             git pull origin main
+
+            # Créer les répertoires pour Certbot et Nginx
+            mkdir -p certbot/conf certbot/www
+            
+            # Vérifier si le certificat existe déjà
+            if [ ! -f "certbot/conf/live/customer-churn.francecentral.cloudapp.azure.com/fullchain.pem" ]; then
+              echo "Certificat non trouvé, génération en cours..."
+              docker compose up -d certbot
+              sleep 30
+              docker compose logs certbot
+              docker compose stop certbot
+            else
+              echo "Certificat déjà présent, passage à l'étape suivante"
+            fi
+
+            # Arrêter les anciens conteneurs
             docker compose down
+
+            # Récupérer les dernières images
             docker compose pull || true
+            
+            # Construire les images locales
             docker compose build
+
+            # Démarrer tous les services avec Nginx et Certbot
             docker compose up -d
+            
+            # Attendre que Nginx soit prêt
+            sleep 10
+            
+            # Vérifier que Nginx est en cours d'exécution
+            docker compose ps | grep nginx-reverse-proxy || echo "Nginx n'a pas démarré correctement"
+            
+            # Afficher les logs pour vérification
+            echo "Logs Nginx :"
+            docker compose logs nginx | tail -20
+            
+            echo "Logs Certbot :"
+            docker compose logs certbot | tail -20
+
+            # Nettoyage des images non utilisées
             docker system prune -af
+
+            echo "Déploiement terminé avec succès !"
+            echo "Accédez à votre application : https://customer-churn.francecentral.cloudapp.azure.com"
