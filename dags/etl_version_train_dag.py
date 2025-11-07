@@ -2,9 +2,10 @@
 from datetime import datetime, timedelta
 import shutil
 from airflow import DAG
-from airflow.operators.bash_operator import BashOperator
 # from airflow.operators.bash_operator import BashOperator
-from airflow.operators.python_operator import PythonOperator
+# from airflow.operators.python_operator import PythonOperator
+from airflow.operators.bash import BashOperator
+from airflow.operators.python import PythonOperator
 from airflow.exceptions import AirflowException
 
 import os
@@ -15,7 +16,7 @@ import logging
 default_args = {
     'owner': 'mlops_team',
     'depends_on_past': False,
-    'start_date': datetime(2024, 1, 1),
+    'start_date': datetime(2024, 11, 6),
     'email_on_failure': False,
     'email_on_retry': False,
     'retries': 1,
@@ -27,7 +28,7 @@ with DAG(
     'Customer_Churn_DVC_pipeline',
     default_args=default_args,
     description='Preprocess, version, train, and evaluate customer churn models',
-    schedule_interval=timedelta(hours=1),
+    schedule_interval="@once",
     catchup=False,
     tags=['customer_churn', 'ml', 'pipeline','dvc'],
 ) as dag:
@@ -35,13 +36,15 @@ with DAG(
     import subprocess
 
     def pull_dvc_data():
+        repo_dir = '/opt/airflow'
         result = subprocess.run(
             ["dvc", "pull", "-v"],
+            cwd=repo_dir,
             capture_output=True,
             text=True
         )
         if result.returncode != 0:
-            raise Exception(f"DVC failed: {result.stderr}")
+            raise AirflowException(f"DVC pull failed:\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}")
         print(result.stdout)
 
     dvc_pull_task= PythonOperator(
@@ -115,7 +118,8 @@ with DAG(
             commit_cmd = [
                 'git',
                 'commit',
-                '-m', 'Update data version via Airflow DAG'
+                '-m', 'Update data version via Airflow DAG',
+                "--allow-empty"
             ]
             result = subprocess.run(
                 commit_cmd,

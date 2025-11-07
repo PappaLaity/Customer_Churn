@@ -119,8 +119,7 @@ def train_and_log_models(cv_folds=5):
 
             model_info = mlflow.sklearn.log_model(
                 sk_model=model,
-                # artifact_path="model",
-                name="model",
+                artifact_path="model",
                 registered_model_name=registry_name,
                 input_example=input_example,
                 signature=mlflow.models.infer_signature(X_train, y_train),
@@ -194,14 +193,23 @@ def register_best_model(best_run, model_registry_name="CustomerChurnModel"):
         value=str(best_run["cv_mean"]),
     )
 
+    
+    versions = client.search_model_versions(f"name='{model_registry_name}'")
+    prod_models = [v for v in versions if getattr(v, "current_stage", None) == "Production"]
+
+    if not prod_models:
+        status = "Production"
+    else:
+        status = "Staging"
+    
     # Promote directly to Production (skip Staging if not needed)
     client.transition_model_version_stage(
         name=model_registry_name,
         version=version.version,
-        stage="Production",
+        stage=status,
         archive_existing_versions=True,
     )
-    print(f"Promoted version {version.version} to Production")
+    print(f"Promoted version {version.version} to {status} stage")
 
     # Verify all versions
     models = client.search_model_versions(f"name='{model_registry_name}'")
