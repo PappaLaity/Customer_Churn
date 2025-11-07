@@ -21,8 +21,8 @@ from airflow.operators.dummy_operator import DummyOperator
 # Config
 FEATURES_PATH = os.getenv("FEATURES_PATH", "/opt/airflow/data/features/features.csv")
 PRODUCTION_DATA_PATH = os.getenv("PRODUCTION_DATA_PATH", "/opt/airflow/data/production/production.csv")
-DRIFT_REPORT_PATH = os.getenv("DRIFT_REPORT_PATH", "/opt/airflow/data/monitoring/drift_report.json")
-REPORTS_DIR = os.getenv("REPORTS_DIR", "/opt/airflow/data/monitoring/reports")
+DRIFT_REPORT_PATH = os.getenv("DRIFT_REPORT_PATH", "/opt/airflow/drifts/monitoring/drift_report.json")
+REPORTS_DIR = os.getenv("REPORTS_DIR", "/opt/airflow/drifts/monitoring/reports")
 MLFLOW_URI = os.getenv("MLFLOW_URI", "http://mlflow:5000")
 
 
@@ -115,7 +115,7 @@ def generate_monitoring_reports(**context):
     summary = generate_summary_report(
         drift_report=drift_report,
         quality_report=quality_report,
-        output_path="/opt/airflow/data/monitoring/summary_report.json",
+        output_path="/opt/airflow/drifts/monitoring/summary_report.json",
     )
     
     # Push to XCom for downstream tasks
@@ -155,7 +155,7 @@ with DAG(
     dag_id='customer_churn_drift_retrain',
     default_args=default_args,
     description='Detect drift, retrain accordingly, and deploy to MLflow Staging',
-    schedule_interval=timedelta(hours=1),
+    schedule_interval=timedelta(weeks=1),
     catchup=False,
     tags=['customer_churn', 'ml', 'drift', 'retraining'],
 ) as dag:

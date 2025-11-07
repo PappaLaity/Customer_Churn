@@ -3,8 +3,8 @@ services:
     image: postgres:15
     container_name: churn_db
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: churn_db
     ports:
       - "5432:5432"
@@ -16,8 +16,8 @@ services:
     image: postgres:15
     container_name: mlflow_db
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
+      POSTGRES_USER: ${MLFLOW_DB_USER}
+      POSTGRES_PASSWORD: ${MLFLOW_DB_PASSWORD}
       POSTGRES_DB: mlflow_db
     volumes:
       - mlflow_db_data:/var/lib/postgresql/data
@@ -31,10 +31,13 @@ services:
       dockerfile: Dockerfile.api
     container_name: churn_api
     environment:
-      DATABASE_URL: postgresql+psycopg2://user:password@db:5432/churn_db
+      DATABASE_URL: ${DATABASE_URL}
       MLFLOW_TRACKING_URI: http://mlflow:5000
       MODEL_REGISTRY_NAME: CustomerChurnModel
       MODEL_STAGE: Production
+      ENV: Production
+      MLFLOW_URI : http://mlflow:5000
+      API_KEY_SECRET: ${API_KEY_SECRET:-changeme-in-production}
     depends_on:
       - db
     volumes:
@@ -46,7 +49,6 @@ services:
       - ./mlflow_artifacts:/mlflow/artifacts
     ports:
       - "8000:8000"
-    env_file: .env
     command: >
       sh -c "alembic upgrade head &&
            python src/api/core/seed.py &&
@@ -62,6 +64,7 @@ services:
     container_name: airflow
     entrypoint: >
       bash -c "
+      set -e
       rm -f /opt/airflow/airflow-webserver.pid && 
       airflow db migrate &&
       airflow users create -u admin -p admin -f telco -l company -r Admin -e admin@telco.com &&
@@ -83,7 +86,7 @@ services:
       - ./dags:/opt/airflow/dags
       - ./models:/opt/airflow/models
       - ./data:/opt/airflow/data
-      - ./drift:/opt/airflow/drift
+      - ./drifts:/opt/airflow/drifts
       - ./.git:/opt/airflow/.git
       - ./.dvc:/opt/airflow/.dvc
       - ./.gitignore:/opt/airflow/.gitignore
@@ -91,7 +94,6 @@ services:
       - ./mlflow_artifacts:/mlflow/artifacts
     depends_on:
       - mlflow
-    env_file: .env
     ports:
       - "8080:8080"
     restart: on-failure
@@ -106,13 +108,11 @@ services:
       - mlflow_db
     volumes:
       - ./mlflow_artifacts:/mlflow/artifacts
-      
     ports:
       - "5001:5000"
     restart: unless-stopped
     networks:
       - churn_network
-
 
   prometheus:
     image: prom/prometheus:latest
@@ -136,8 +136,8 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_USER=${GF_SECURITY_ADMIN_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
     depends_on:
       - prometheus
     volumes:
@@ -146,7 +146,7 @@ services:
     restart: unless-stopped
     networks:
       - churn_network
-
+ 
 volumes:
   db_data:
   grafana-storage:
@@ -157,7 +157,3 @@ volumes:
 networks:
   churn_network:
     driver: bridge
-
-
-
-

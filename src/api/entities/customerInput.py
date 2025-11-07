@@ -17,10 +17,10 @@ from sqlmodel import Column, Field, String
 
 class InputCustomer(BaseModel):
     tenure: float = Field(..., description="Durée d'abonnement en mois")
-    InternetService_Fiber_optic: bool = Field(..., description="Client avec fibre optique",alias="InternetService_Fiber optic")
-    Contract_Two_year: bool = Field(..., description="Contrat sur deux ans",alias="Contract_Two year")
-    PaymentMethod_Electronic_check: bool = Field(..., description="Paiement par chèque électronique",alias="PaymentMethod_Electronic check")
-    No_internet_service: int = Field(..., description="Pas de service internet (0/1)",alias="No_internet_service")
+    InternetService_Fiber_optic: bool = Field(..., description="Client avec fibre optique")
+    Contract_Two_year: bool = Field(..., description="Contrat sur deux ans")
+    PaymentMethod_Electronic_check: bool = Field(..., description="Paiement par chèque électronique")
+    No_internet_service: int = Field(..., description="Pas de service internet (0/1)")
     TotalCharges: float = Field(..., description="Total facturé au client")
     MonthlyCharges: float = Field(..., description="Montant mensuel facturé")
     PaperlessBilling: int = Field(..., description="Facturation sans papier (0/1)")

@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "http://customer-churn.francecentral.cloudapp.azure.com:8000/$1"
+    }
+  ]
+}
