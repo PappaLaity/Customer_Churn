@@ -39,7 +39,6 @@ MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI", "http://mlflow:5000")
 MODEL_NAME = os.getenv("MODEL_REGISTRY_NAME", "CustomerChurnModel")
 MODEL_STAGE = os.getenv("MODEL_STAGE", "Production")
 mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
-mlflow.set_experiment("Production_Customer_Churn_API")
 
 
 # Lifespan: init DB, sync DVC data, preload models, schedule periodic reload
@@ -315,6 +314,7 @@ async def predict(payload: PredictPayload):
 
 @app.post("/survey/submit")
 async def submit_survey(input: InputCustomer, background_tasks: BackgroundTasks):
+    mlflow.set_experiment("Production_Customer_Churn_API")
     # Predict single record using A/B models if available, else pyfunc model
     start = time.time()
     result_1 = await predict_single(input)
