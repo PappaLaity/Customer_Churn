@@ -13,6 +13,7 @@ from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Request
 from fastapi.concurrency import asynccontextmanager
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBearer
+from fastapi.middleware.cors import CORSMiddleware
 from prometheus_fastapi_instrumentator import Instrumentator
 from prometheus_client import Counter, Gauge, Histogram
 
@@ -33,6 +34,8 @@ from src.experiments.ab import ExperimentConfig, assign_bucket, log_exposure
 
 # Only initialize the database on app import when not running tests.
 ENV = os.getenv("ENV", "dev")
+
+
 MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI", "http://mlflow:5000")
 MODEL_NAME = os.getenv("MODEL_REGISTRY_NAME", "CustomerChurnModel")
 MODEL_STAGE = os.getenv("MODEL_STAGE", "Production")
@@ -80,6 +83,20 @@ app = FastAPI(title="Customer Churn Prediction", lifespan=lifespan)
 
 # Expose default HTTP metrics at /metrics
 Instrumentator().instrument(app).expose(app)
+
+origins = [
+    "http://localhost:8081",
+    "http://127.0.0.1:8081",
+    "https://customer-churn-dusky.vercel.app"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins, #["*"], #origins
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 # --- MLflow pyfunc model for batch predictions ---
@@ -306,10 +323,19 @@ async def predict(payload: PredictPayload):
 
 @app.post("/survey/submit")
 async def submit_survey(input: InputCustomer, background_tasks: BackgroundTasks, request: Request):
+async def submit_survey(input: InputCustomer, background_tasks: BackgroundTasks):
+    mlflow.set_experiment("Production_Customer_Churn_API")
     # Predict single record using A/B models if available, else pyfunc model
     start = time.time()
     result = await predict_single(input, request)
+    result_1 = await predict_single(input)
     duration = time.time() - start
+    result = result_1["prediction"]
+    # print(result_1)
+
+    mlflow.log_metric("latency", result_1["latency"])
+    # mlflow.log_param("model_used", result_1["model"])
+    mlflow.set_tag("model_used", result_1["model"])
 
     # Log metrics
     PREDICTION_LATENCY.labels(
@@ -321,15 +347,39 @@ async def submit_survey(input: InputCustomer, background_tasks: BackgroundTasks,
 
     # Append to production CSV
     file_path = Path("data/production/production.csv")
-    df = pd.DataFrame([input.model_dump()])
-    df["Churn"] = result["prediction"]
-    if file_path.exists():
-        df_existing = pd.read_csv(file_path)
-        df_combined = pd.concat([df_existing, df], ignore_index=True)
-        df_combined.to_csv(file_path, index=False)
+    # Data Validation
+    # data = input
+    # result = await predict_churn(data)
+    # Make Prediction
+    customer_data = input.model_dump(by_alias=True)
+    customer_data["Churn"] = int(result)
+    df = pd.DataFrame([customer_data])
+    df["Churn"] = result
+
+    csv_columns = [
+        "tenure",
+        "InternetService_Fiber_optic",
+        "Contract_Two_year",
+        "PaymentMethod_Electronic_check",
+        "No_internet_service",
+        "TotalCharges",
+        "MonthlyCharges",
+        "PaperlessBilling",
+        "Churn",
+    ]
+
+    # Vérifier si le fichier existe ET non vide
+    if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
+        try:
+            df_existing = pd.read_csv(file_path)
+        except pd.errors.EmptyDataError:
+            df_existing = pd.DataFrame(columns=csv_columns)
     else:
         file_path.parent.mkdir(parents=True, exist_ok=True)
         df.to_csv(file_path, index=False)
+
+    df_combined = pd.concat([df_existing, df], ignore_index=True)
+    df_combined.to_csv(file_path, index=False)
 
     # DVC push in background
     background_tasks.add_task(dvc_push_background)
@@ -441,7 +491,67 @@ async def set_ab_config(update: AbConfigUpdate):
     }
 
 
-def load_model(model_name: str = "CustomerChurnModel"):
+# # Métriques personnalisées
+prediction_counter = Counter(
+    "churn_predictions_total",
+    "Total number of churn predictions",
+    ["model_version", "prediction_result"],
+)
+
+prediction_duration = Histogram(
+    "churn_prediction_duration_seconds", "Time spent processing prediction"
+)
+
+active_users = Gauge("churn_api_active_users", "Number of active users")
+
+
+# # Exemple d'utilisation dans vos endpoints
+async def predict_churn(data=None):
+    start_time = time.time()
+
+    results = await predict(data)
+    result = results["prediction"]
+    # Enregistrer les métriques
+    prediction_counter.labels(
+        model_version="v1.0", prediction_result="churn" if result == 1 else "no_churn"
+    ).inc()
+
+    prediction_duration.observe(time.time() - start_time)
+
+    return result
+
+
+async def predict(data: InputCustomer):
+
+    df = pd.DataFrame([data.model_dump()])
+    if app.state.model_A and app.state.model_B:
+        model_choice = "A" if random.random() < 0.5 else "B"
+    else:
+        model_choice = "A"
+
+    start = time.time()
+    preds = (
+        app.state.model_A.predict(df)
+        if model_choice == "A"
+        else app.state.model_B.predict(df)
+    )
+    # result = model_A.predict(df)[0]
+    print(f"Predicted result: {preds[0]}")
+    latency = time.time() - start
+
+    # Log locally or send to MLflow for analysis
+    mlflow.log_metric("latency", latency)
+    mlflow.log_param("model_used", model_choice)
+
+    return {
+        "model": "Production" if model_choice == "A" else "Staging",
+        "prediction": preds[0],
+        "latency": latency,
+    }
+
+
+def load_model(model_name="CustomerChurnModel"):
+
     models = mlflow.search_model_versions(
         filter_string=f"name='{model_name}'", max_results=1000
     )
