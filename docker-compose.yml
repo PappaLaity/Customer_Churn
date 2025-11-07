@@ -35,6 +35,9 @@ services:
       MLFLOW_TRACKING_URI: http://mlflow:5000
       MODEL_REGISTRY_NAME: CustomerChurnModel
       MODEL_STAGE: Production
+      ENV: Production
+      MLFLOW_URI : http://mlflow:5000
+      API_KEY_SECRET: ${API_KEY_SECRET:-changeme-in-production}
     depends_on:
       - db
     volumes:
@@ -106,7 +109,6 @@ services:
       - mlflow_db
     volumes:
       - ./mlflow_artifacts:/mlflow/artifacts
-      
     ports:
       - "5001:5000"
     restart: unless-stopped
