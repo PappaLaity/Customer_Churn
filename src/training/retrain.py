@@ -231,8 +231,8 @@ def train_combined(features_path: str, production_path: str) -> int:
             prod_df = pd.DataFrame()
 
     if prod_df.empty:
-        print("[WARN] Production data not found or empty. Falling back to features-only training.")
-        return train_features_only()
+        print("[WARN] Production data not found or empty. Skipping retraining.")
+        return -1  # Indicate no retraining was performed
 
     combined = _align_and_concat(features_df, prod_df, label="Churn")
     X_train, X_test, y_train, y_test = _split_scale_smote(combined, label="Churn")
@@ -248,9 +248,11 @@ def main():
     args = parser.parse_args()
 
     if args.mode == "combined":
-        train_combined(args.features_path, args.production_path)
+        result = train_combined(args.features_path, args.production_path)
+        if result == -1:
+            print("[INFO] No drift detected or insufficient data. Skipping retraining.")
     else:
-        train_features_only()
+        print("[WARN] Feature-only retraining skipped due to no drift detection.")
 
 
 if __name__ == "__main__":

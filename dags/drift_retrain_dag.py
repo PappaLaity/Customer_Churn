@@ -63,7 +63,7 @@ def run_drift_detection(**context):
 
 def choose_branch(**context):
     is_drift = context['ti'].xcom_pull(task_ids='detect_drift', key='is_drift')
-    return 'retrain_combined' if is_drift else 'retrain_features'
+    return 'retrain_combined' if is_drift else 'skip_retraining'
 
 
 def generate_monitoring_reports(**context):
@@ -188,9 +188,8 @@ with DAG(
         bash_command='export PYTHONPATH=/opt/airflow && export MLFLOW_URI={mlflow} && export DEPLOY_STAGE=Staging && python -m src.training.retrain --mode combined'.format(mlflow=MLFLOW_URI),
     )
 
-    retrain_features = BashOperator(
-        task_id='retrain_features',
-        bash_command='export PYTHONPATH=/opt/airflow && export MLFLOW_URI={mlflow} && export DEPLOY_STAGE=Staging && python -m src.training.retrain --mode features'.format(mlflow=MLFLOW_URI),
+    skip_retraining = DummyOperator(
+        task_id='skip_retraining',
     )
 
     done = DummyOperator(
@@ -200,4 +199,4 @@ with DAG(
 
     build_features >> detect_drift_task >> generate_reports >> branch
     branch >> retrain_combined >> done
-    branch >> retrain_features >> done
+    branch >> skip_retraining >> done
