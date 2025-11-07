@@ -1,0 +1,9 @@
+{
+  "numeric_columns": [],
+  "psi_threshold": 0.2,
+  "per_column_psi": {},
+  "mean_psi": 0.0,
+  "max_psi": 0.0,
+  "is_drift": false,
+  "reason": "skipped drift: Production data file missing or empty"
+}

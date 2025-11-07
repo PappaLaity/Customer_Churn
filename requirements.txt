@@ -3,6 +3,7 @@ fastapi
 pydantic
 uvicorn
 pytest
+dvc
 python-dotenv
 pandas
 numpy
@@ -23,3 +24,4 @@ imbalanced-learn
 psycopg2-binary
 pydantic[email]
 httpx
+evidently
