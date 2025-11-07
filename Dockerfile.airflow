@@ -14,5 +14,6 @@ COPY requirements-airflow.txt .
 
 RUN pip install -r requirements-airflow.txt
 
+ENV PYTHONPATH="${PYTHONPATH}:/opt/airflow/src"
 
 
