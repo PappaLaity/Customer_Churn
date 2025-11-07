@@ -35,7 +35,8 @@ jobs:
             cd /home/${{ secrets.AZURE_USER }}/Customer_Churn || git clone https://github.com/PappaLaity/Customer_Churn.git Customer_Churn
             cd Customer_Churn
             git pull origin main
-            
-            # Rendre le script exécutable et le lancer
-            chmod +x deploy.sh
-            ./deploy.sh
+            docker compose down
+            docker compose pull || true
+            docker compose build
+            docker compose up -d
+            docker system prune -af
