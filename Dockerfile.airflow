@@ -1,3 +1,4 @@
+# Dockerfile.airflow
 FROM apache/airflow:2.10.2-python3.11
 
 USER root
@@ -8,9 +9,9 @@ RUN apt-get update && apt-get install -y git
 COPY dags ./dags
 COPY src ./src
 
+# Créer les répertoires de logs avec les bonnes permissions
 RUN mkdir -p /opt/airflow/logs/scheduler && \
-    chown -R airflow:airflow /opt/airflow/logs && \
-    chmod -R 755 /opt/airflow/logs
+    chmod -R 777 /opt/airflow/logs
 
 USER airflow
 COPY requirements-airflow.txt .
