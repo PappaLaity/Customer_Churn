@@ -6,10 +6,15 @@ WORKDIR /opt/airflow
 
 RUN apt-get update && apt-get install -y git
 
+RUN git config --global user.email "airflow@pipeline.local" && \
+    git config --global user.name "Airflow DAG" && \
+    git config --global --add safe.directory /opt/airflow
+
 COPY dags ./dags
 COPY src ./src
 
 USER airflow
+RUN git config --global --add safe.directory /opt/airflow
 COPY requirements-airflow.txt .
 
 RUN pip install --no-cache-dir -r requirements-airflow.txt
