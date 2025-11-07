@@ -64,6 +64,7 @@ services:
     container_name: airflow
     entrypoint: >
       bash -c "
+      set -e
       rm -f /opt/airflow/airflow-webserver.pid && 
       airflow db migrate &&
       airflow users create -u admin -p admin -f telco -l company -r Admin -e admin@telco.com &&
@@ -85,7 +86,7 @@ services:
       - ./dags:/opt/airflow/dags
       - ./models:/opt/airflow/models
       - ./data:/opt/airflow/data
-      - ./logs:/opt/airflow/logs
+      # - ./logs:/opt/airflow/logs
       - ./.git:/opt/airflow/.git
       - ./.dvc:/opt/airflow/.dvc
       - ./.gitignore:/opt/airflow/.gitignore
@@ -156,7 +157,3 @@ volumes:
 networks:
   churn_network:
     driver: bridge
-
-
-
-
