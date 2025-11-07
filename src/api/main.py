@@ -78,12 +78,13 @@ app = FastAPI(title="Customer Churn Prediction", lifespan=lifespan)
 Instrumentator().instrument(app).expose(app)
 
 origins = [
-    "http://localhost:8081"
+    "http://localhost:8081",
+    "http://127.0.0.1:8081",
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], #origins
+    allow_origins=origins, #["*"], #origins
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -322,7 +323,9 @@ async def submit_survey(input: InputCustomer, background_tasks: BackgroundTasks)
     # print(result_1)
 
     mlflow.log_metric("latency", result_1["latency"])
-    mlflow.log_param("model_used", result_1["model"])
+    # mlflow.log_param("model_used", result_1["model"])
+    mlflow.set_tag("model_used", result_1["model"])
+
     # Log metrics
     PREDICTION_LATENCY.labels(
         model_version=str(app.state.prod_version or _model_version)
@@ -363,6 +366,9 @@ async def submit_survey(input: InputCustomer, background_tasks: BackgroundTasks)
     else:
         file_path.parent.mkdir(parents=True, exist_ok=True)
         df.to_csv(file_path, index=False)
+
+    df_combined = pd.concat([df_existing, df], ignore_index=True)
+    df_combined.to_csv(file_path, index=False)
 
     # DVC push in background
     background_tasks.add_task(dvc_push_background)
