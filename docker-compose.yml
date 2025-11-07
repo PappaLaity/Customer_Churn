@@ -146,6 +146,39 @@ services:
     restart: unless-stopped
     networks:
       - churn_network
+  certbot:
+    image: certbot/certbot:latest
+    container_name: certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    environment:
+      - CERTBOT_EMAIL=${CERTBOT_EMAIL:-admin@example.com}
+    entrypoint: > 
+      /bin/sh -c "
+      DOMAIN='customer-churn.francecentral.cloudapp.azure.com'
+      CERT_PATH='/etc/letsencrypt/live/$DOMAIN/fullchain.pem'
+      
+      echo 'Attente de 30 secondes pour que Nginx soit prêt...';
+      sleep 30;
+      
+      if [ ! -f $CERT_PATH ]; then
+        echo 'Tentative de génération du certificat...';
+        certbot certonly --webroot -w /var/www/certbot -d $DOMAIN --email $CERTBOT_EMAIL --agree-tos --non-interactive --keep-until-expiring || echo 'Échec de la génération du certificat';
+      else
+        echo 'Certificat déjà existant';
+      fi;
+      
+      echo 'Fin de Certbot. Conteneur s'arrête.';
+      "
+    networks:
+      - churn_network
+    depends_on:
+      - nginx
+    restart: on-failure
+
+
+  # ========== NGINX REVERSE PROXY ==========
   nginx:
     image: nginx:latest
     container_name: nginx-reverse-proxy
@@ -165,16 +198,12 @@ services:
     networks:
       - churn_network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
-  certbot:
-    image: certbot/certbot:latest
-    container_name: certbot
-    volumes:
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
-    entrypoint: /bin/sh -c "certbot certonly --webroot -w /var/www/certbot -d customer-churn.francecentral.cloudapp.azure.com --email votre-email@example.com --agree-tos --non-interactive --keep-until-expiring || true"
-    networks:
-      - churn_network
 
 volumes:
   db_data:
