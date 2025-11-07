@@ -63,8 +63,11 @@ async def lifespan(app: FastAPI):
     ab_enabled_env = os.getenv("AB_ENABLED", "true").lower() in {"1", "true", "yes"}
     app.state.ab_config = ExperimentConfig(enabled=ab_enabled_env)
 
-    # initial load of sklearn models for A/B
-    load_model(MODEL_NAME)
+    # initial load of sklearn models for A/B (non-fatal)
+    try:
+        load_model(MODEL_NAME)
+    except Exception as e:
+        print(f"Initial model preload skipped due to error: {e}")
     task = asyncio.create_task(model_reloader(interval=300))
 
     try:
@@ -464,8 +467,10 @@ def load_model(model_name: str = "CustomerChurnModel"):
             app.state.model_B = mlflow.sklearn.load_model(app.state.stag_source)
             print(f"Loaded Staging model: {app.state.stag_source}")
     except Exception as e:
-        print(f"Error loading model: {e}")
-        raise
+        # Non-fatal: keep running without preloaded sklearn models; fallback to pyfunc
+        app.state.model_A = None
+        app.state.model_B = None
+        print(f"Error loading model(s); continuing without preload: {e}")
 
 
 async def model_reloader(interval: int = 300):
