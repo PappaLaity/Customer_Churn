@@ -9,8 +9,11 @@ RUN apt-get update && apt-get install -y git
 COPY dags ./dags
 COPY src ./src
 
+# Créer les répertoires de logs avec les bonnes permissions
+RUN mkdir -p /opt/airflow/logs/scheduler && \
+    chmod -R 777 /opt/airflow/logs
+
 USER airflow
 COPY requirements-airflow.txt .
 
 RUN pip install --no-cache-dir -r requirements-airflow.txt
-
