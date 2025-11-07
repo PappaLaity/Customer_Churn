@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
-from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Request
 from fastapi.concurrency import asynccontextmanager
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBearer
@@ -28,6 +28,7 @@ from src.api.core.security import verify_api_key
 from src.api.entities.customerInput import InputCustomer
 from src.api.routes import auth, users
 from pydantic import BaseModel
+from src.experiments.ab import ExperimentConfig, assign_bucket, log_exposure
 
 
 # Only initialize the database on app import when not running tests.
@@ -57,6 +58,10 @@ async def lifespan(app: FastAPI):
     app.state.stag_source = None
     app.state.prod_version = None
     app.state.prod_source = None
+
+    # A/B config
+    ab_enabled_env = os.getenv("AB_ENABLED", "true").lower() in {"1", "true", "yes"}
+    app.state.ab_config = ExperimentConfig(enabled=ab_enabled_env)
 
     # initial load of sklearn models for A/B
     load_model(MODEL_NAME)
@@ -297,10 +302,10 @@ async def predict(payload: PredictPayload):
 
 
 @app.post("/survey/submit")
-async def submit_survey(input: InputCustomer, background_tasks: BackgroundTasks):
+async def submit_survey(input: InputCustomer, background_tasks: BackgroundTasks, request: Request):
     # Predict single record using A/B models if available, else pyfunc model
     start = time.time()
-    result = await predict_single(input)
+    result = await predict_single(input, request)
     duration = time.time() - start
 
     # Log metrics
@@ -328,27 +333,44 @@ async def submit_survey(input: InputCustomer, background_tasks: BackgroundTasks)
     return {"success": "Thanky you for your submission"}
 
 
-async def predict_single(data: InputCustomer) -> Dict[str, Any]:
+async def predict_single(data: InputCustomer, request: Request) -> Dict[str, Any]:
     df = pd.DataFrame([data.model_dump()])
-    model_choice = "A"
-    if (
-        getattr(app.state, "model_A", None) is not None
-        and getattr(app.state, "model_B", None) is not None
-    ):
-        model_choice = "A" if random.random() < 0.8 else "B"
+
+    # Determine bucket using sticky assignment when possible
+    bucket, subject_id = assign_bucket(request, app.state.ab_config)
+    if subject_id is None and getattr(app.state, "model_A", None) is not None and getattr(app.state, "model_B", None) is not None:
+        # Fallback to randomized split if no subject_id is provided
+        p_b = float(app.state.ab_config.bucket_b_pct)
+        bucket = "B" if random.random() < p_b else "A"
 
     start = time.time()
-    if model_choice == "A" and app.state.model_A is not None:
+    if bucket == "A" and app.state.model_A is not None:
         preds = app.state.model_A.predict(df)
         model_used = f"Production(v{app.state.prod_version})"
-    elif model_choice == "B" and app.state.model_B is not None:
+        model_version = str(app.state.prod_version)
+    elif bucket == "B" and app.state.model_B is not None:
         preds = app.state.model_B.predict(df)
         model_used = f"Staging(v{app.state.stag_version})"
+        model_version = str(app.state.stag_version)
     else:
         _ensure_model_loaded()
         preds = _model.predict(df)
         model_used = f"Registry({MODEL_STAGE})"
+        model_version = str(_model_version)
     latency = time.time() - start
+
+    # Log exposure
+    try:
+        log_exposure(
+            endpoint="/survey/submit",
+            subject_id=subject_id,
+            bucket=bucket,
+            model=model_used,
+            model_version=model_version,
+            latency_sec=latency,
+        )
+    except Exception:
+        pass
 
     return {"model": model_used, "prediction": int(preds[0]), "latency": latency}
 
@@ -374,6 +396,46 @@ def _ks_d_stat(a_sorted: np.ndarray, b_sorted: np.ndarray) -> float:
 # Include other routers
 app.include_router(users.router)
 app.include_router(auth.router)
+
+
+# --- A/B testing admin endpoints ---
+class AbConfigUpdate(BaseModel):
+    enabled: Optional[bool] = None
+    bucket_b_pct: Optional[float] = None
+    sticky_header: Optional[str] = None
+
+
+@app.get("/ab/config", dependencies=[Depends(verify_api_key)])
+async def get_ab_config():
+    cfg = app.state.ab_config
+    return {
+        "enabled": bool(cfg.enabled),
+        "bucket_b_pct": float(cfg.bucket_b_pct),
+        "sticky_header": cfg.sticky_header,
+    }
+
+
+@app.post("/ab/config", dependencies=[Depends(verify_api_key)])
+async def set_ab_config(update: AbConfigUpdate):
+    cfg = app.state.ab_config
+    if update.enabled is not None:
+        cfg.enabled = bool(update.enabled)
+    if update.bucket_b_pct is not None:
+        try:
+            cfg.bucket_b_pct = float(update.bucket_b_pct)
+        except Exception:
+            raise HTTPException(status_code=400, detail="bucket_b_pct must be a float")
+    if update.sticky_header is not None:
+        cfg.sticky_header = str(update.sticky_header)
+    cfg.clamp()
+    return {
+        "status": "ok",
+        "config": {
+            "enabled": bool(cfg.enabled),
+            "bucket_b_pct": float(cfg.bucket_b_pct),
+            "sticky_header": cfg.sticky_header,
+        },
+    }
 
 
 def load_model(model_name: str = "CustomerChurnModel"):
