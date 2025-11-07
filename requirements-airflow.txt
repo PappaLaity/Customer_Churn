@@ -1,7 +1,7 @@
 pytest
 python-dotenv
 pandas
-numpy
+#numpy
 scikit-learn
 matplotlib
 requests
@@ -12,3 +12,8 @@ xgboost
 joblib
 imbalanced-learn
 dvc
+pandas
+numpy>=1.22,<2.1
+evidently==0.6.1
+alibi-detect==0.11.4
+scipy<1.11
