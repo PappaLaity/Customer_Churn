@@ -125,14 +125,12 @@ def generate_drift_report(
             "timestamp": datetime.now().isoformat(),
         }
     
-    # Save HTML report
+    # Save reports
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     html_path = os.path.join(output_dir, f"drift_report_{timestamp}.html")
-    report.save_html(html_path)
     
-    # Save JSON report
-    json_path = os.path.join(output_dir, f"drift_report_{timestamp}.json")
-    report.save_json(json_path)
+    # Save HTML report using modern API
+    report.save(html_path)
     
     # Extract key metrics
     report_dict = report.as_dict()
@@ -152,7 +150,6 @@ def generate_drift_report(
         "status": "completed",
         "timestamp": datetime.now().isoformat(),
         "html_report": html_path,
-        "json_report": json_path,
         "drift_detected": drift_detected,
         "drift_share": drift_share,
         "num_columns": len(numerical_features) + len(categorical_features),
@@ -243,8 +240,8 @@ def generate_data_quality_report(
     html_path = os.path.join(output_dir, f"{report_name}_{timestamp}.html")
     json_path = os.path.join(output_dir, f"{report_name}_{timestamp}.json")
     
-    report.save_html(html_path)
-    report.save_json(json_path)
+    # Save report using modern API
+    report.save(html_path)
     
     return {
         "status": "completed",
