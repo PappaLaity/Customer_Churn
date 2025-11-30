@@ -22,7 +22,7 @@ services:
     volumes:
       - mlflow_db_data:/var/lib/postgresql/data
     ports:
-      - "5433:5432" 
+      - "5433:5432"
     networks:
       - churn_network
   fastapi:
@@ -36,7 +36,7 @@ services:
       MODEL_REGISTRY_NAME: CustomerChurnModel
       MODEL_STAGE: Production
       ENV: Production
-      MLFLOW_URI : http://mlflow:5000
+      MLFLOW_URI: http://mlflow:5000
       API_KEY_SECRET: ${API_KEY_SECRET:-changeme-in-production}
     depends_on:
       - db
@@ -63,14 +63,7 @@ services:
       dockerfile: Dockerfile.airflow
     container_name: airflow
     entrypoint: >
-      bash -c "
-      set -e
-      rm -f /opt/airflow/airflow-webserver.pid && 
-      airflow db migrate &&
-      airflow users create -u admin -p admin -f telco -l company -r Admin -e admin@telco.com &&
-      airflow webserver & sleep 10 &&
-      airflow scheduler
-      "
+      bash -c " set -e rm -f /opt/airflow/airflow-webserver.pid &&  airflow db migrate && airflow users create -u admin -p admin -f telco -l company -r Admin -e admin@telco.com && airflow webserver & sleep 10 && airflow scheduler "
     environment:
       - AIRFLOW_HOME=/opt/airflow
       - MLFLOW_TRACKING_URI=http://mlflow:5000
@@ -87,6 +80,7 @@ services:
       - ./models:/opt/airflow/models
       - ./data:/opt/airflow/data
       - ./drifts:/opt/airflow/drifts
+      - ./src:/opt/airflow/src
       - ./.git:/opt/airflow/.git
       - ./.dvc:/opt/airflow/.dvc
       - ./.gitignore:/opt/airflow/.gitignore
@@ -146,13 +140,14 @@ services:
     restart: unless-stopped
     networks:
       - churn_network
- 
+
 volumes:
   db_data:
   grafana-storage:
   prometheus-data:
   mlflow_db_data:
   mlflow_artifacts:
+
 
 networks:
   churn_network:

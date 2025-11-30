@@ -6,6 +6,8 @@ from typing import Dict, Any
 from alibi_detect.cd import KSDrift, ChiSquareDrift
 from pandas.errors import EmptyDataError
 
+from src.etl.inference import preprocess_inference_data
+
 def _ensure_dir(path: str):
     dirname = os.path.dirname(path)
     if dirname:
@@ -28,8 +30,8 @@ def detect_drift(
     try:
         if not os.path.exists(production_path) or os.path.getsize(production_path) == 0:
              raise EmptyDataError("Production data file missing or empty")
-        production = pd.read_csv(production_path)
-        if production.empty:
+        production_raw = pd.read_csv(production_path)
+        if production_raw.empty:
             raise EmptyDataError("Production dataframe is empty")
     except (EmptyDataError, FileNotFoundError) as e:
          # Return empty/no-drift report if production data is missing
@@ -43,6 +45,14 @@ def detect_drift(
             json.dump(report, f, indent=2)
         return report
 
+    # Preprocess production data to match baseline features
+    print("Preprocessing production data for drift detection...")
+    production = preprocess_inference_data(
+        production_raw, 
+        models_dir="/opt/airflow/models",
+        features_path=baseline_path
+    )
+
     # Preprocessing: Drop NaNs to ensure clean drift detection
     baseline = baseline.dropna()
     production = production.dropna()
@@ -54,6 +64,11 @@ def detect_drift(
     # Intersect with production columns
     num_cols = [c for c in num_cols if c in production.columns]
     cat_cols = [c for c in cat_cols if c in production.columns]
+    
+    print("\nDEBUG: Baseline Dtypes:")
+    print(baseline[num_cols].dtypes)
+    print("\nDEBUG: Production Dtypes:")
+    print(production[num_cols].dtypes)
     
     drift_results = {}
     is_drift = False

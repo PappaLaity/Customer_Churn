@@ -129,8 +129,22 @@ def generate_drift_report(
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     html_path = os.path.join(output_dir, f"drift_report_{timestamp}.html")
     
-    # Save HTML report using modern API
-    report.save(html_path)
+    # Try to save HTML report - Evidently API varies by version
+    try:
+        if hasattr(report, 'save_html'):
+            report.save_html(html_path)
+        elif hasattr(report, 'save'):
+            report.save(html_path)
+        else:
+            # Fallback: just get the dict
+            with open(html_path.replace('.html', '.log'), 'w') as f:
+                f.write("Evidently report generated but save method not found\n")
+    except Exception as e:
+        return {
+            "status": "error",
+            "reason": f"Failed to save report: {str(e)}",
+            "timestamp": datetime.now().isoformat(),
+        }
     
     # Extract key metrics
     report_dict = report.as_dict()
@@ -240,8 +254,21 @@ def generate_data_quality_report(
     html_path = os.path.join(output_dir, f"{report_name}_{timestamp}.html")
     json_path = os.path.join(output_dir, f"{report_name}_{timestamp}.json")
     
-    # Save report using modern API
-    report.save(html_path)
+    # Try to save report - Evidently API varies by version
+    try:
+        if hasattr(report, 'save_html'):
+            report.save_html(html_path)
+        elif hasattr(report, 'save'):
+            report.save(html_path)
+        else:
+            with open(html_path.replace('.html', '.log'), 'w') as f:
+                f.write("Evidently report generated but save method not found\n")
+    except Exception as e:
+        return {
+            "status": "error",
+            "reason": f"Failed to save report: {str(e)}",
+            "timestamp": datetime.now().isoformat(),
+        }
     
     return {
         "status": "completed",

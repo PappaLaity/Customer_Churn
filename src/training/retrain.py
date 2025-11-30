@@ -163,6 +163,9 @@ def _train_and_log_from_arrays(X_train, X_test, y_train, y_test) -> Dict[str, An
                 {
                     "model_name": name,
                     "test_accuracy": test_acc,
+                    "test_precision": precision,
+                    "test_recall": recall,
+                    "test_f1_score": f1,
                     "cv_mean": cv_mean,
                     "run_id": run.info.run_id,
                     "info": model_info,
@@ -170,7 +173,7 @@ def _train_and_log_from_arrays(X_train, X_test, y_train, y_test) -> Dict[str, An
             )
 
     best = max(results, key=lambda r: r["test_recall"]) if results else {}
-    print(f"Best model: {best.get('model_name')} ({best.get('test_recall')})")
+    print(f"Best model: {best.get('model_name')} (recall={best.get('test_recall'):.4f})")
     return best
 
 
@@ -216,23 +219,36 @@ def train_features_only() -> int:
 
 
 def train_combined(features_path: str, production_path: str) -> int:
+    """
+    Trains models on combined training features and production data.
+    """
+    from src.etl.inference import preprocess_inference_data
+    
     try:
         features_df = pd.read_csv(features_path)
     except (pd.errors.EmptyDataError, FileNotFoundError) as e:
         print(f"[ERROR] Features file is empty or not found: {e}")
         raise
     
-    prod_df = pd.DataFrame()
+    prod_raw_df = pd.DataFrame()
     if os.path.exists(production_path):
         try:
-            prod_df = pd.read_csv(production_path)
+            prod_raw_df = pd.read_csv(production_path)
         except pd.errors.EmptyDataError:
             print("[WARN] Production CSV file exists but is empty.")
-            prod_df = pd.DataFrame()
+            prod_raw_df = pd.DataFrame()
 
-    if prod_df.empty:
+    if prod_raw_df.empty:
         print("[WARN] Production data not found or empty. Skipping retraining.")
         return -1  # Indicate no retraining was performed
+    
+    # Preprocess production data to match baseline features schema
+    print("Preprocessing production data for retraining...")
+    prod_df = preprocess_inference_data(
+        prod_raw_df,
+        models_dir="/opt/airflow/models",
+        features_path=features_path
+    )
 
     combined = _align_and_concat(features_df, prod_df, label="Churn")
     X_train, X_test, y_train, y_test = _split_scale_smote(combined, label="Churn")

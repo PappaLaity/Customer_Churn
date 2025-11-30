@@ -1,19 +1,17 @@
 {
-  "timestamp": "2025-11-30T01:13:36.291728",
+  "timestamp": "2025-11-30T16:23:08.388744",
   "drift_analysis": {
-    "status": "skipped",
-    "reason": "production data file is empty",
-    "timestamp": "2025-11-30T01:13:36.290711"
+    "status": "error",
+    "reason": "Report generation failed: Column (gender) is partially present in data",
+    "timestamp": "2025-11-30T16:23:08.365306"
   },
   "data_quality": {
-    "status": "skipped",
-    "reason": "data file is empty"
+    "status": "completed",
+    "timestamp": "2025-11-30T16:23:08.388473",
+    "html_report": "/opt/airflow/drifts/monitoring/reports/production_data_quality_20251130_162308.html",
+    "json_report": "/opt/airflow/drifts/monitoring/reports/production_data_quality_20251130_162308.json",
+    "num_rows": 200,
+    "num_columns": 21
   },
-  "alerts": [
-    {
-      "severity": "info",
-      "type": "data_availability",
-      "message": "Drift analysis skipped: production data file is empty"
-    }
-  ]
+  "alerts": []
 }

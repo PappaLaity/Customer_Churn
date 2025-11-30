@@ -4,15 +4,34 @@
   "details": {
     "numerical": {
       "columns": [
+        "tenure",
+        "No_internet_service",
         "TotalCharges",
         "MonthlyCharges",
+        "PaperlessBilling",
         "Churn"
       ],
       "is_drift": true,
       "p_values": [
-        2.0978027350793127e-06,
-        2.311171366300171e-39,
-        0.21889351308345795
+        1.3061194156829872e-33,
+        0.0,
+        7.100517905200832e-06,
+        5.222011402115527e-32,
+        0.5301737785339355,
+        0.00029518184601329267
+      ]
+    },
+    "categorical": {
+      "columns": [
+        "InternetService_Fiber_optic",
+        "Contract_Two_year",
+        "PaymentMethod_Electronic_check"
+      ],
+      "is_drift": true,
+      "p_values": [
+        7.142808770825088e-35,
+        4.4210783037984536e-15,
+        3.7850284606311433e-23
       ]
     }
   }

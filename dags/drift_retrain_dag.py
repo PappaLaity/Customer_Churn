@@ -87,28 +87,37 @@ def generate_monitoring_reports(**context):
     print(f"  Production path: {PRODUCTION_DATA_PATH}")
     print(f"  Reports directory: {REPORTS_DIR}")
     
-    # Generate drift report
-    print("\nGenerating drift report...")
-    drift_report = generate_drift_report(
-        baseline_path=FEATURES_PATH,
-        production_path=PRODUCTION_DATA_PATH,
-        output_dir=REPORTS_DIR,
-        target_column="Churn",
-    )
-    print(f"  Status: {drift_report.get('status')}")
-    if drift_report.get('status') != 'completed':
-        print(f"  Reason: {drift_report.get('reason')}")
     
-    # Generate data quality report for production data
+    # Generate drift report (non-blocking)
+    print("\nGenerating drift report...")
+    try:
+        drift_report = generate_drift_report(
+            baseline_path=FEATURES_PATH,
+            production_path=PRODUCTION_DATA_PATH,
+            output_dir=REPORTS_DIR,
+            target_column="Churn",
+        )
+        print(f"  Status: {drift_report.get('status')}")
+        if drift_report.get('status') != 'completed':
+            print(f"  Reason: {drift_report.get('reason')}")
+    except Exception as e:
+        print(f"  WARNING: Drift report generation failed: {str(e)}")
+        drift_report = {"status": "error", "reason": str(e)}
+    
+    # Generate data quality report for production data (non-blocking)
     print("\nGenerating data quality report...")
-    quality_report = generate_data_quality_report(
-        data_path=PRODUCTION_DATA_PATH,
-        output_dir=REPORTS_DIR,
-        report_name="production_data_quality",
-    )
-    print(f"  Status: {quality_report.get('status')}")
-    if quality_report.get('status') != 'completed':
-        print(f"  Reason: {quality_report.get('reason')}")
+    try:
+        quality_report = generate_data_quality_report(
+            data_path=PRODUCTION_DATA_PATH,
+            output_dir=REPORTS_DIR,
+            report_name="production_data_quality",
+        )
+        print(f"  Status: {quality_report.get('status')}")
+        if quality_report.get('status') != 'completed':
+            print(f"  Reason: {quality_report.get('reason')}")
+    except Exception as e:
+        print(f"  WARNING: Quality report generation failed: {str(e)}")
+        quality_report = {"status": "error", "reason": str(e)}
     
     # Generate summary report
     print("\nGenerating summary report...")
