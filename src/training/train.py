@@ -7,13 +7,12 @@ import mlflow.sklearn
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.model_selection import cross_val_score, StratifiedKFold
-from sklearn.metrics import accuracy_score, confusion_matrix
+from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score, f1_score
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier, HistGradientBoostingClassifier
 from sklearn.neural_network import MLPClassifier
 from src.etl.preprocessing import preprocess_data
 from mlflow.tracking import MlflowClient
-from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score, f1_score
 
 
 
@@ -112,10 +111,7 @@ def train_and_log_models(cv_folds=5):
             if os.path.exists("scaler.pkl"):
                 mlflow.log_artifact("scaler.pkl")
             
-            # --- Define and log model signature ---
-
             # --- Log model ---
-            input_example = X_train[:5]  # Select the first 5 rows of the training data
 
             model_info = mlflow.sklearn.log_model(
                 sk_model=model,
@@ -135,7 +131,7 @@ def train_and_log_models(cv_folds=5):
                     "test_f1_score": f1,
                     "cv_mean": cv_mean,
                     "run_id": run.info.run_id,
-                    "registery_model_name": registry_name,
+                    "registry_model_name": registry_name,
                     "info": model_info,
                 }
             )
