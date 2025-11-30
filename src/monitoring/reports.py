@@ -5,20 +5,17 @@ from typing import Dict, Any, Optional
 import pandas as pd
 import numpy as np
 
-# Evidently 0.4.x API  
-# Note: Evidently 0.4.x uses Dashboard/Profile API, not Report
+# Evidently 0.4.x API (Report-based)
 try:
-    from evidently.dashboard import Dashboard
-    from evidently.dashboard.tabs import DataDriftTab
-    from evidently.model_profile import Profile
-    from evidently.model_profile.sections import DataDriftProfileSection
+    from evidently.report import Report
+    from evidently.metric_preset import DataDriftPreset
+    from evidently.metrics import DatasetMissingValuesMetric
     HAS_EVIDENTLY = True
 except ImportError:
     HAS_EVIDENTLY = False
-    Dashboard = None
-    DataDriftTab = None
-    Profile = None
-    DataDriftProfileSection = None
+    Report = None
+    DataDriftPreset = None
+    DatasetMissingValuesMetric = None
 
 
 def _ensure_dir(path: str):
@@ -125,7 +122,7 @@ def generate_drift_report(
     if target_column in categorical_features:
         categorical_features.remove(target_column)
     
-    # Generate comprehensive report using Evidently 0.4.x Dashboard API
+    # Generate comprehensive report using Evidently 0.4.x Report API
     if not HAS_EVIDENTLY:
         return {
             "status": "skipped",
@@ -134,13 +131,20 @@ def generate_drift_report(
         }
     
     try:
-        # Evidently 0.4.x uses Dashboard with tabs
-        dashboard = Dashboard(tabs=[DataDriftTab()])
-        dashboard.calculate(baseline_df, production_df)
+        # Evidently 0.4.x Report API
+        report = Report(metrics=[
+            DataDriftPreset(),
+            DatasetMissingValuesMetric(),
+        ])
+        
+        report.run(
+            reference_data=baseline_df,
+            current_data=production_df,
+        )
     except Exception as e:
         return {
             "status": "error",
-            "reason": f"Dashboard generation failed: {str(e)}",
+            "reason": f"Report generation failed: {str(e)}",
             "timestamp": datetime.now().isoformat(),
         }
     
@@ -148,21 +152,41 @@ def generate_drift_report(
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     html_path = os.path.join(output_dir, f"drift_report_{timestamp}.html")
     
-    # Save HTML report - Evidently 0.4.x Dashboard has save_html()
+    # Save HTML report - Evidently 0.4.x Report has save_html()
     try:
-        print(f"Saving Evidently drift dashboard to {html_path}")
-        dashboard.save_html(html_path)
+        print(f"Saving Evidently drift report to {html_path}")
+        report.save_html(html_path)
         print(f"✅ Successfully saved HTML drift report")
     except Exception as e:
         return {
             "status": "error",
-            "reason": f"Failed to save dashboard: {str(e)}",
+            "reason": f"Failed to save report: {str(e)}",
             "timestamp": datetime.now().isoformat(),
         }
     
-    # Extract key metrics from dashboard (0.4.x doesn't have as_dict, use basic info)
-    drift_detected = True  # Assume drift if dashboard was generated
-    drift_share = 0.0  # Not easily accessible in 0.4.x Dashboard
+    # Extract key metrics
+    try:
+        # 0.4.x Report has as_dict()
+        report_dict = report.as_dict()
+        
+        # Parse drift results
+        drift_detected = False
+        drift_share = 0.0
+        
+        # Look for DataDriftPreset results in the dictionary
+        # Structure varies, so we'll do a best-effort search
+        metrics = report_dict.get("metrics", [])
+        for metric in metrics:
+            if "drift" in str(metric.get("metric", "")).lower():
+                result = metric.get("result", {})
+                if "dataset_drift" in result:
+                    drift_detected = result.get("dataset_drift", False)
+                    drift_share = result.get("drift_share", 0.0)
+                    break
+    except Exception as e:
+        print(f"WARNING: Failed to extract metrics from report: {e}")
+        drift_detected = True # Assume drift if we can't parse
+        drift_share = 0.0
     
     return {
         "status": "completed",
