@@ -1,5 +1,19 @@
 {
-  "is_drift": false,
-  "reason": "skipped drift: Production data file missing or empty",
-  "p_val_threshold": 0.05
+  "is_drift": true,
+  "p_val_threshold": 0.05,
+  "details": {
+    "numerical": {
+      "columns": [
+        "TotalCharges",
+        "MonthlyCharges",
+        "Churn"
+      ],
+      "is_drift": true,
+      "p_values": [
+        2.0978027350793127e-06,
+        2.311171366300171e-39,
+        0.21889351308345795
+      ]
+    }
+  }
 }
