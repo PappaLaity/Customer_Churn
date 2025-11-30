@@ -140,9 +140,9 @@ def train_and_log_models(cv_folds=5):
                 }
             )
 
-    # Find the best run by test accuracy
-    best_run = max(results, key=lambda x: x["test_accuracy"])
-    print(f"\n Best model: {best_run['model_name']} ({best_run['test_accuracy']:.4f})")
+    # Find the best run by test recall
+    best_run = max(results, key=lambda x: x["test_recall"])
+    print(f"\n Best model: {best_run['model_name']} ({best_run['test_recall']:.4f})")
     print(f"Run ID: {best_run['run_id']}")
     return best_run
 
@@ -170,7 +170,7 @@ def register_best_model(best_run, model_registry_name="CustomerChurnModel"):
         name=model_registry_name,
         version=version.version,
         description=f"Auto-registered {best_run['model_name']} "
-                    f"with test accuracy {best_run['test_accuracy']:.4f}",
+                    f"with test recall {best_run['test_recall']:.4f}",
     )
 
     # Add tags
@@ -183,8 +183,8 @@ def register_best_model(best_run, model_registry_name="CustomerChurnModel"):
     client.set_model_version_tag(
         name=model_registry_name,
         version=version.version,
-        key="test_accuracy",
-        value=str(best_run["test_accuracy"]),
+        key="test_recall",
+        value=str(best_run["test_recall"]),
     )
     client.set_model_version_tag(
         name=model_registry_name,

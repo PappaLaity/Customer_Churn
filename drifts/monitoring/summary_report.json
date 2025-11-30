@@ -1,0 +1,19 @@
+{
+  "timestamp": "2025-11-30T00:40:43.166041",
+  "drift_analysis": {
+    "status": "skipped",
+    "reason": "production data file is empty",
+    "timestamp": "2025-11-30T00:40:43.165190"
+  },
+  "data_quality": {
+    "status": "skipped",
+    "reason": "data file is empty"
+  },
+  "alerts": [
+    {
+      "severity": "info",
+      "type": "data_availability",
+      "message": "Drift analysis skipped: production data file is empty"
+    }
+  ]
+}

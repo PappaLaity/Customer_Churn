@@ -169,8 +169,8 @@ def _train_and_log_from_arrays(X_train, X_test, y_train, y_test) -> Dict[str, An
                 }
             )
 
-    best = max(results, key=lambda r: r["test_accuracy"]) if results else {}
-    print(f"Best model: {best.get('model_name')} ({best.get('test_accuracy')})")
+    best = max(results, key=lambda r: r["test_recall"]) if results else {}
+    print(f"Best model: {best.get('model_name')} ({best.get('test_recall')})")
     return best
 
 
@@ -195,7 +195,7 @@ def register_best_model(best_run: Dict[str, Any], stage: str = "Staging", model_
     client.update_model_version(
         name=model_registry_name,
         version=version.version,
-        description=f"Auto-registered {best_run['model_name']} with test accuracy {best_run['test_accuracy']}",
+        description=f"Auto-registered {best_run['model_name']} with test recall {best_run['test_recall']}",
     )
 
     client.transition_model_version_stage(

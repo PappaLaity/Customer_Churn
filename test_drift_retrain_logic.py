@@ -60,7 +60,7 @@ def test_no_drift_scenario():
         result = train_combined(features_path, empty_production_path)
         
         assert result == -1, f"Expected -1 (no retraining), got {result}"
-        print("✅ No drift scenario test passed - retraining skipped")
+        print(" No drift scenario test passed - retraining skipped")
 
 
 def test_drift_scenario():
@@ -83,7 +83,7 @@ def test_drift_scenario():
         
         # Mock functions
         def mock_train(*args, **kwargs):
-            return {"model_name": "test", "test_accuracy": 0.85}
+            return {"model_name": "test", "test_accuracy": 0.85, "test_recall": 0.80}
         
         def mock_register(*args, **kwargs):
             return 1
@@ -96,7 +96,7 @@ def test_drift_scenario():
             result = train_combined(features_path, production_path)
             
             assert result != -1, f"Expected retraining to proceed, got {result}"
-            print("✅ Drift scenario test passed - retraining proceeded")
+            print("Drift scenario test passed - retraining proceeded")
             
         finally:
             # Restore original functions
@@ -120,7 +120,7 @@ def test_missing_production_file():
         result = train_combined(features_path, missing_production_path)
         
         assert result == -1, f"Expected -1 (no retraining), got {result}"
-        print("✅ Missing production file test passed - retraining skipped")
+        print("Missing production file test passed - retraining skipped")
 
 
 def test_branch_logic():
@@ -139,12 +139,12 @@ def test_branch_logic():
     result_no_drift = choose_branch(False)
     assert result_no_drift == 'skip_retraining', f"Expected 'skip_retraining', got {result_no_drift}"
     
-    print("✅ Branching logic test passed")
+    print("Branching logic test passed")
 
 
 def main():
     """Run all tests."""
-    print("🧪 Testing Drift-Based Retraining Logic")
+    print("Testing Drift-Based Retraining Logic")
     print("=" * 50)
     
     try:
@@ -154,14 +154,14 @@ def main():
         test_branch_logic()
         
         print("\n" + "=" * 50)
-        print("🎉 All tests passed!")
+        print(" All tests passed!")
         print("The drift-based retraining logic is working correctly:")
         print("  - Skips retraining when no drift is detected")
         print("  - Proceeds with retraining when drift is detected") 
         print("  - Properly handles missing production data")
         
     except Exception as e:
-        print(f"\n❌ Test failed: {e}")
+        print(f"\n Test failed: {e}")
         sys.exit(1)
 
 

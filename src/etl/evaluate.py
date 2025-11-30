@@ -102,7 +102,7 @@ import os
 #     if log_to_mlflow:
 #         with mlflow.start_run(run_name="Model Evaluation"):
 #             mlflow.log_metric("test_accuracy", accuracy)
-
+# 
 #             # Plot confusion matrix
 #             plt.figure(figsize=(6, 5))
 #             sns.heatmap(cm, annot=True, fmt="d", cmap="Blues")
@@ -245,7 +245,7 @@ def evaluate_model(model, X_test, y_test, log_to_mlflow=True):
             sns.heatmap(cm, annot=True, fmt="d", cmap="Blues")
             plt.xlabel("Predicted")
             plt.ylabel("True")
-            plt.title(f"Confusion Matrix (Accuracy={accuracy:.4f})")
+            plt.title(f"Confusion Matrix (Recall={recall:.4f})")
             os.makedirs("artifacts", exist_ok=True)
             plt.savefig("artifacts/confusion_matrix.png")
             mlflow.log_artifact("artifacts/confusion_matrix.png")

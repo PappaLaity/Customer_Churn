@@ -12,3 +12,5 @@ xgboost
 joblib
 imbalanced-learn
 dvc
+evidently
+alibi-detect

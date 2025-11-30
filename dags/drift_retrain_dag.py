@@ -55,7 +55,7 @@ def run_drift_detection(**context):
         baseline_path=FEATURES_PATH,
         production_path=PRODUCTION_DATA_PATH,
         report_path=DRIFT_REPORT_PATH,
-        psi_threshold=float(os.getenv("PSI_THRESHOLD", 0.2)),
+        p_val_threshold=float(os.getenv("P_VAL_THRESHOLD", 0.05)),
     )
     context['ti'].xcom_push(key='is_drift', value=report.get('is_drift', False))
     return report
