@@ -1,15 +1,14 @@
 {
-  "timestamp": "2025-11-30T17:04:02.136428",
+  "timestamp": "2025-11-30T17:29:54.787113",
   "drift_analysis": {
     "status": "error",
-    "reason": "Report generation failed: Column (gender) is partially present in data",
-    "timestamp": "2025-11-30T17:04:02.108321"
+    "reason": "'Report' object has no attribute 'as_dict'"
   },
   "data_quality": {
     "status": "completed",
-    "timestamp": "2025-11-30T17:04:02.136085",
-    "html_report": "/opt/airflow/drifts/monitoring/reports/production_data_quality_20251130_170402.log",
-    "json_report": "/opt/airflow/drifts/monitoring/reports/production_data_quality_20251130_170402.json",
+    "timestamp": "2025-11-30T17:29:54.786785",
+    "html_report": "/opt/airflow/drifts/monitoring/reports/production_data_quality_20251130_172954.log",
+    "json_report": "/opt/airflow/drifts/monitoring/reports/production_data_quality_20251130_172954.json",
     "num_rows": 200,
     "num_columns": 21
   },
