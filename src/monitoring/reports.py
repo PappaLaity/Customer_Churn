@@ -129,16 +129,22 @@ def generate_drift_report(
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     html_path = os.path.join(output_dir, f"drift_report_{timestamp}.html")
     
-    # Try to save HTML report - Evidently API varies by version
+    # Save HTML report - Evidently 0.7.x uses save_html()
     try:
         if hasattr(report, 'save_html'):
+            print(f"Saving Evidently report using save_html() to {html_path}")
             report.save_html(html_path)
         elif hasattr(report, 'save'):
+            print(f"Saving Evidently report using save() to {html_path}")
             report.save(html_path)
         else:
-            # Fallback: just get the dict
-            with open(html_path.replace('.html', '.log'), 'w') as f:
-                f.write("Evidently report generated but save method not found\n")
+            # Fallback: log that neither method is available
+            log_path = html_path.replace('.html', '.log')
+            with open(log_path, 'w') as f:
+                f.write(f"Evidently report generated but save method not found\n")
+                f.write(f"Available methods: {[m for m in dir(report) if 'save' in m.lower()]}\n")
+            print(f"WARNING: Evidently save method not found. Created log at {log_path}")
+            html_path = log_path  # Update path for return value
     except Exception as e:
         return {
             "status": "error",
@@ -254,15 +260,21 @@ def generate_data_quality_report(
     html_path = os.path.join(output_dir, f"{report_name}_{timestamp}.html")
     json_path = os.path.join(output_dir, f"{report_name}_{timestamp}.json")
     
-    # Try to save report - Evidently API varies by version
+    # Try to save report - Evidently 0.7.x uses save_html()
     try:
         if hasattr(report, 'save_html'):
+            print(f"Saving data quality report using save_html() to {html_path}")
             report.save_html(html_path)
         elif hasattr(report, 'save'):
+            print(f"Saving data quality report using save() to {html_path}")
             report.save(html_path)
         else:
-            with open(html_path.replace('.html', '.log'), 'w') as f:
-                f.write("Evidently report generated but save method not found\n")
+            log_path = html_path.replace('.html', '.log')
+            with open(log_path, 'w') as f:
+                f.write(f"Evidently report generated but save method not found\n")
+                f.write(f"Available methods: {[m for m in dir(report) if 'save' in m.lower()]}\n")
+            print(f"WARNING: Evidently save method not found. Created log at {log_path}")
+            html_path = log_path
     except Exception as e:
         return {
             "status": "error",
