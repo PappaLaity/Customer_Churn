@@ -24,4 +24,3 @@ if not api_logger.handlers:
     api_logger.addHandler(_rotating)
 
 api_logger.propagate = False
-

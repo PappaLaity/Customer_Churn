@@ -50,17 +50,17 @@
 #     """Test drift report generation with valid data."""
 #     baseline_path = os.path.join(temp_dir, "baseline.csv")
 #     production_path = os.path.join(temp_dir, "production.csv")
-    
+
 #     sample_baseline_data.to_csv(baseline_path, index=False)
 #     sample_production_data.to_csv(production_path, index=False)
-    
+
 #     report = generate_drift_report(
 #         baseline_path=baseline_path,
 #         production_path=production_path,
 #         output_dir=temp_dir,
 #         target_column="Churn",
 #     )
-    
+
 #     assert report["status"] == "completed"
 #     assert "html_report" in report
 #     assert "json_report" in report
@@ -74,16 +74,16 @@
 #     """Test drift report when production data is missing."""
 #     baseline_path = os.path.join(temp_dir, "baseline.csv")
 #     production_path = os.path.join(temp_dir, "nonexistent.csv")
-    
+
 #     sample_baseline_data.to_csv(baseline_path, index=False)
-    
+
 #     report = generate_drift_report(
 #         baseline_path=baseline_path,
 #         production_path=production_path,
 #         output_dir=temp_dir,
 #         target_column="Churn",
 #     )
-    
+
 #     assert report["status"] == "skipped"
 #     assert "reason" in report
 #     assert "missing" in report["reason"].lower()
@@ -93,13 +93,13 @@
 #     """Test data quality report generation."""
 #     data_path = os.path.join(temp_dir, "production.csv")
 #     sample_production_data.to_csv(data_path, index=False)
-    
+
 #     report = generate_data_quality_report(
 #         data_path=data_path,
 #         output_dir=temp_dir,
 #         report_name="quality_test",
 #     )
-    
+
 #     assert report["status"] == "completed"
 #     assert "html_report" in report
 #     assert "json_report" in report
@@ -111,13 +111,13 @@
 # def test_generate_data_quality_report_missing_file(temp_dir):
 #     """Test data quality report with missing file."""
 #     data_path = os.path.join(temp_dir, "nonexistent.csv")
-    
+
 #     report = generate_data_quality_report(
 #         data_path=data_path,
 #         output_dir=temp_dir,
 #         report_name="quality_test",
 #     )
-    
+
 #     assert report["status"] == "skipped"
 #     assert report["reason"] == "data file missing"
 
@@ -130,28 +130,28 @@
 #         "drift_share": 0.25,
 #         "html_report": "/path/to/drift.html",
 #     }
-    
+
 #     quality_report = {
 #         "status": "completed",
 #         "num_rows": 100,
 #         "num_columns": 5,
 #     }
-    
+
 #     summary_path = os.path.join(temp_dir, "summary.json")
-    
+
 #     summary = generate_summary_report(
 #         drift_report=drift_report,
 #         quality_report=quality_report,
 #         output_path=summary_path,
 #     )
-    
+
 #     assert "timestamp" in summary
 #     assert "drift_analysis" in summary
 #     assert "data_quality" in summary
 #     assert "alerts" in summary
 #     assert len(summary["alerts"]) > 0
 #     assert os.path.exists(summary_path)
-    
+
 #     # Verify alert for drift
 #     drift_alert = [a for a in summary["alerts"] if a["type"] == "drift"]
 #     assert len(drift_alert) > 0
@@ -164,21 +164,21 @@
 #         "status": "skipped",
 #         "reason": "production data missing",
 #     }
-    
+
 #     quality_report = {
 #         "status": "completed",
 #         "num_rows": 100,
 #         "num_columns": 5,
 #     }
-    
+
 #     summary_path = os.path.join(temp_dir, "summary.json")
-    
+
 #     summary = generate_summary_report(
 #         drift_report=drift_report,
 #         quality_report=quality_report,
 #         output_path=summary_path,
 #     )
-    
+
 #     # Should have info alert about skipped analysis
 #     info_alerts = [a for a in summary["alerts"] if a["severity"] == "info"]
 #     assert len(info_alerts) > 0
@@ -189,21 +189,21 @@
 #     """Test that HTML report contains expected content."""
 #     baseline_path = os.path.join(temp_dir, "baseline.csv")
 #     production_path = os.path.join(temp_dir, "production.csv")
-    
+
 #     sample_baseline_data.to_csv(baseline_path, index=False)
 #     sample_production_data.to_csv(production_path, index=False)
-    
+
 #     report = generate_drift_report(
 #         baseline_path=baseline_path,
 #         production_path=production_path,
 #         output_dir=temp_dir,
 #         target_column="Churn",
 #     )
-    
+
 #     # Read HTML file
 #     with open(report["html_report"], "r") as f:
 #         html_content = f.read()
-    
+
 #     # Check for Evidently markers
 #     assert len(html_content) > 0
 #     # HTML should be substantial (Evidently generates detailed reports)
@@ -214,21 +214,21 @@
 #     """Test that JSON report has expected structure."""
 #     baseline_path = os.path.join(temp_dir, "baseline.csv")
 #     production_path = os.path.join(temp_dir, "production.csv")
-    
+
 #     sample_baseline_data.to_csv(baseline_path, index=False)
 #     sample_production_data.to_csv(production_path, index=False)
-    
+
 #     report = generate_drift_report(
 #         baseline_path=baseline_path,
 #         production_path=production_path,
 #         output_dir=temp_dir,
 #         target_column="Churn",
 #     )
-    
+
 #     # Read JSON file
 #     with open(report["json_report"], "r") as f:
 #         json_data = json.load(f)
-    
+
 #     # Check structure
 #     assert "metrics" in json_data
 #     assert isinstance(json_data["metrics"], list)

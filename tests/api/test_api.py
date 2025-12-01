@@ -1,4 +1,4 @@
-'''from dotenv import load_dotenv
+"""from dotenv import load_dotenv
 import pytest
 import sys, os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
@@ -20,7 +20,8 @@ def test_root(client: TestClient):
 def test_check_health_without_key(client: TestClient):
     response = client.get("/health")
     assert response.status_code == 403
-'''
+"""
+
 '''
 # def test_check_health(client: TestClient):
 #     headers = {"X-API-Key": key}
@@ -103,11 +104,12 @@ Tests unitaires pour l'API Customer Churn
 Fichier: tests/test_api.py
 """
 import os
+from unittest.mock import MagicMock, patch
+
+import numpy as np
+import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import patch, MagicMock
-import pandas as pd
-import numpy as np
 
 # Configurer l'environnement de test AVANT d'importer l'app
 os.environ["ENV"] = "test"
@@ -115,10 +117,10 @@ os.environ["MLFLOW_TRACKING_URI"] = "http://localhost:5000"
 
 from src.api.main import app  # Import corrigé
 
-
 # ═══════════════════════════════════════════════════════════════
 # FIXTURES
 # ═══════════════════════════════════════════════════════════════
+
 
 @pytest.fixture
 def client():
@@ -138,13 +140,14 @@ def sample_customer_data():
         "No_internet_service": 0,
         "TotalCharges": 1500.50,
         "MonthlyCharges": 85.25,
-        "PaperlessBilling": 1
+        "PaperlessBilling": 1,
     }
 
 
 # ═══════════════════════════════════════════════════════════════
 # TESTS DE BASE
 # ═══════════════════════════════════════════════════════════════
+
 
 def test_home_endpoint(client):
     """Test de l'endpoint racine"""
@@ -171,9 +174,9 @@ def test_get_models(mock_search, client):
     mock_version.last_updated_timestamp = 1234567890
     mock_version.description = "Test model"
     mock_version.tags = {"model_name": "TestModel", "cv_mean": "0.85"}
-    
+
     mock_search.return_value = [mock_version]
-    
+
     response = client.get("/models")
     assert response.status_code == 200
     data = response.json()

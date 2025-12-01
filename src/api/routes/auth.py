@@ -1,11 +1,11 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from sqlmodel import Session, select
-from src.api.entities.users import User, UserRead, UserCreate
-from src.api.core.database import engine
 
+from src.api.core.database import engine
 # from src.api.core.database import get_session
-from src.api.core.security import API_KEY_SECRET, hash_password, verify_password
+from src.api.core.security import API_KEY_SECRET, verify_password
+from src.api.entities.users import User, UserRead
 
 # from src.api.core.jwt import create_access_token
 

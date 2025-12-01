@@ -1,37 +1,30 @@
 import asyncio
 import os
-import asyncio
 import random
 import subprocess
 import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from src.api.core.logger import api_logger as logger
-
+import mlflow
+import mlflow.pyfunc
+import mlflow.sklearn
 import numpy as np
 import pandas as pd
 from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException
 from fastapi.concurrency import asynccontextmanager
-from fastapi.responses import JSONResponse
-from fastapi.security import HTTPBearer
 from fastapi.middleware.cors import CORSMiddleware
-from prometheus_fastapi_instrumentator import Instrumentator
-from prometheus_client import Counter, Gauge, Histogram
-
-import mlflow
-import mlflow.pyfunc
-import mlflow.sklearn
+from fastapi.responses import JSONResponse
 from mlflow.tracking import MlflowClient
-
+from prometheus_client import Counter, Gauge, Histogram
+from prometheus_fastapi_instrumentator import Instrumentator
 from pydantic import BaseModel
 
 from src.api.core.database import init_db
+from src.api.core.logger import api_logger as logger
 from src.api.core.security import verify_api_key
 from src.api.entities.customerInput import InputCustomer
 from src.api.routes import auth, users
-from pydantic import BaseModel
-
 
 # Only initialize the database on app import when not running tests.
 ENV = os.getenv("ENV", "dev")
@@ -84,12 +77,12 @@ Instrumentator().instrument(app).expose(app)
 origins = [
     "http://localhost:8081",
     "http://127.0.0.1:8081",
-    "https://customer-churn-dusky.vercel.app"
+    "https://customer-churn-dusky.vercel.app",
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins, #["*"], #origins
+    allow_origins=origins,  # ["*"], #origins
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -197,9 +190,8 @@ async def get_models():
                     "run_id": m.run_id,
                     "description": m.description,
                     "model_name": m.tags.get("model_name"),
-                    "cv_mean":  m.tags.get("cv_mean"),
+                    "cv_mean": m.tags.get("cv_mean"),
                     "test_accuracy": m.tags.get("test_accuracy"),
-                    "run_id": m.run_id,
                 }
                 for m in models
             ]
@@ -464,7 +456,7 @@ active_users = Gauge("churn_api_active_users", "Number of active users")
 async def predict_churn(data=None):
     start_time = time.time()
 
-    results = await predict(data)
+    results = await predict_ab(data)
     result = results["prediction"]
     # Enregistrer les métriques
     prediction_counter.labels(
@@ -476,7 +468,7 @@ async def predict_churn(data=None):
     return result
 
 
-async def predict(data: InputCustomer):
+async def predict_ab(data: InputCustomer):
 
     df = pd.DataFrame([data.model_dump()])
     if app.state.model_A and app.state.model_B:

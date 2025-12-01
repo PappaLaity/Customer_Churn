@@ -1,5 +1,6 @@
 import os
-from sqlmodel import Session, create_engine, SQLModel
+
+from sqlmodel import Session, SQLModel, create_engine
 
 ENV = os.getenv("ENV", "dev")
 
@@ -7,7 +8,9 @@ ENV = os.getenv("ENV", "dev")
 if ENV == "test":
     DATABASE_URL = "sqlite:///./test.db"
 else:
-    DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@db:5432/churn_db")
+    DATABASE_URL = os.getenv(
+        "DATABASE_URL", "postgresql://user:password@db:5432/churn_db"
+    )
 
 # DATABASE_URL = "postgresql+psycopg2://user:password@db:5432/churn_db"
 # DATABASE_URL = "mysql+pymysql://root@localhost/churn_test"

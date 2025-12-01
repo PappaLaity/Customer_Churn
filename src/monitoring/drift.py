@@ -1,8 +1,9 @@
-import os
 import json
+import os
+from typing import Any, Dict
+
 import numpy as np
 import pandas as pd
-from typing import Dict, Any
 from pandas.errors import EmptyDataError, ParserError
 
 
@@ -87,10 +88,14 @@ def detect_drift(
         return report
 
     # Intersect numeric columns
-    num_cols = list(set(_numeric_columns(baseline)).intersection(_numeric_columns(production)))
+    num_cols = list(
+        set(_numeric_columns(baseline)).intersection(_numeric_columns(production))
+    )
     scores = {}
     for col in num_cols:
-        scores[col] = _psi(baseline[col].to_numpy(), production[col].to_numpy(), bins=10)
+        scores[col] = _psi(
+            baseline[col].to_numpy(), production[col].to_numpy(), bins=10
+        )
 
     max_psi = max(scores.values()) if scores else 0.0
     mean_psi = float(np.mean(list(scores.values()))) if scores else 0.0

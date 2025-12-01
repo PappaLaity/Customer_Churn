@@ -1,11 +1,10 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+from pwdlib import PasswordHash
 from sqlmodel import Session, select
+
 from src.api.core.database import engine
 from src.api.core.security import hash_password, verify_api_key
 from src.api.entities.users import User, UserCreate, UserRead, UserUpdate
-from fastapi import Depends, HTTPException, status
-
-from pwdlib import PasswordHash
 
 pwd_hash = PasswordHash.recommended()
 router = APIRouter(prefix="/users", tags=["Users"])

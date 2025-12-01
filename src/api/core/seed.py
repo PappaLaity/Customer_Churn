@@ -1,12 +1,11 @@
+from pwdlib import PasswordHash
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
-from pwdlib import PasswordHash
 
-from src.api.core.logger import api_logger as logger
-
-from src.api.utils.enum.UserRole import UserRole
 from src.api.core.database import get_session
+from src.api.core.logger import api_logger as logger
 from src.api.entities.users import User
+from src.api.utils.enum.UserRole import UserRole
 
 # Initialisation de l'instance Argon2
 pwd_context = PasswordHash.recommended()  # par défaut, utilise Argon2id
@@ -16,8 +15,10 @@ def seed_admin():
     # Use next() to get the session from the generator
     db = next(get_session())
     try:
-        existing_admin = db.exec(select(User).where(User.email == "admin@example.com")).first()
-        
+        existing_admin = db.exec(
+            select(User).where(User.email == "admin@example.com")
+        ).first()
+
         if not existing_admin:
             admin = User(
                 username="Admin",
@@ -59,7 +60,7 @@ if __name__ == "__main__":
 
 # def seed_admin(session: Session = None):
 #     """Crée un admin par défaut. Si session est None, utilise get_session()"""
-    
+
 #     # Si pas de session fournie, utiliser le générateur
 #     if session is None:
 #         db = next(get_session())
@@ -67,10 +68,10 @@ if __name__ == "__main__":
 #     else:
 #         db = session
 #         should_close = False
-    
+
 #     try:
 #         existing_admin = db.exec(select(User).where(User.email == "admin@example.com")).first()
-        
+
 #         if not existing_admin:
 #             admin = User(
 #                 username="Admin",
