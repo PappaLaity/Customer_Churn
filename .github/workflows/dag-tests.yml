@@ -10,6 +10,11 @@ on:
     paths:
       - 'dags/**'
 
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
 jobs:
   validate-dags:
     runs-on: ubuntu-latest
@@ -58,7 +63,8 @@ jobs:
     
     - name: Run DAG tests
       run: |
-        pytest tests/test_drift_retrain_dag.py -v --tb=short --junit-xml=junit/dag-test-results.xml
+        mkdir -p junit
+        pytest tests/test_drift_retrain_dag.py -v --tb=short -p no:cacheprovider --junit-xml=junit/dag-test-results.xml
     
     - name: Publish DAG test results
       uses: EnricoMi/publish-unit-test-result-action@v2

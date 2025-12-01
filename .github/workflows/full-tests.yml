@@ -7,6 +7,11 @@ on:
   schedule:
     - cron: '0 0 * * 0'  # Weekly on Sunday
 
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
 jobs:
   full-test:
     runs-on: ubuntu-latest
@@ -31,7 +36,9 @@ jobs:
     - name: Run all tests with coverage
       run: |
         export ENV=test
+        mkdir -p junit
         pytest tests/ -v \
+          -p no:cacheprovider \
           --cov=src \
           --cov-report=html \
           --cov-report=term \
@@ -62,4 +69,4 @@ jobs:
     
     - name: Check coverage threshold
       run: |
-        pytest tests/ --cov=src --cov-fail-under=60 --cov-report=term
+        pytest tests/ -p no:cacheprovider --cov=src --cov-fail-under=60 --cov-report=term
