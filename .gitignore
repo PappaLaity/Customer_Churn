@@ -226,8 +226,8 @@ src/**/__pycache__/
 # DVC cache/remote local
 # remote/
 models
-# data.dvc
-data
+
+
 
 # Python
 __pycache__/
