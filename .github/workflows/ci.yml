@@ -184,7 +184,7 @@ name: CI/CD TEST Pipeline
 run-name: CI/CD Pipeline - by  @${{ github.actor }}
 on:
   push:
-    branches: ["mlops-improvements"]
+    branches: ["refactor/mlops-improvements"]
     paths:
       - '**/*.py'
       - 'requirements.txt'
