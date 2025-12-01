@@ -2,13 +2,13 @@ name: CI/CD TEST Pipeline
 run-name: CI/CD Pipeline - by  @${{ github.actor }}
 on:
   push:
-    branches: ["develop"]
+  #  branches: ["develop"] 
     paths: 
       - '**/*.py'
       - 'requirements.txt'
       - '.github/workflows/**'
   pull_request:
-    branches: ["develop"]
+    #branches: ["develop"]
   workflow_dispatch:
 
 jobs:
