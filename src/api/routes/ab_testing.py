@@ -3,6 +3,9 @@
 This router handles A/B test experiment configuration management.
 """
 
+import os
+from pathlib import Path
+
 from fastapi import APIRouter, Depends, HTTPException, Request
 
 from src.api.core.security import verify_api_key
@@ -72,3 +75,55 @@ async def set_ab_config(update: AbConfigUpdate, request: Request):
             "sticky_header": cfg.sticky_header,
         },
     }
+
+
+@router.get("/results", dependencies=[Depends(verify_api_key)])
+async def get_ab_results(metric: str = "latency"):
+    """Get A/B test statistical analysis results.
+    
+    Analyzes the exposure logs and provides statistical comparison
+    between variant A (Production) and variant B (Staging).
+    
+    Args:
+        metric: Metric to analyze ('latency' supported currently)
+        
+    Returns:
+        Statistical analysis results including:
+        - Sample sizes per variant
+        - Metric values per variant
+        - Lift percentage
+        - Statistical significance (p-value)
+        - Recommendation (PROMOTE/CONTINUE/ROLLBACK)
+        
+    Raises:
+        HTTPException: If analysis fails or insufficient data
+    """
+    from src.experiments.ab_analysis import generate_report
+    
+    exposures_path = os.getenv("AB_EXPOSURES_PATH", "data/experiments/ab_exposures.csv")
+    
+    if not Path(exposures_path).exists():
+        raise HTTPException(
+            status_code=404,
+            detail="No A/B test data found. Run some experiments first."
+        )
+    
+    try:
+        report = generate_report(
+            exposures_path=exposures_path,
+            metric=metric,
+        )
+        
+        if report['status'] == 'error':
+            raise HTTPException(
+                status_code=400,
+                detail=report['error']
+            )
+        
+        return report
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Analysis failed: {str(e)}"
+        )

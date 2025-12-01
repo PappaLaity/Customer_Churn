@@ -69,5 +69,5 @@ def test_set_ab_config_invalid_bucket_pct(client: TestClient, auth_headers, mock
     payload = {"bucket_b_pct": "not_a_number"}
     
     response = client.post("/ab/config", json=payload, headers=auth_headers)
-    # Should return 400 bad request
-    assert response.status_code == 400
+    # FastAPI returns 422 for Pydantic validation errors
+    assert response.status_code == 422

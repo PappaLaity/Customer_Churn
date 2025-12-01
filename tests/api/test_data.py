@@ -14,10 +14,8 @@ def test_get_customers_infos_without_auth(client: TestClient):
 
 def test_get_customers_infos_no_file(client: TestClient, auth_headers, mocker):
     """Test /customers/infos when production file doesn't exist."""
-    # Mock Path.exists to return False
-    mock_path = mocker.MagicMock()
-    mock_path.exists.return_value = False
-    mocker.patch("pathlib.Path", return_value=mock_path)
+    # Mock the Path.exists() method directly on the data route's Path usage
+    mocker.patch("src.api.routes.data.Path.exists", return_value=False)
     
     response = client.get("/customers/infos", headers=auth_headers)
     assert response.status_code == 200

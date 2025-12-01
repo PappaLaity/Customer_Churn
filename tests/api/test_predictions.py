@@ -73,26 +73,16 @@ def test_survey_submit(client: TestClient, mock_app_state, mocker, tmp_path):
         return_value={"model": "Test", "prediction": 1, "latency": 0.1}
     )
     
+    # Updated payload to match InputCustomer schema (preprocessed features)
     payload = {
-        "gender": "Male",
-        "SeniorCitizen": 0,
-        "Partner": "Yes",
-        "Dependents": "No",
-        "tenure": 12,
-        "PhoneService": "Yes",
-        "MultipleLines": "No",
-        "InternetService": "Fiber optic",
-        "OnlineSecurity": "No",
-        "OnlineBackup": "Yes",
-        "DeviceProtection": "No",
-        "TechSupport": "No",
-        "StreamingTV": "No",
-        "StreamingMovies": "No",
-        "Contract": "Month-to-month",
-        "PaperlessBilling": "Yes",
-        "PaymentMethod": "Electronic check",
+        "tenure": 12.0,
+        "InternetService_Fiber_optic": True,
+        "Contract_Two_year": False,
+        "PaymentMethod_Electronic_check": True,
+        "No_internet_service": 0,
+        "TotalCharges": 844.2,
         "MonthlyCharges": 70.35,
-        "TotalCharges": 844.2
+        "PaperlessBilling": 1
     }
     
     response = client.post("/survey/submit", json=payload)
