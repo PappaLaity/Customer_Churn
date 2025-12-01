@@ -1,0 +1,65 @@
+name: Full Test Suite
+
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly on Sunday
+
+jobs:
+  full-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+    
+    - name: Install all dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-airflow.txt
+        pip install pytest pytest-mock pytest-cov
+    
+    - name: Run all tests with coverage
+      run: |
+        export ENV=test
+        pytest tests/ -v \
+          --cov=src \
+          --cov-report=html \
+          --cov-report=term \
+          --cov-report=xml \
+          --junit-xml=junit/full-test-results.xml
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        files: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+    
+    - name: Upload coverage report
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: coverage-report
+        path: htmlcov/
+    
+    - name: Publish test results
+      uses: EnricoMi/publish-unit-test-result-action@v2
+      if: always()
+      with:
+        files: |
+          junit/full-test-results.xml
+    
+    - name: Check coverage threshold
+      run: |
+        pytest tests/ --cov=src --cov-fail-under=60 --cov-report=term

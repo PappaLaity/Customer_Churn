@@ -7,6 +7,7 @@ This module handles:
 """
 
 import asyncio
+import logging
 import os
 import subprocess
 from contextlib import asynccontextmanager
@@ -31,6 +32,8 @@ MODEL_STAGE = os.getenv("MODEL_STAGE", "Production")
 
 mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
 
+logger = logging.getLogger(__name__)
+
 
 async def load_models(app: FastAPI, model_name: str = MODEL_NAME) -> None:
     """Load Production and Staging models from MLflow registry.
@@ -52,10 +55,16 @@ async def load_models(app: FastAPI, model_name: str = MODEL_NAME) -> None:
                 app.state.app_state.stag_version = m.version
                 app.state.app_state.stag_source = m.source
 
-        print(f"Production model version: {app.state.app_state.prod_version}, "
-              f"source: {app.state.app_state.prod_source}")
-        print(f"Staging model version: {app.state.app_state.stag_version}, "
-              f"source: {app.state.app_state.stag_source}")
+        logger.info(
+            "Production model version: %s, source: %s",
+            app.state.app_state.prod_version,
+            app.state.app_state.prod_source
+        )
+        logger.info(
+            "Staging model version: %s, source: %s",
+            app.state.app_state.stag_version,
+            app.state.app_state.stag_source
+        )
         
         # Try to load sklearn models for fast inference
         try:
@@ -63,21 +72,21 @@ async def load_models(app: FastAPI, model_name: str = MODEL_NAME) -> None:
                 app.state.app_state.model_A = mlflow.sklearn.load_model(
                     app.state.app_state.prod_source
                 )
-                print(f"Loaded Production model: {app.state.app_state.prod_source}")
+                logger.info("Loaded Production model: %s", app.state.app_state.prod_source)
             
             if app.state.app_state.stag_source:
                 app.state.app_state.model_B = mlflow.sklearn.load_model(
                     app.state.app_state.stag_source
                 )
-                print(f"Loaded Staging model: {app.state.app_state.stag_source}")
+                logger.info("Loaded Staging model: %s", app.state.app_state.stag_source)
         except Exception as e:
             # Non-fatal: keep running without preloaded sklearn models
             app.state.app_state.model_A = None
             app.state.app_state.model_B = None
-            print(f"Error loading sklearn model(s); continuing without preload: {e}")
+            logger.error("Error loading sklearn model(s); continuing without preload: %s", e, exc_info=True)
             
     except Exception as e:
-        print(f"Error loading models from registry: {e}")
+        logger.error("Error loading models from registry: %s", e, exc_info=True)
 
 
 async def model_reloader(app: FastAPI, interval: int = 300) -> None:
@@ -93,7 +102,7 @@ async def model_reloader(app: FastAPI, interval: int = 300) -> None:
         try:
             await load_models(app, MODEL_NAME)
         except Exception as e:
-            print(f"Error during periodic model reload: {e}")
+            logger.error("Error during periodic model reload: %s", e, exc_info=True)
         
         await asyncio.sleep(interval)
 
@@ -101,11 +110,11 @@ async def model_reloader(app: FastAPI, interval: int = 300) -> None:
 def sync_dvc_data() -> None:
     """Synchronize DVC-tracked data (non-blocking on failure)."""
     try:
-        print("Pulling DVC data...")
+        logger.info("Pulling DVC data...")
         subprocess.run(["dvc", "pull", "-v"], check=True)
-        print("DVC data synchronized.")
+        logger.info("DVC data synchronized")
     except Exception as e:
-        print(f"DVC pull failed: {e}")
+        logger.error("DVC pull failed: %s", e, exc_info=True)
 
 
 @asynccontextmanager
@@ -140,7 +149,7 @@ async def lifespan(app: FastAPI):
     try:
         await load_models(app, MODEL_NAME)
     except Exception as e:
-        print(f"Initial model preload skipped due to error: {e}")
+        logger.warning("Initial model preload skipped due to error: %s", e)
     
     # Start background model reloader task
     reloader_task = asyncio.create_task(model_reloader(app, interval=300))
@@ -150,4 +159,4 @@ async def lifespan(app: FastAPI):
     finally:
         # Cleanup on shutdown
         reloader_task.cancel()
-        print("Application shutdown complete.")
+        logger.info("Application shutdown complete")

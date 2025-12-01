@@ -26,3 +26,4 @@ pydantic[email]
 httpx
 evidently
 alibi-detect
+pytest-mock

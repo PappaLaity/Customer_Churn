@@ -6,6 +6,7 @@ This router handles:
 """
 
 import asyncio
+import logging
 from pathlib import Path
 
 import pandas as pd
@@ -16,6 +17,8 @@ from src.api.core.security import verify_api_key
 
 
 router = APIRouter(tags=["data"])
+
+logger = logging.getLogger(__name__)
 
 
 @router.get("/customers/infos", dependencies=[Depends(verify_api_key)])
@@ -94,6 +97,6 @@ async def dvc_push_background():
     stdout, stderr = await process.communicate()
 
     if process.returncode == 0:
-        print("[DVC] Push successful:\n", stdout.decode())
+        logger.info("DVC push successful: %s", stdout.decode())
     else:
-        print("[DVC] Push failed:\n", stderr.decode())
+        logger.error("DVC push failed: %s", stderr.decode())

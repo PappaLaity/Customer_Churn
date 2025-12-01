@@ -27,28 +27,28 @@ print(all_methods[:30])
 # Try to save
 try:
     if hasattr(report, 'save_html'):
-        print("\n✅ save_html() method exists")
+        print("\n save_html() method exists")
         report.save_html('/tmp/test_report.html')
-        print("✅ Saved HTML successfully")
+        print("Saved HTML successfully")
     else:
-        print("\n❌ save_html() method NOT found")
+        print("\n save_html() method NOT found")
 except Exception as e:
-    print(f"❌ Error saving: {e}")
+    print(f" Error saving: {e}")
 
 # Try as_dict
 try:
     if hasattr(report, 'as_dict'):
-        print("\n✅ as_dict() method exists")
+        print("\n as_dict() method exists")
     else:
-        print("\n❌ as_dict() method NOT found")
+        print("\n as_dict() method NOT found")
 except Exception as e:
-    print(f"❌ Error: {e}")
+    print(f" Error: {e}")
 
 # Try json
 try:
     if hasattr(report, 'json'):
-        print("\n✅ json() method exists")
+        print("\n json() method exists")
     else:
-        print("\n❌ json() method NOT found")
+        print("\n json() method NOT found")
 except Exception as e:
-    print(f"❌ Error: {e}")
+    print(f" Error: {e}")

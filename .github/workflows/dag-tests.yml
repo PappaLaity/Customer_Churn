@@ -1,0 +1,68 @@
+name: DAG Validation
+
+on:
+  push:
+    paths:
+      - 'dags/**'
+      - 'src/**'
+      - 'requirements-airflow.txt'
+  pull_request:
+    paths:
+      - 'dags/**'
+
+jobs:
+  validate-dags:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+    
+    - name: Install Airflow dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements-airflow.txt
+    
+    - name: Validate DAG syntax
+      run: |
+        export AIRFLOW__CORE__DAGS_FOLDER=./dags
+        export AIRFLOW__CORE__LOAD_EXAMPLES=False
+        python -c "
+        import sys
+        sys.path.insert(0, '.')
+        
+        # Validate drift_retrain_dag
+        try:
+            from dags.drift_retrain_dag import dag
+            print(f'✅ DAG {dag.dag_id} is valid')
+            print(f'   Tasks: {len(dag.tasks)}')
+        except Exception as e:
+            print(f'❌ drift_retrain_dag failed: {e}')
+            sys.exit(1)
+        
+        # Validate etl_version_train_dag  
+        try:
+            from dags.etl_version_train_dag import dag as etl_dag
+            print(f'✅ DAG {etl_dag.dag_id} is valid')
+            print(f'   Tasks: {len(etl_dag.tasks)}')
+        except Exception as e:
+            print(f'❌ etl_version_train_dag failed: {e}')
+            sys.exit(1)
+        "
+    
+    - name: Run DAG tests
+      run: |
+        pytest tests/test_drift_retrain_dag.py -v --tb=short --junit-xml=junit/dag-test-results.xml
+    
+    - name: Publish DAG test results
+      uses: EnricoMi/publish-unit-test-result-action@v2
+      if: always()
+      with:
+        files: |
+          junit/dag-test-results.xml
