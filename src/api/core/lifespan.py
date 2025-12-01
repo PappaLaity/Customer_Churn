@@ -1,0 +1,153 @@
+"""Application lifespan management and model loading.
+
+This module handles:
+- Application startup (DVC sync, DB init, model loading)
+- Background tasks (periodic model reloading)
+- Application shutdown
+"""
+
+import asyncio
+import os
+import subprocess
+from contextlib import asynccontextmanager
+from typing import Optional
+
+import mlflow
+import mlflow.pyfunc
+import mlflow.sklearn
+from fastapi import FastAPI
+from mlflow.tracking import MlflowClient
+
+from src.api.core.database import init_db
+from src.api.core.state import AppState
+from src.experiments.ab import ExperimentConfig
+
+
+# Environment variables
+ENV = os.getenv("ENV", "dev")
+MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI", "http://mlflow:5000")
+MODEL_NAME = os.getenv("MODEL_REGISTRY_NAME", "CustomerChurnModel")
+MODEL_STAGE = os.getenv("MODEL_STAGE", "Production")
+
+mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+
+
+async def load_models(app: FastAPI, model_name: str = MODEL_NAME) -> None:
+    """Load Production and Staging models from MLflow registry.
+    
+    Args:
+        app: FastAPI application instance
+        model_name: Name of the model in MLflow registry
+    """
+    try:
+        models = mlflow.search_model_versions(
+            filter_string=f"name='{model_name}'", max_results=1000
+        )
+        
+        for m in models:
+            if m.current_stage == "Production":
+                app.state.app_state.prod_version = m.version
+                app.state.app_state.prod_source = m.source
+            if m.current_stage == "Staging":
+                app.state.app_state.stag_version = m.version
+                app.state.app_state.stag_source = m.source
+
+        print(f"Production model version: {app.state.app_state.prod_version}, "
+              f"source: {app.state.app_state.prod_source}")
+        print(f"Staging model version: {app.state.app_state.stag_version}, "
+              f"source: {app.state.app_state.stag_source}")
+        
+        # Try to load sklearn models for fast inference
+        try:
+            if app.state.app_state.prod_source:
+                app.state.app_state.model_A = mlflow.sklearn.load_model(
+                    app.state.app_state.prod_source
+                )
+                print(f"Loaded Production model: {app.state.app_state.prod_source}")
+            
+            if app.state.app_state.stag_source:
+                app.state.app_state.model_B = mlflow.sklearn.load_model(
+                    app.state.app_state.stag_source
+                )
+                print(f"Loaded Staging model: {app.state.app_state.stag_source}")
+        except Exception as e:
+            # Non-fatal: keep running without preloaded sklearn models
+            app.state.app_state.model_A = None
+            app.state.app_state.model_B = None
+            print(f"Error loading sklearn model(s); continuing without preload: {e}")
+            
+    except Exception as e:
+        print(f"Error loading models from registry: {e}")
+
+
+async def model_reloader(app: FastAPI, interval: int = 300) -> None:
+    """Background task to periodically reload models from MLflow.
+    
+    Args:
+        app: FastAPI application instance
+        interval: Reload interval in seconds (default: 300 = 5 minutes)
+    """
+    await asyncio.sleep(5)  # Initial delay
+    
+    while True:
+        try:
+            await load_models(app, MODEL_NAME)
+        except Exception as e:
+            print(f"Error during periodic model reload: {e}")
+        
+        await asyncio.sleep(interval)
+
+
+def sync_dvc_data() -> None:
+    """Synchronize DVC-tracked data (non-blocking on failure)."""
+    try:
+        print("Pulling DVC data...")
+        subprocess.run(["dvc", "pull", "-v"], check=True)
+        print("DVC data synchronized.")
+    except Exception as e:
+        print(f"DVC pull failed: {e}")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """FastAPI lifespan context manager.
+    
+    Handles:
+    - Database initialization
+    - DVC data synchronization
+    - AppState initialization
+    - Model loading
+    - Background task setup
+    
+    Args:
+        app: FastAPI application instance
+    """
+    # Initialize database (skip in test environment)
+    if ENV != "test":
+        init_db()
+
+    # Sync DVC data
+    sync_dvc_data()
+
+    # Initialize application state
+    app.state.app_state = AppState()
+    
+    # Initialize A/B testing configuration
+    ab_enabled_env = os.getenv("AB_ENABLED", "true").lower() in {"1", "true", "yes"}
+    app.state.app_state.ab_config = ExperimentConfig(enabled=ab_enabled_env)
+
+    # Load models (non-fatal on failure)
+    try:
+        await load_models(app, MODEL_NAME)
+    except Exception as e:
+        print(f"Initial model preload skipped due to error: {e}")
+    
+    # Start background model reloader task
+    reloader_task = asyncio.create_task(model_reloader(app, interval=300))
+
+    try:
+        yield  # Application runs here
+    finally:
+        # Cleanup on shutdown
+        reloader_task.cancel()
+        print("Application shutdown complete.")
