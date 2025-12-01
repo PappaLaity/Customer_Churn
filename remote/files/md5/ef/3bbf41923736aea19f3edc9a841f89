@@ -1,0 +1,3 @@
+ts,endpoint,subject_id,bucket,model,model_version,latency_sec
+2025-11-30T20:47:47.777187,/survey/submit,,A,Production(v1),1,0.378718
+2025-11-30T20:59:49.222623,/survey/submit,,B,Staging(v2),2,0.160928

@@ -25,7 +25,7 @@ default_args = {
 
 # Define the DAG
 with DAG(
-    'Customer_Churn_DVC_pipeline',
+    'Customer_Churn_DVC_pipeline_Train_Eval',
     default_args=default_args,
     description='Preprocess, version, train, and evaluate customer churn models',
     schedule_interval="@once",
@@ -38,7 +38,7 @@ with DAG(
     def pull_dvc_data():
         repo_dir = '/opt/airflow'
         result = subprocess.run(
-            ["dvc", "pull", "-v"],
+            ["dvc", "pull", "-v", "--force"],
             cwd=repo_dir,
             capture_output=True,
             text=True

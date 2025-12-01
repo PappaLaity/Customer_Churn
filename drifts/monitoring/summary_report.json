@@ -1,18 +1,18 @@
 {
-  "timestamp": "2025-11-30T20:24:34.596637",
+  "timestamp": "2025-12-01T01:22:59.124930",
   "drift_analysis": {
     "status": "completed",
-    "timestamp": "2025-11-30T20:24:34.594313",
-    "html_report": "/opt/airflow/drifts/monitoring/reports/drift_report_20251130_202434.html",
+    "timestamp": "2025-12-01T01:22:59.121210",
+    "html_report": "/opt/airflow/drifts/monitoring/reports/drift_report_20251201_012258.html",
     "drift_detected": true,
     "drift_share": 0.5,
     "num_columns": 5
   },
   "data_quality": {
     "status": "completed",
-    "timestamp": "2025-11-30T20:24:34.596440",
+    "timestamp": "2025-12-01T01:22:59.124605",
     "html_report": null,
-    "json_report": "/opt/airflow/drifts/monitoring/reports/production_data_quality_20251130_202434.json",
+    "json_report": "/opt/airflow/drifts/monitoring/reports/production_data_quality_20251201_012259.json",
     "num_rows": 200,
     "num_columns": 21
   },

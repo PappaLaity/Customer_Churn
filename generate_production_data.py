@@ -83,8 +83,8 @@ def generate_production_data(n_samples=200):
     output_path = 'data/production/production.csv'
     df.to_csv(output_path, index=False)
     
-    print(f"✅ Created realistic production data with {n_samples} rows and {len(df.columns)} columns")
-    print(f"📊 Saved to: {output_path}")
+    print(f"Created realistic production data with {n_samples} rows and {len(df.columns)} columns")
+    print(f"Saved to: {output_path}")
     print("\nData Summary:")
     print(df[['MonthlyCharges', 'tenure', 'Churn']].describe())
     print(f"\nChurn Rate: {df['Churn'].value_counts(normalize=True).get('Yes', 0):.2%}")
