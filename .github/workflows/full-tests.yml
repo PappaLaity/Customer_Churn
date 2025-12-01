@@ -36,37 +36,19 @@ jobs:
     - name: Run all tests with coverage
       run: |
         export ENV=test
-        mkdir -p junit
         pytest tests/ -v \
-          -p no:cacheprovider \
+          -o cache_dir=/tmp/pytest_cache \
           --cov=src \
           --cov-report=html \
           --cov-report=term \
-          --cov-report=xml \
-          --junit-xml=junit/full-test-results.xml
-    
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        files: ./coverage.xml
-        flags: unittests
-        name: codecov-umbrella
-        fail_ci_if_error: false
+          --cov-report=xml
     
     - name: Upload coverage report
       uses: actions/upload-artifact@v3
-      if: always()
       with:
         name: coverage-report
         path: htmlcov/
     
-    - name: Publish test results
-      uses: EnricoMi/publish-unit-test-result-action@v2
-      if: always()
-      with:
-        files: |
-          junit/full-test-results.xml
-    
     - name: Check coverage threshold
       run: |
-        pytest tests/ -p no:cacheprovider --cov=src --cov-fail-under=60 --cov-report=term
+        pytest tests/ -o cache_dir=/tmp/pytest_cache --cov=src --cov-fail-under=60 --cov-report=term

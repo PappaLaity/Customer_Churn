@@ -38,12 +38,4 @@ jobs:
     - name: Run API tests
       run: |
         export ENV=test
-        mkdir -p junit
-        pytest tests/api/ -v --tb=short -p no:cacheprovider --junit-xml=junit/test-results.xml
-    
-    - name: Publish test results
-      uses: EnricoMi/publish-unit-test-result-action@v2
-      if: always()
-      with:
-        files: |
-          junit/test-results.xml
+        pytest tests/api/ -v --tb=short -o cache_dir=/tmp/pytest_cache
