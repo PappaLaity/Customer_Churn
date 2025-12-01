@@ -37,7 +37,6 @@ jobs:
       run: |
         export ENV=test
         pytest tests/ -v \
-          -o cache_dir=/tmp/pytest_cache \
           --cov=src \
           --cov-report=html \
           --cov-report=term \
@@ -51,4 +50,4 @@ jobs:
     
     - name: Check coverage threshold
       run: |
-        pytest tests/ -o cache_dir=/tmp/pytest_cache --cov=src --cov-fail-under=60 --cov-report=term
+        pytest tests/ --cov=src --cov-fail-under=60 --cov-report=term

@@ -38,4 +38,4 @@ jobs:
     - name: Run API tests
       run: |
         export ENV=test
-        pytest tests/api/ -v --tb=short -o cache_dir=/tmp/pytest_cache
+        pytest tests/api/ -v --tb=short
