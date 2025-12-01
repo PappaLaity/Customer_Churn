@@ -6,6 +6,7 @@ on:
       - 'dags/**'
       - 'src/**'
       - 'requirements-airflow.txt'
+      - '.github/workflows/dag-tests.yml'
   pull_request:
     paths:
       - 'dags/**'
