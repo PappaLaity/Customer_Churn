@@ -4,6 +4,7 @@ import pytest
 from sqlalchemy import create_engine, text
 import os
 
+@pytest.mark.integration
 def test_database_connection():
     """Vérifie que la connexion DB fonctionne"""
     DATABASE_URL = os.getenv(
@@ -20,6 +21,7 @@ def test_database_connection():
     print("✅ Database connection successful")
 
 
+@pytest.mark.integration
 def test_users_table_exists():
     """Vérifie que la table users existe"""
     DATABASE_URL = os.getenv(

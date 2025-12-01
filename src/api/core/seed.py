@@ -2,6 +2,8 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from pwdlib import PasswordHash
 
+from src.api.core.logger import api_logger as logger
+
 from src.api.utils.enum.UserRole import UserRole
 from src.api.core.database import get_session
 from src.api.entities.users import User
@@ -26,15 +28,15 @@ def seed_admin():
             )
             db.add(admin)
             db.commit()
-            print("Admin par défaut créé (Argon2 utilisé) !")
+            logger.info("Admin par défaut créé (Argon2 utilisé) !")
         else:
-            print("Admin déjà existant.")
+            logger.info("Admin déjà existant.")
     except IntegrityError as e:
         db.rollback()
-        print("Erreur lors de la création de l'admin :", e)
+        logger.info("Erreur lors de la création de l'admin :", e)
     except Exception as e:
         db.rollback()
-        print(f"Erreur inattendue: {e}")
+        logger.info(f"Erreur inattendue: {e}")
     finally:
         db.close()
 
@@ -79,15 +81,15 @@ if __name__ == "__main__":
 #             )
 #             db.add(admin)
 #             db.commit()
-#             print("Admin par défaut créé (Argon2 utilisé) !")
+#             logger.info("Admin par défaut créé (Argon2 utilisé) !")
 #         else:
-#             print("Admin déjà existant.")
+#             logger.info("Admin déjà existant.")
 #     except IntegrityError as e:
 #         db.rollback()
-#         print("Erreur lors de la création de l'admin :", e)
+#         logger.info("Erreur lors de la création de l'admin :", e)
 #     except Exception as e:
 #         db.rollback()
-#         print(f"Erreur inattendue: {e}")
+#         logger.info(f"Erreur inattendue: {e}")
 #     finally:
 #         if should_close:
 #             db.close()

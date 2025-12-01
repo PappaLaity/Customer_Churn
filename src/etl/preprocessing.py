@@ -238,6 +238,8 @@ import numpy as np
 import os
 import logging
 
+from src.api.core.logger import api_logger as logger
+
 
 def preprocess_data():
     """
@@ -390,4 +392,4 @@ def preprocess_data():
 # if __name__ == "__main__":
 #     # quick local check
 #     X_train, X_test, y_train, y_test = preprocess_data()
-#     print("Preprocessing complete.", X_train.shape, X_test.shape, y_train.shape, y_test.shape)
+#     logger.info("Preprocessing complete.", X_train.shape, X_test.shape, y_train.shape, y_test.shape)

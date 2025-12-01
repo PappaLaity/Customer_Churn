@@ -2,13 +2,13 @@ name: CI/CD TEST Pipeline
 run-name: CI/CD Pipeline - by  @${{ github.actor }}
 on:
   push:
-    branches: ["mlops-improvements"]
-    paths:
+  #  branches: ["develop"] 
+    paths: 
       - '**/*.py'
       - 'requirements.txt'
       - '.github/workflows/**'
   pull_request:
-    branches: ["develop"]
+    #branches: ["develop"]
   workflow_dispatch:
 
 jobs:
@@ -28,9 +28,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run tests (unit only)
-        run: |
-          ENV=test MLFLOW_TRACKING_URI=file:///tmp/mlruns pytest -m "not integration"
+      - name: Run tests
+        run: pytest
 
   # ═════════════════════════════════════════════════════════════
   # JOB 1: Linting (Qualité du code)
@@ -126,9 +125,9 @@ jobs:
           pip install -r requirements.txt
           pip install pytest pytest-cov pytest-mock
       
-      - name: Run tests with coverage (exclude integration)
+      - name: Run tests with coverage
         run: |
-          pytest tests/ -v -m "not integration" \
+          pytest tests/ -v \
             --cov=src \
             --cov-report=xml \
             --cov-report=term-missing \
@@ -158,25 +157,25 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       
-      - name: Build Docker images (local compose)
+      - name: Build Docker images
         run: |
-          docker compose -f docker-compose.local.yml build
+          docker compose build
       
-      - name: Start services (local compose)
+      - name: Start services
         run: |
-          docker compose -f docker-compose.local.yml up -d
-          sleep 30
+          docker compose up -d
+          sleep 30  # Attendre que les services démarrent
       
       - name: Check services health
         run: |
-          docker compose -f docker-compose.local.yml ps
-          docker compose -f docker-compose.local.yml logs churn_api
+          docker compose ps
+          docker compose logs churn_api
       
       - name: Run integration tests
         run: |
-          docker compose -f docker-compose.local.yml exec -T churn_api pytest tests/ -v -m "integration"
+          docker compose exec -T churn_api pytest tests/ -v -m "integration"
       
       - name: Cleanup
         if: always()
         run: |
-          docker compose -f docker-compose.local.yml down -v
+          docker compose down -v

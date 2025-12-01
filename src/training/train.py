@@ -15,6 +15,8 @@ from src.etl.preprocessing import preprocess_data
 from mlflow.tracking import MlflowClient
 from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score, f1_score
 
+from src.api.core.logger import api_logger as logger
+
 
 
 load_dotenv()
@@ -54,7 +56,7 @@ def train_and_log_models(cv_folds=5):
 
     for name, model in models.items():
         with mlflow.start_run(run_name=name) as run:
-            print(f"\n Training model: {name}")
+            logger.info(f"\n Training model: {name}")
             registry_name = model_registry_name + "_" + name
             # --- Train and evaluate ---
             cv_scores = cross_val_score(
@@ -142,8 +144,8 @@ def train_and_log_models(cv_folds=5):
 
     # Find the best run by test accuracy
     best_run = max(results, key=lambda x: x["test_accuracy"])
-    print(f"\n Best model: {best_run['model_name']} ({best_run['test_accuracy']:.4f})")
-    print(f"Run ID: {best_run['run_id']}")
+    logger.info(f"\n Best model: {best_run['model_name']} ({best_run['test_accuracy']:.4f})")
+    logger.info(f"Run ID: {best_run['run_id']}")
     return best_run
 
 def register_best_model(best_run, model_registry_name="CustomerChurnModel"):
@@ -153,9 +155,9 @@ def register_best_model(best_run, model_registry_name="CustomerChurnModel"):
     
     try:
         client.create_registered_model(model_registry_name)
-        print(f"Created new registered model: {model_registry_name}")
+        logger.info(f"Created new registered model: {model_registry_name}")
     except Exception as e:
-        print(f"Model registry already exists: {model_registry_name}")
+        logger.info(f"Model registry already exists: {model_registry_name}")
 
     # Register new version
     version = client.create_model_version(
@@ -163,7 +165,7 @@ def register_best_model(best_run, model_registry_name="CustomerChurnModel"):
         source=f"runs:/{run_id}/model",
         run_id=run_id
     )
-    print(f"Registered version {version.version}")
+    logger.info(f"Registered version {version.version}")
 
     # Update metadata
     client.update_model_version(
@@ -209,11 +211,11 @@ def register_best_model(best_run, model_registry_name="CustomerChurnModel"):
         stage=status,
         archive_existing_versions=True,
     )
-    print(f"Promoted version {version.version} to {status} stage")
+    logger.info(f"Promoted version {version.version} to {status} stage")
 
     # Verify all versions
     models = client.search_model_versions(f"name='{model_registry_name}'")
-    print(f"\nModel Registry Status:")
+    logger.info(f"\nModel Registry Status:")
     for model in models:
         print(f" Version {model.version}: {model.current_stage} "
               f"(Created: {model.creation_timestamp})")

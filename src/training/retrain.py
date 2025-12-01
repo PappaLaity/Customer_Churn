@@ -2,6 +2,8 @@ import os
 import argparse
 from typing import Tuple, Dict, Any, List
 
+from src.api.core.logger import api_logger as logger
+
 import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
@@ -51,7 +53,7 @@ def _align_and_concat(feature_df: pd.DataFrame, prod_df: pd.DataFrame, label: st
     feature_df = _ensure_label(feature_df, label)
     # If production lacks label, fall back to features only
     if label not in prod_df.columns:
-        print("[WARN] Production data has no 'Churn' label. Training on features only.")
+        logger.info("[WARN] Production data has no 'Churn' label. Training on features only.")
         return feature_df
 
     # Intersect columns to ensure alignment
@@ -105,7 +107,7 @@ def _train_and_log_from_arrays(X_train, X_test, y_train, y_test) -> Dict[str, An
     results: List[Dict[str, Any]] = []
     for name, model in _models().items():
         with mlflow.start_run(run_name=f"Retrain - {name}") as run:
-            print(f"Training model: {name}")
+            logger.info(f"Training model: {name}")
 
             cv_scores = cross_val_score(model, X_train, y_train, cv=skf, scoring="accuracy")
             cv_mean, cv_std = float(np.mean(cv_scores)), float(np.std(cv_scores))
@@ -170,7 +172,7 @@ def _train_and_log_from_arrays(X_train, X_test, y_train, y_test) -> Dict[str, An
             )
 
     best = max(results, key=lambda r: r["test_accuracy"]) if results else {}
-    print(f"Best model: {best.get('model_name')} ({best.get('test_accuracy')})")
+    logger.info(f"Best model: {best.get('model_name')} ({best.get('test_accuracy')})")
     return best
 
 
@@ -205,7 +207,7 @@ def register_best_model(best_run: Dict[str, Any], stage: str = "Staging", model_
         archive_existing_versions=False,
     )
 
-    print(f"Registered version {version.version} transitioned to {stage}")
+    logger.info(f"Registered version {version.version} transitioned to {stage}")
     return int(version.version)
 
 
@@ -219,7 +221,7 @@ def train_combined(features_path: str, production_path: str) -> int:
     try:
         features_df = pd.read_csv(features_path)
     except (pd.errors.EmptyDataError, FileNotFoundError) as e:
-        print(f"[ERROR] Features file is empty or not found: {e}")
+        logger.info(f"[ERROR] Features file is empty or not found: {e}")
         raise
     
     prod_df = pd.DataFrame()
@@ -227,11 +229,11 @@ def train_combined(features_path: str, production_path: str) -> int:
         try:
             prod_df = pd.read_csv(production_path)
         except pd.errors.EmptyDataError:
-            print("[WARN] Production CSV file exists but is empty.")
+            logger.info("[WARN] Production CSV file exists but is empty.")
             prod_df = pd.DataFrame()
 
     if prod_df.empty:
-        print("[WARN] Production data not found or empty. Falling back to features-only training.")
+        logger.info("[WARN] Production data not found or empty. Falling back to features-only training.")
         return train_features_only()
 
     combined = _align_and_concat(features_df, prod_df, label="Churn")

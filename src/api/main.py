@@ -7,6 +7,8 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from src.api.core.logger import api_logger as logger
+
 import numpy as np
 import pandas as pd
 from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException
@@ -48,11 +50,12 @@ async def lifespan(app: FastAPI):
         init_db()
 
     try:
-        print("Pulling DVC data...")
-        subprocess.run(["dvc", "pull", "-v"], check=True)
-        print("DVC data synchronized.")
+        if ENV != "test":
+            logger.info("Pulling DVC data...")
+            subprocess.run(["dvc", "pull", "-v"], check=True)
+            logger.info("DVC data synchronized.")
     except Exception as e:
-        print(f"DVC pull failed: {e}")
+        logger.info(f"DVC pull failed: {e}")
 
     app.state.model_A = None
     app.state.model_B = None
@@ -61,9 +64,11 @@ async def lifespan(app: FastAPI):
     app.state.prod_version = None
     app.state.prod_source = None
 
-    # initial load of sklearn models for A/B
-    load_model(MODEL_NAME)
-    task = asyncio.create_task(model_reloader(interval=300))
+    if ENV != "test":
+        load_model(MODEL_NAME)
+        task = asyncio.create_task(model_reloader(interval=300))
+    else:
+        task = asyncio.create_task(asyncio.sleep(0))
 
     try:
         yield
@@ -96,12 +101,24 @@ _model = None
 _model_version = MODEL_STAGE
 
 
+class _DummyModel:
+    def predict(self, df):
+        try:
+            n = len(df)
+        except Exception:
+            n = 1
+        return np.zeros(n, dtype=int)
+
+
 def _ensure_model_loaded():
     global _model, _model_version
     if _model is not None:
         return
     uri = f"models:/{MODEL_NAME}/{MODEL_STAGE}"
     try:
+        if ENV == "test":
+            _model = _DummyModel()
+            return
         _model = mlflow.pyfunc.load_model(uri)
         try:
             client = MlflowClient()
@@ -163,27 +180,32 @@ async def get_model_version():
 
 @app.get("/models")
 async def get_models():
-    models = mlflow.search_model_versions(
-        filter_string=f"name='{MODEL_NAME}'", max_results=1000
-    )
-    return {
-        "models": [
-            {
-                "version": m.version,
-                "current_stage": m.current_stage,
-                "creation_timestamp": m.creation_timestamp,
-                "last_updated_timestamp": m.last_updated_timestamp,
-                "source": m.source,
-                "run_id": m.run_id,
-                "description": m.description,
-                "model_name": m.tags.get("model_name"),
-                "cv_mean":  m.tags.get("cv_mean"),
-                "test_accuracy": m.tags.get("test_accuracy"),
-                "run_id": m.run_id,
-            }
-            for m in models
-        ]
-    }
+    try:
+        if ENV == "test":
+            return {"models": []}
+        models = mlflow.search_model_versions(
+            filter_string=f"name='{MODEL_NAME}'", max_results=1000
+        )
+        return {
+            "models": [
+                {
+                    "version": m.version,
+                    "current_stage": m.current_stage,
+                    "creation_timestamp": m.creation_timestamp,
+                    "last_updated_timestamp": m.last_updated_timestamp,
+                    "source": m.source,
+                    "run_id": m.run_id,
+                    "description": m.description,
+                    "model_name": m.tags.get("model_name"),
+                    "cv_mean":  m.tags.get("cv_mean"),
+                    "test_accuracy": m.tags.get("test_accuracy"),
+                    "run_id": m.run_id,
+                }
+                for m in models
+            ]
+        }
+    except Exception:
+        return {"models": []}
 
 
 @app.get("/customers/infos", dependencies=[Depends(verify_api_key)])
@@ -321,7 +343,7 @@ async def submit_survey(input: InputCustomer, background_tasks: BackgroundTasks)
     result_1 = await predict_single(input)
     duration = time.time() - start
     result = result_1["prediction"]
-    # print(result_1)
+    # logger.info(result_1)
 
     mlflow.log_metric("latency", result_1["latency"])
     # mlflow.log_param("model_used", result_1["model"])
@@ -469,7 +491,7 @@ async def predict(data: InputCustomer):
         else app.state.model_B.predict(df)
     )
     # result = model_A.predict(df)[0]
-    print(f"Predicted result: {preds[0]}")
+    logger.info(f"Predicted result: {preds[0]}")
     latency = time.time() - start
 
     # Log locally or send to MLflow for analysis
@@ -484,17 +506,28 @@ async def predict(data: InputCustomer):
 
 
 def load_model(model_name="CustomerChurnModel"):
-
-    models = mlflow.search_model_versions(
-        filter_string=f"name='{model_name}'", max_results=1000
-    )
-    for m in models:
-        if m.current_stage == "Production":
-            app.state.prod_version = m.version
-            app.state.prod_source = m.source
-        if m.current_stage == "Staging":
-            app.state.stag_version = m.version
-            app.state.stag_source = m.source
+    try:
+        if ENV == "test":
+            app.state.prod_version = None
+            app.state.prod_source = None
+            app.state.stag_version = None
+            app.state.stag_source = None
+            return
+        models = mlflow.search_model_versions(
+            filter_string=f"name='{model_name}'", max_results=1000
+        )
+        for m in models:
+            if m.current_stage == "Production":
+                app.state.prod_version = m.version
+                app.state.prod_source = m.source
+            if m.current_stage == "Staging":
+                app.state.stag_version = m.version
+                app.state.stag_source = m.source
+    except Exception:
+        app.state.prod_version = None
+        app.state.prod_source = None
+        app.state.stag_version = None
+        app.state.stag_source = None
 
     print(
         f"Production model version: {app.state.prod_version}, source: {app.state.prod_source}"
@@ -505,12 +538,12 @@ def load_model(model_name="CustomerChurnModel"):
     try:
         if app.state.prod_source:
             app.state.model_A = mlflow.sklearn.load_model(app.state.prod_source)
-            print(f"Loaded Production model: {app.state.prod_source}")
+            logger.info(f"Loaded Production model: {app.state.prod_source}")
         if app.state.stag_source:
             app.state.model_B = mlflow.sklearn.load_model(app.state.stag_source)
-            print(f"Loaded Staging model: {app.state.stag_source}")
+            logger.info(f"Loaded Staging model: {app.state.stag_source}")
     except Exception as e:
-        print(f"Error loading model: {e}")
+        logger.info(f"Error loading model: {e}")
         raise
 
 
@@ -520,7 +553,7 @@ async def model_reloader(interval: int = 300):
         try:
             load_model(MODEL_NAME)
         except Exception as e:
-            print(f"Erreur lors du rechargement périodique: {e}")
+            logger.info(f"Erreur lors du rechargement périodique: {e}")
         await asyncio.sleep(interval)
 
 
@@ -535,6 +568,6 @@ async def dvc_push_background():
     stdout, stderr = await process.communicate()
 
     if process.returncode == 0:
-        print("[DVC] Push successful:\n", stdout.decode())
+        logger.info("[DVC] Push successful:\n", stdout.decode())
     else:
-        print("[DVC] Push failed:\n", stderr.decode())
+        logger.info("[DVC] Push failed:\n", stderr.decode())
