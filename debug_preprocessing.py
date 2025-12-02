@@ -49,7 +49,7 @@ def debug():
         is_num_p = np.issubdtype(dtype_p, np.number)
         
         if is_num_b != is_num_p:
-            print(f"❌ MISMATCH: {col} - Baseline: {dtype_b}, Production: {dtype_p}")
+            print(f" MISMATCH: {col} - Baseline: {dtype_b}, Production: {dtype_p}")
             print(f"   Baseline sample: {baseline[col].iloc[0]}")
             print(f"   Production sample: {production[col].iloc[0]}")
 

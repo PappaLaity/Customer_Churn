@@ -69,14 +69,14 @@ def make_prediction(customer_id: str):
         
         if response.status_code == 200:
             result = response.json()
-            print(f"✅ Customer {customer_id}: {result}")
+            print(f" Customer {customer_id}: {result}")
             return True
         else:
-            print(f"❌ Error {response.status_code}: {response.text}")
+            print(f" Error {response.status_code}: {response.text}")
             return False
             
     except Exception as e:
-        print(f"❌ Request failed: {e}")
+        print(f" Request failed: {e}")
         return False
 
 
@@ -108,16 +108,16 @@ def check_ab_results():
             print("="*60)
             return True
         else:
-            print(f"\n❌ Analysis failed ({response.status_code}): {response.text}")
+            print(f"\n Analysis failed ({response.status_code}): {response.text}")
             return False
             
     except Exception as e:
-        print(f"\n❌ Analysis request failed: {e}")
+        print(f"\n Analysis request failed: {e}")
         return False
 
 
 if __name__ == "__main__":
-    print("🔄 Generating A/B test traffic...")
+    print("Generating A/B test traffic...")
     print(f"Target: {API_URL}")
     print(f"Sending 10 prediction requests...\n")
     
@@ -128,11 +128,11 @@ if __name__ == "__main__":
             success_count += 1
         time.sleep(0.5)  # Small delay between requests
     
-    print(f"\n📊 Completed: {success_count}/10 requests successful")
+    print(f"\n Completed: {success_count}/10 requests successful")
     
     if success_count > 0:
-        print("\n🔍 Checking A/B test analysis...")
+        print("\n Checking A/B test analysis...")
         time.sleep(1)
         check_ab_results()
     else:
-        print("\n⚠️  No successful requests - skipping analysis")
+        print("\n No successful requests - skipping analysis")
