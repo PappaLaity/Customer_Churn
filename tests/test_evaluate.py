@@ -33,7 +33,7 @@ def test_model_evaluation_pipeline(monkeypatch):
         "Contract": ["Month-to-month", "Two year"] * 6,
         "PaperlessBilling": ["Yes", "No"] * 6,
         "PaymentMethod": ["Mailed check", "Bank transfer"] * 6,
-        "MonthlyCharges": [70.35, 99.65, 80.0, 90.0, 75.0, 85.5, 65.0, 95.0, 78.0, 88.0, 72.5, 91.0],
+        "MonthlyCharges": [70.34, 99.65, 80.0, 90.0, 75.0, 85.5, 65.0, 95.0, 78.0, 88.0, 72.5, 91.0],
         "TotalCharges": ["70.35", "1000.50", "80.0", "90.0", "75.0", "85.5", "65.0", "95.0", "78.0", "88.0", "72.5", "91.0"],
         "Churn": ["No", "Yes"] * 6
     })
@@ -60,3 +60,4 @@ def test_model_evaluation_pipeline(monkeypatch):
     assert not X_test.isna().any().any()
     assert set(y_train).issubset({0, 1})
     assert set(y_test).issubset({0, 1})
+
