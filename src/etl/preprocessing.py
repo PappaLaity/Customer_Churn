@@ -287,7 +287,7 @@ def preprocess_data():
       - Select important features
       - Scale features
       - Apply SMOTE with dynamic k_neighbors
-      - Return train/test splits
+      - Return train/test splits as DataFrames
     """
 
     # -----------------------------
@@ -390,7 +390,13 @@ def preprocess_data():
     X_train_smoted, y_train_smoted = smote.fit_resample(X_train_scaled, y_train)
 
     # -----------------------------
-    # 9) Save preprocessing models
+    # 9) Convert back to DataFrame
+    # -----------------------------
+    X_train_smoted = pd.DataFrame(X_train_smoted, columns=X.columns)
+    X_test_scaled = pd.DataFrame(X_test_scaled, columns=X.columns)
+
+    # -----------------------------
+    # 10) Save preprocessing models
     # -----------------------------
     with open(os.path.join(MODELS_PATH, "scaler.pkl"), "wb") as f:
         pickle.dump(scaler, f)
