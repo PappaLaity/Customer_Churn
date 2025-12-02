@@ -37,11 +37,8 @@ def test_get_customers_infos_with_data(client: TestClient, auth_headers, mocker,
     })
     df.to_csv(csv_file, index=False)
     
-    # Mock Path to point to our temp file
-    mock_path = mocker.MagicMock()
-    mock_path.exists.return_value = True
-    mocker.patch("pathlib.Path", return_value=mock_path)
-    mocker.patch("pandas.read_csv", return_value=df)
+    # Mock Path to point to our temp file - must mock the specific Path usage in data.py
+    mocker.patch("src.api.routes.data.Path", return_value=csv_file)
     
     response = client.get("/customers/infos", headers=auth_headers)
     assert response.status_code == 200
