@@ -3,10 +3,6 @@ name: API Tests
 on:
   push:
     branches: [ main, monitoring-observability ]
-    paths:
-      - 'src/api/**'
-      - 'tests/api/**'
-      - 'requirements.txt'
   pull_request:
     branches: [ main ]
 
