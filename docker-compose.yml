@@ -47,6 +47,9 @@ services:
       - ./.gitignore:/app/.gitignore
       - ./remote:/app/remote
       - ./mlflow_artifacts:/mlflow/artifacts
+      - ./tests:/app/tests
+      - ./src:/app/src
+
     ports:
       - "8000:8000"
     command: >
