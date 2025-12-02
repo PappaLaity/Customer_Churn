@@ -218,9 +218,12 @@ def preprocess_data():
                    "PaperlessBilling", "Churn"]
     present = [c for c in binary_cols if c in df_encoded.columns]
 
-    df_encoded[present] = df_encoded[present].replace(
-        {"Yes": 1, "No": 0, "Female": 0, "Male": 1}
-    )
+    #df_encoded[present] = df_encoded[present].replace(
+        #{"Yes": 1, "No": 0, "Female": 0, "Male": 1}
+    #)
+    replacement_dict = {"Yes": 1, "No": 0, "Female": 0, "Male": 1}
+    for col in present:
+        df_encoded[col] = df_encoded[col].replace(replacement_dict).astype(int)
 
     # One-hot
     multi_cols = [
