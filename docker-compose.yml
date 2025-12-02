@@ -86,6 +86,7 @@ services:
       - ./.gitignore:/opt/airflow/.gitignore
       - ./remote:/opt/airflow/remote
       - ./mlflow_artifacts:/mlflow/artifacts
+
     depends_on:
       - mlflow
     ports:

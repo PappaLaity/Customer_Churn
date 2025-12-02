@@ -93,7 +93,7 @@ def analyze_latency(
     latency_a = df[df['bucket'] == 'A']['latency_sec'].dropna()
     latency_b = df[df['bucket'] == 'B']['latency_sec'].dropna()
     
-    if len(latency_a) < 2 or len(latency_b) < 2:
+    if len(latency_a) < 1 or len(latency_b) < 1:
         raise ValueError(f"Insufficient samples: A={len(latency_a)}, B={len(latency_b)}")
     
     # Calculate means
@@ -111,15 +111,16 @@ def analyze_latency(
     is_significant = p_value < alpha
     
     return ABTestResult(
-        variant_a_count=len(latency_a),
-        variant_b_count=len(latency_b),
-        variant_a_metric=mean_a,
-        variant_b_metric=mean_b,
-        lift_percent=lift_percent,
-        p_value=p_value,
-        is_significant=is_significant,
-        confidence_level=confidence_level,
+        variant_a_count=int(len(latency_a)),
+        variant_b_count=int(len(latency_b)),
+        variant_a_metric=float(mean_a),
+        variant_b_metric=float(mean_b),
+        lift_percent=float(lift_percent),
+        p_value=float(p_value),
+        is_significant=bool(is_significant),
+        confidence_level=float(confidence_level),
     )
+
 
 
 def analyze_conversion_rate(
@@ -198,15 +199,16 @@ def analyze_conversion_rate(
     is_significant = p_value < alpha
     
     return ABTestResult(
-        variant_a_count=count_a,
-        variant_b_count=count_b,
-        variant_a_metric=rate_a,
-        variant_b_metric=rate_b,
-        lift_percent=lift_percent,
-        p_value=p_value,
-        is_significant=is_significant,
-        confidence_level=confidence_level,
+        variant_a_count=int(count_a),
+        variant_b_count=int(count_b),
+        variant_a_metric=float(rate_a),
+        variant_b_metric=float(rate_b),
+        lift_percent=float(lift_percent),
+        p_value=float(p_value),
+        is_significant=bool(is_significant),
+        confidence_level=float(confidence_level),
     )
+
 
 
 def calculate_sample_size(

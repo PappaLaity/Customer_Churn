@@ -6,6 +6,7 @@ All business logic has been extracted into specialized modules.
 
 from fastapi import FastAPI
 from prometheus_fastapi_instrumentator import Instrumentator
+from fastapi.middleware.cors import CORSMiddleware
 
 from src.api.core.lifespan import lifespan
 from src.api.routes import (
@@ -18,6 +19,13 @@ from src.api.routes import (
     users,
 )
 
+origins = [
+    "http://localhost:8081",
+    "http://127.0.0.1:8081",
+    "https://customer-churn-dusky.vercel.app"
+]
+
+
 
 # Create FastAPI application
 app = FastAPI(
@@ -26,6 +34,15 @@ app = FastAPI(
     version="2.0.0",
     lifespan=lifespan,
 )
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins, #["*"], #origins
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 # Enable Prometheus metrics
 Instrumentator().instrument(app).expose(app)

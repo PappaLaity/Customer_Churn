@@ -33,7 +33,7 @@ async def get_customers_infos():
     Raises:
         HTTPException: If there's an error reading the file
     """
-    file_path = Path("data/production/production.csv")
+    file_path = Path("app/data/production/production.csv")
     
     if not file_path.exists():
         return JSONResponse(
