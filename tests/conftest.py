@@ -1,8 +1,8 @@
 import sys
 import os
-from pathlib import Path
 
-project_root = str(Path(__file__).resolve().parents[1])
+# Add project root to path
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 os.environ["ENV"] = "test"
