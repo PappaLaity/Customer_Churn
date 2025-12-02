@@ -1,28 +1,3 @@
-# import os
-
-# import pandas as pd
-
-
-# def load(filepath=None):
-#     if filepath is None:
-#         base = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-#         # filepath = os.path.join(base, 'Data', 'WA_Fn-UseC_-Telco-Customer-Churn.csv')
-#         filepath = os.path.join(
-#             os.getenv("AIRFLOW_HOME", "/opt/airflow"),
-#             "data/input",
-#             "WA_Fn-UseC_-Telco-Customer-Churn.csv",
-#         )
-
-#     if not os.path.exists(filepath):
-#         filepath = os.path.join(
-#             base, "data/input", "WA_Fn-UseC_-Telco-Customer-Churn.csv"
-#         )
-#         if not os.path.exists(filepath):
-#             raise FileNotFoundError(f"Churn CSV not found at {filepath!r}")
-
-#     df = pd.read_csv(filepath)
-#     df = df.drop(columns=["customerID"], errors="ignore")
-#     return df
 import os
 import pandas as pd
 
@@ -30,12 +5,10 @@ CSV_NAME = "WA_Fn-UseC_-Telco-Customer-Churn.csv"
 
 def load(filepath=None):
     """
-    Load the churn dataset from multiple possible locations.
-    Works on:
-    - Local machine
-    - Docker
-    - GitHub Actions CI
-    - Airflow (if AIRFLOW_HOME is set)
+    Load the churn dataset.
+
+    - In tests: a mock CSV will be injected via monkeypatch and filepath override.
+    - In production: falls back to AIRFLOW_HOME or project data/ directory.
     """
 
     # ---------------------------------------------------------
@@ -47,7 +20,7 @@ def load(filepath=None):
         return pd.read_csv(filepath)
 
     # ---------------------------------------------------------
-    # 2. Try AIRFLOW_HOME/data/input/*
+    # 2. Try AIRFLOW_HOME/data/input/* (Airflow & Docker)
     # ---------------------------------------------------------
     airflow_home = os.getenv("AIRFLOW_HOME")
     if airflow_home:
@@ -56,20 +29,17 @@ def load(filepath=None):
             return pd.read_csv(candidate)
 
     # ---------------------------------------------------------
-    # 3. Try repo_root/data/input/*  ← correct path for CI GitHub
+    # 3. Try project_root/data/input/* (local machine & CI)
     # ---------------------------------------------------------
-    # base = project root
     base = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-
     candidate = os.path.join(base, "data", "input", CSV_NAME)
     if os.path.exists(candidate):
         return pd.read_csv(candidate)
 
     # ---------------------------------------------------------
-    # 4. If nothing worked → explicit error
+    # 4. Nothing found → explicit error
     # ---------------------------------------------------------
     raise FileNotFoundError(
-        "Churn CSV not found in any known location:\n"
-        f"- {os.getenv('AIRFLOW_HOME')}/data/input/{CSV_NAME}\n"
-        f"- {base}/data/input/{CSV_NAME}"
+        "Churn CSV not found in any known location.\n"
+        "In tests, a mock CSV must be injected using monkeypatch."
     )
