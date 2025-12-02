@@ -266,8 +266,12 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 
 from src.api.core.logger import api_logger as logger
-import src.etl.extract as extract
+import src.etl.extract as extract  # ← nécessaire pour monkeypatch/load()
 
+
+# ------------------------------------------------------
+# 🔹 Configurable paths
+# ------------------------------------------------------
 BASE_PATH = os.environ.get("BASE_PATH", "data")
 PREPROCESSED_PATH = os.path.join(BASE_PATH, "preprocessed")
 FEATURES_PATH = os.path.join(BASE_PATH, "features")
@@ -280,59 +284,60 @@ os.makedirs(MODELS_PATH, exist_ok=True)
 
 def preprocess_data():
     """
-    Preprocess pipeline structured in layers:
-      - df_clean: cleaned but not encoded
-      - df_encoded: fully encoded
-      - features_df: feature-selected dataset
+    Pipeline structuré :
+      1) Chargement
+      2) Nettoyage (df_clean)
+      3) Encodage (df_encoded)
+      4) Réduction colonnes redondantes
+      5) Sélection de features
+      6) Split + scaling + SMOTE
     """
 
-    # -------------------------------------------
-    # 1) Load raw data
-    # -------------------------------------------
+    # -------------------------------
+    # 1) LOAD
+    # -------------------------------
     df = extract.load()
 
-    # -------------------------------------------
-    # 2) CLEANING (df_clean)
-    # -------------------------------------------
+    # -------------------------------
+    # 2) CLEANING
+    # -------------------------------
     df_clean = df.copy()
 
     df_clean["TotalCharges"] = pd.to_numeric(
-        df_clean.get("TotalCharges", pd.Series()), errors="coerce"
+        df_clean.get("TotalCharges", pd.Series(dtype="float")), errors="coerce"
     )
     df_clean["TotalCharges"] = df_clean["TotalCharges"].fillna(df_clean["MonthlyCharges"])
     df_clean["TotalCharges"] = df_clean["TotalCharges"].astype(float)
 
-    # -------------------------------------------
-    # 3) ENCODING (df_encoded)
-    # -------------------------------------------
+    # -------------------------------
+    # 3) ENCODING
+    # -------------------------------
     df_encoded = df_clean.copy()
 
-    # Binary features
+    # Binary encoding
     binary_cols = ["gender", "Partner", "Dependents", "PhoneService",
                    "PaperlessBilling", "Churn"]
-    binary_cols_present = [c for c in binary_cols if c in df_encoded.columns]
+    present = [c for c in binary_cols if c in df_encoded.columns]
 
-    df_encoded[binary_cols_present] = df_encoded[binary_cols_present].replace(
+    df_encoded[present] = df_encoded[present].replace(
         {"Yes": 1, "No": 0, "Female": 0, "Male": 1}
     )
 
-    # One-hot multi categorical
-    multi_cat_cols = [
+    # One-hot
+    multi_cols = [
         "MultipleLines", "InternetService", "OnlineSecurity", "OnlineBackup",
         "DeviceProtection", "TechSupport", "StreamingTV", "StreamingMovies",
         "Contract", "PaymentMethod"
     ]
+    present_multi = [c for c in multi_cols if c in df_encoded.columns]
 
-    multi_present = [c for c in multi_cat_cols if c in df_encoded.columns]
+    if present_multi:
+        df_encoded = pd.get_dummies(df_encoded, columns=present_multi, drop_first=True)
 
-    if multi_present:
-        df_encoded = pd.get_dummies(df_encoded, columns=multi_present, drop_first=True)
-
-    # LabelEncoder for remaining objects
+    # LabelEncoder remaining objects
     encoders = {}
-    object_cols = [
-        c for c in df_encoded.select_dtypes(include=["object"]).columns if c != "Churn"
-    ]
+    object_cols = [c for c in df_encoded.select_dtypes(include=["object"]).columns
+                   if c != "Churn"]
 
     for col in object_cols:
         le = LabelEncoder()
@@ -343,16 +348,15 @@ def preprocess_data():
     if "Churn" in df_encoded.columns and df_encoded["Churn"].dtype == object:
         df_encoded["Churn"] = df_encoded["Churn"].replace({"Yes": 1, "No": 0}).astype(int)
 
+    # Save preprocessed
     df_encoded.to_csv(os.path.join(PREPROCESSED_PATH, "preprocessed.csv"), index=False)
 
     if "Churn" not in df_encoded.columns:
         raise KeyError("Target column 'Churn' missing after preprocessing")
 
-    # -------------------------------------------
-    # 4) Merge “no internet service” redundant columns
-    # -------------------------------------------
-    df_encoded = df_encoded.copy()
-
+    # -------------------------------
+    # 4) Merge redundant “no internet/phone service”
+    # -------------------------------
     internet_cols = [
         c for c in df_encoded.columns
         if "No internet service" in c or "InternetService_No" in c
@@ -366,39 +370,33 @@ def preprocess_data():
         df_encoded["No_phone_service"] = df_encoded["MultipleLines_No phone service"].astype(int)
         df_encoded.drop(columns=["MultipleLines_No phone service"], inplace=True)
 
-    # -------------------------------------------
-    # 5) Feature selection
-    # -------------------------------------------
+    # -------------------------------
+    # 5) FEATURE SELECTION
+    # -------------------------------
     corr = df_encoded.corr()["Churn"].abs().sort_values(ascending=False)
-
-    important_features = [
-        f for f in corr.index if f != "Churn" and corr.loc[f] > 0.18
-    ]
+    important_features = [c for c in corr.index if c != "Churn" and corr.loc[c] > 0.18]
 
     if not important_features:
         important_features = [c for c in df_encoded.columns if c != "Churn"]
 
     features_df = df_encoded[important_features + ["Churn"]].copy()
-    features_df.columns = [
-        col.strip().replace(" ", "_") for col in features_df.columns
-    ]
+    features_df.columns = [col.replace(" ", "_") for col in features_df.columns]
 
     features_df.to_csv(os.path.join(FEATURES_PATH, "features.csv"), index=False)
 
-    # -------------------------------------------
-    # 6) Train/test split
-    # -------------------------------------------
+    # -------------------------------
+    # 6) SPLIT + SCALE + SMOTE
+    # -------------------------------
     X = features_df.drop(columns=["Churn"])
     y = features_df["Churn"]
 
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42,
+        X, y,
+        test_size=0.2,
+        random_state=42,
         stratify=y if len(np.unique(y)) > 1 else None
     )
 
-    # -------------------------------------------
-    # 7) Scaling + SMOTE
-    # -------------------------------------------
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
@@ -406,9 +404,7 @@ def preprocess_data():
     smote = SMOTE(random_state=42)
     X_train_smoted, y_train_smoted = smote.fit_resample(X_train_scaled, y_train)
 
-    # -------------------------------------------
-    # 8) Save preprocessing models
-    # -------------------------------------------
+    # Save transformers
     with open(os.path.join(MODELS_PATH, "scaler.pkl"), "wb") as f:
         pickle.dump(scaler, f)
 
