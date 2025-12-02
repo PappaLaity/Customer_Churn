@@ -88,42 +88,42 @@ def test_preprocess_basic(monkeypatch):
     monkeypatch.setattr(prep, "MODELS_PATH", tmp_models)
 
     # ------------------------------------------------------------
-    # 3. Create a temporary mock CSV file
+    # 3. Create a temporary mock CSV file with 10 rows (5 per class)
     # ------------------------------------------------------------
     tmp_csv = os.path.join(tmp_dir, "mock_churn.csv")
 
     df_mock = pd.DataFrame({
-        "gender": ["Male", "Female"],
-        "SeniorCitizen": [0, 1],
-        "Partner": ["Yes", "No"],
-        "Dependents": ["No", "Yes"],
-        "tenure": [1, 10],
-        "PhoneService": ["Yes", "No"],
-        "MultipleLines": ["No", "Yes"],
-        "InternetService": ["DSL", "Fiber optic"],
-        "OnlineSecurity": ["Yes", "No"],
-        "OnlineBackup": ["No", "Yes"],
-        "DeviceProtection": ["No", "Yes"],
-        "TechSupport": ["No", "Yes"],
-        "StreamingTV": ["No", "Yes"],
-        "StreamingMovies": ["No", "Yes"],
-        "Contract": ["Month-to-month", "Two year"],
-        "PaperlessBilling": ["Yes", "No"],
-        "PaymentMethod": ["Mailed check", "Bank transfer"],
-        "MonthlyCharges": [70.35, 99.65],
-        "TotalCharges": ["70.35", "1000.50"],
-        "Churn": ["No", "Yes"]
+        "gender": ["Male", "Female"] * 5,
+        "SeniorCitizen": [0, 1, 0, 1, 0, 1, 0, 1, 0, 1],
+        "Partner": ["Yes", "No"] * 5,
+        "Dependents": ["No", "Yes"] * 5,
+        "tenure": [1, 10, 2, 9, 3, 8, 4, 7, 5, 6],
+        "PhoneService": ["Yes", "No"] * 5,
+        "MultipleLines": ["No", "Yes"] * 5,
+        "InternetService": ["DSL", "Fiber optic"] * 5,
+        "OnlineSecurity": ["Yes", "No"] * 5,
+        "OnlineBackup": ["No", "Yes"] * 5,
+        "DeviceProtection": ["No", "Yes"] * 5,
+        "TechSupport": ["No", "Yes"] * 5,
+        "StreamingTV": ["No", "Yes"] * 5,
+        "StreamingMovies": ["No", "Yes"] * 5,
+        "Contract": ["Month-to-month", "Two year"] * 5,
+        "PaperlessBilling": ["Yes", "No"] * 5,
+        "PaymentMethod": ["Mailed check", "Bank transfer"] * 5,
+        "MonthlyCharges": [70.35, 99.65, 75, 95, 80, 90, 85, 85, 88, 92],
+        "TotalCharges": ["70.35", "1000.50", "75", "95", "80", "90", "85", "85", "88", "92"],
+        "Churn": [0, 1, 0, 1, 0, 1, 0, 1, 0, 1]
     })
 
     df_mock.to_csv(tmp_csv, index=False)
 
     # ------------------------------------------------------------
-    # 4. Force extract.load() to always return the temporary CSV
+    # 4. Patch extract.load globally pour retourner le CSV mock
     # ------------------------------------------------------------
     monkeypatch.setattr(extract, "load", lambda filepath=None: pd.read_csv(tmp_csv))
 
     # ------------------------------------------------------------
-    # 5. Run preprocessing normally
+    # 5. Run preprocessing normalement
     # ------------------------------------------------------------
     X_train, X_test, y_train, y_test = prep.preprocess_data()
 
@@ -138,7 +138,7 @@ def test_preprocess_basic(monkeypatch):
     assert set(np.unique(y_test)).issubset({0, 1}), "y_test not binary"
 
     # ------------------------------------------------------------
-    # 7. Check that output files were created
+    # 7. Check that output files were créés
     # ------------------------------------------------------------
     assert os.path.exists(os.path.join(tmp_preprocessed, "preprocessed.csv")), "preprocessed.csv missing"
     assert os.path.exists(os.path.join(tmp_features, "features.csv")), "features.csv missing"
