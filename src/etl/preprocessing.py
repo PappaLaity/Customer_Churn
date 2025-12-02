@@ -287,7 +287,7 @@ def preprocess_data():
       - Select important features
       - Scale features
       - Apply SMOTE with dynamic k_neighbors
-      - Return train/test splits as DataFrames
+      - Return train/test splits as DataFrame
     """
 
     # -----------------------------
@@ -308,8 +308,10 @@ def preprocess_data():
     # Binary
     binary_cols = ["gender", "Partner", "Dependents", "PhoneService", "PaperlessBilling", "Churn"]
     binary_present = [c for c in binary_cols if c in df.columns]
-    if binary_present:
-        df[binary_present] = df[binary_present].replace({"Yes": 1, "No": 0, "Female": 0, "Male": 1})
+    if len(binary_present) > 0:
+        df[binary_present] = df[binary_present].replace(
+            {"Yes": 1, "No": 0, "Female": 0, "Male": 1}
+        )
 
     # One-hot multi-categorical
     multi_cat_cols = [
@@ -318,7 +320,7 @@ def preprocess_data():
         "Contract", "PaymentMethod"
     ]
     multi_present = [c for c in multi_cat_cols if c in df.columns]
-    if multi_present:
+    if len(multi_present) > 0:
         df = pd.get_dummies(df, columns=multi_present, drop_first=True)
 
     # LabelEncoder for remaining objects
@@ -342,7 +344,7 @@ def preprocess_data():
     # 4) Merge “no internet service” columns
     # -----------------------------
     internet_cols = [c for c in df.columns if "No internet service" in c or "InternetService_No" in c]
-    if internet_cols:
+    if len(internet_cols) > 0:
         df["No_internet_service"] = df[internet_cols].any(axis=1).astype(int)
         df.drop(columns=internet_cols, inplace=True)
 
@@ -377,8 +379,8 @@ def preprocess_data():
     # 7) Scaling
     # -----------------------------
     scaler = StandardScaler()
-    X_train_scaled = scaler.fit_transform(X_train)
-    X_test_scaled = scaler.transform(X_test)
+    X_train_scaled = pd.DataFrame(scaler.fit_transform(X_train), columns=X_train.columns)
+    X_test_scaled = pd.DataFrame(scaler.transform(X_test), columns=X_test.columns)
 
     # -----------------------------
     # 8) SMOTE with dynamic k_neighbors
@@ -387,16 +389,11 @@ def preprocess_data():
     min_class_samples = min(counter.values())
     k_neighbors = min(5, max(1, min_class_samples - 1))  # k_neighbors >= 1
     smote = SMOTE(random_state=42, k_neighbors=k_neighbors)
-    X_train_smoted, y_train_smoted = smote.fit_resample(X_train_scaled, y_train)
+    X_train_smoted_array, y_train_smoted = smote.fit_resample(X_train_scaled.values, y_train)
+    X_train_smoted = pd.DataFrame(X_train_smoted_array, columns=X_train.columns)
 
     # -----------------------------
-    # 9) Convert back to DataFrame
-    # -----------------------------
-    X_train_smoted = pd.DataFrame(X_train_smoted, columns=X.columns)
-    X_test_scaled = pd.DataFrame(X_test_scaled, columns=X.columns)
-
-    # -----------------------------
-    # 10) Save preprocessing models
+    # 9) Save preprocessing models
     # -----------------------------
     with open(os.path.join(MODELS_PATH, "scaler.pkl"), "wb") as f:
         pickle.dump(scaler, f)
