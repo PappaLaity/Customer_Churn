@@ -322,7 +322,7 @@ if __name__ == '__main__':
         
         if report['status'] == 'success':
             results = report['results']
-            print(f"\n✅ Analysis completed successfully\n")
+            print(f"\n Analysis completed successfully\n")
             print(f"Variant A (Production):")
             print(f"  - Sample size: {results['variant_a']['sample_size']}")
             print(f"  - Avg latency: {results['variant_a']['metric_value']:.4f}s")
@@ -336,13 +336,13 @@ if __name__ == '__main__':
             print(f"  - P-value: {results['analysis']['p_value']:.4f}")
             print(f"  - Significant: {results['analysis']['is_significant']}")
             
-            print(f"\n📊 Recommendation:")
+            print(f"\n Recommendation:")
             print(f"  {results['recommendation']}")
             
-            print(f"\n💾 Report saved to: data/experiments/ab_analysis_report.json")
+            print(f"\n Report saved to: data/experiments/ab_analysis_report.json")
         else:
-            print(f"\n❌ Analysis failed: {report['error']}")
+            print(f"\n Analysis failed: {report['error']}")
             
     except Exception as e:
-        print(f"\n❌ Error: {e}")
+        print(f"\n Error: {e}")
         sys.exit(1)
