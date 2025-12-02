@@ -71,6 +71,12 @@ def _split_scale_smote(df: pd.DataFrame, label: str = "Churn") -> Tuple[np.ndarr
     X = df.drop(columns=[label])
     y = df[label].astype(int)
 
+    # Handle NaN values before SMOTE (common in one-hot encoded features from production data)
+    nan_count = X.isna().sum().sum()
+    if nan_count > 0:
+        print(f"[INFO] Found {nan_count} NaN values in features. Filling with 0...")
+        X = X.fillna(0)
+
     X_train, X_test, y_train, y_test = train_test_split(
         X,
         y,
