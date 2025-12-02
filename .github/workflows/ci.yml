@@ -578,11 +578,11 @@ jobs:
       - name: Check services health
         run: |
           docker compose -f docker-compose.yml ps
-          docker compose -f docker-compose.yml logs churn_api
+          docker compose -f docker-compose.yml logs fastapi
 
       - name: Run integration tests
         run: |
-          docker compose -f docker-compose.yml exec -T churn_api pytest tests/ -v -m "integration"
+          docker compose -f docker-compose.yml exec -T fastapi pytest tests/ -v -m "integration"
 
       - name: Cleanup
         if: always()
