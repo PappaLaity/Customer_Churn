@@ -258,7 +258,6 @@
 #     return X_train_smoted, X_test_scaled, y_train_smoted, y_test
 import os
 import pickle
-from collections import Counter
 
 import numpy as np
 import pandas as pd
@@ -267,8 +266,12 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 
 from src.api.core.logger import api_logger as logger
-import src.etl.extract as extract
+import src.etl.extract as extract  # ← nécessaire pour monkeypatch/load()
 
+
+# ------------------------------------------------------
+# 🔹 Configurable paths
+# ------------------------------------------------------
 BASE_PATH = os.environ.get("BASE_PATH", "data")
 PREPROCESSED_PATH = os.path.join(BASE_PATH, "preprocessed")
 FEATURES_PATH = os.path.join(BASE_PATH, "features")
@@ -281,122 +284,130 @@ os.makedirs(MODELS_PATH, exist_ok=True)
 
 def preprocess_data():
     """
-    Preprocess pipeline:
-      - Clean data
-      - Encode features
-      - Select important features
-      - Scale features
-      - Apply SMOTE with dynamic k_neighbors
-      - Return train/test splits as DataFrame
+    Pipeline structuré :
+      1) Chargement
+      2) Nettoyage (df_clean)
+      3) Encodage (df_encoded)
+      4) Réduction colonnes redondantes
+      5) Sélection de features
+      6) Split + scaling + SMOTE
     """
 
-    # -----------------------------
-    # 1) Load data
-    # -----------------------------
+    # -------------------------------
+    # 1) LOAD
+    # -------------------------------
     df = extract.load()
 
-    # -----------------------------
-    # 2) Cleaning
-    # -----------------------------
-    df["TotalCharges"] = pd.to_numeric(df.get("TotalCharges", pd.Series()), errors="coerce")
-    df["TotalCharges"] = df["TotalCharges"].fillna(df["MonthlyCharges"])
-    df["TotalCharges"] = df["TotalCharges"].astype(float)
+    # -------------------------------
+    # 2) CLEANING
+    # -------------------------------
+    df_clean = df.copy()
 
-    # -----------------------------
-    # 3) Encoding
-    # -----------------------------
-    # Binary
-    binary_cols = ["gender", "Partner", "Dependents", "PhoneService", "PaperlessBilling", "Churn"]
-    binary_present = [c for c in binary_cols if c in df.columns]
-    if len(binary_present) > 0:
-        df[binary_present] = df[binary_present].replace(
-            {"Yes": 1, "No": 0, "Female": 0, "Male": 1}
-        )
+    df_clean["TotalCharges"] = pd.to_numeric(
+        df_clean.get("TotalCharges", pd.Series(dtype="float")), errors="coerce"
+    )
+    df_clean["TotalCharges"] = df_clean["TotalCharges"].fillna(df_clean["MonthlyCharges"])
+    df_clean["TotalCharges"] = df_clean["TotalCharges"].astype(float)
 
-    # One-hot multi-categorical
-    multi_cat_cols = [
+    # -------------------------------
+    # 3) ENCODING
+    # -------------------------------
+    df_encoded = df_clean.copy()
+
+    # Binary encoding
+    binary_cols = ["gender", "Partner", "Dependents", "PhoneService",
+                   "PaperlessBilling", "Churn"]
+    present = [c for c in binary_cols if c in df_encoded.columns]
+
+    df_encoded[present] = df_encoded[present].replace(
+        {"Yes": 1, "No": 0, "Female": 0, "Male": 1}
+    )
+
+    # One-hot
+    multi_cols = [
         "MultipleLines", "InternetService", "OnlineSecurity", "OnlineBackup",
         "DeviceProtection", "TechSupport", "StreamingTV", "StreamingMovies",
         "Contract", "PaymentMethod"
     ]
-    multi_present = [c for c in multi_cat_cols if c in df.columns]
-    if len(multi_present) > 0:
-        df = pd.get_dummies(df, columns=multi_present, drop_first=True)
+    present_multi = [c for c in multi_cols if c in df_encoded.columns]
 
-    # LabelEncoder for remaining objects
+    if present_multi:
+        df_encoded = pd.get_dummies(df_encoded, columns=present_multi, drop_first=True)
+
+    # LabelEncoder remaining objects
     encoders = {}
-    object_cols = [c for c in df.select_dtypes(include=["object"]).columns if c != "Churn"]
+    object_cols = [c for c in df_encoded.select_dtypes(include=["object"]).columns
+                   if c != "Churn"]
+
     for col in object_cols:
         le = LabelEncoder()
-        df[col] = le.fit_transform(df[col].astype(str))
+        df_encoded[col] = le.fit_transform(df_encoded[col].astype(str))
         encoders[col] = le
 
     # Ensure Churn numeric
-    if "Churn" in df.columns and df["Churn"].dtype == object:
-        df["Churn"] = df["Churn"].replace({"Yes": 1, "No": 0}).astype(int)
+    if "Churn" in df_encoded.columns and df_encoded["Churn"].dtype == object:
+        df_encoded["Churn"] = df_encoded["Churn"].replace({"Yes": 1, "No": 0}).astype(int)
 
-    df.to_csv(os.path.join(PREPROCESSED_PATH, "preprocessed.csv"), index=False)
+    # Save preprocessed
+    df_encoded.to_csv(os.path.join(PREPROCESSED_PATH, "preprocessed.csv"), index=False)
 
-    if "Churn" not in df.columns:
+    if "Churn" not in df_encoded.columns:
         raise KeyError("Target column 'Churn' missing after preprocessing")
 
-    # -----------------------------
-    # 4) Merge “no internet service” columns
-    # -----------------------------
-    internet_cols = [c for c in df.columns if "No internet service" in c or "InternetService_No" in c]
-    if len(internet_cols) > 0:
-        df["No_internet_service"] = df[internet_cols].any(axis=1).astype(int)
-        df.drop(columns=internet_cols, inplace=True)
+    # -------------------------------
+    # 4) Merge redundant “no internet/phone service”
+    # -------------------------------
+    internet_cols = [
+        c for c in df_encoded.columns
+        if "No internet service" in c or "InternetService_No" in c
+    ]
 
-    if "MultipleLines_No phone service" in df.columns:
-        df["No_phone_service"] = df["MultipleLines_No phone service"].astype(int)
-        df.drop(columns=["MultipleLines_No phone service"], inplace=True)
+    if internet_cols:
+        df_encoded["No_internet_service"] = df_encoded[internet_cols].any(axis=1).astype(int)
+        df_encoded.drop(columns=internet_cols, inplace=True)
 
-    # -----------------------------
-    # 5) Feature selection
-    # -----------------------------
-    corr = df.corr()["Churn"].abs().sort_values(ascending=False)
-    important_features = [f for f in corr.index if f != "Churn" and corr.loc[f] > 0.18]
+    if "MultipleLines_No phone service" in df_encoded.columns:
+        df_encoded["No_phone_service"] = df_encoded["MultipleLines_No phone service"].astype(int)
+        df_encoded.drop(columns=["MultipleLines_No phone service"], inplace=True)
+
+    # -------------------------------
+    # 5) FEATURE SELECTION
+    # -------------------------------
+    corr = df_encoded.corr()["Churn"].abs().sort_values(ascending=False)
+    important_features = [c for c in corr.index if c != "Churn" and corr.loc[c] > 0.18]
+
     if not important_features:
-        important_features = [c for c in df.columns if c != "Churn"]
+        important_features = [c for c in df_encoded.columns if c != "Churn"]
 
-    features_df = df[important_features + ["Churn"]].copy()
-    features_df.columns = [col.strip().replace(" ", "_") for col in features_df.columns]
+    features_df = df_encoded[important_features + ["Churn"]].copy()
+    features_df.columns = [col.replace(" ", "_") for col in features_df.columns]
+
     features_df.to_csv(os.path.join(FEATURES_PATH, "features.csv"), index=False)
 
-    # -----------------------------
-    # 6) Train/test split
-    # -----------------------------
+    # -------------------------------
+    # 6) SPLIT + SCALE + SMOTE
+    # -------------------------------
     X = features_df.drop(columns=["Churn"])
     y = features_df["Churn"]
 
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42,
+        X, y,
+        test_size=0.2,
+        random_state=42,
         stratify=y if len(np.unique(y)) > 1 else None
     )
 
-    # -----------------------------
-    # 7) Scaling
-    # -----------------------------
     scaler = StandardScaler()
-    X_train_scaled = pd.DataFrame(scaler.fit_transform(X_train), columns=X_train.columns)
-    X_test_scaled = pd.DataFrame(scaler.transform(X_test), columns=X_test.columns)
+    X_train_scaled = scaler.fit_transform(X_train)
+    X_test_scaled = scaler.transform(X_test)
 
-    # -----------------------------
-    # 8) SMOTE with dynamic k_neighbors
-    # -----------------------------
-    counter = Counter(y_train)
-    min_class_samples = min(counter.values())
-    k_neighbors = min(5, max(1, min_class_samples - 1))  # k_neighbors >= 1
-    smote = SMOTE(random_state=42, k_neighbors=k_neighbors)
-    X_train_smoted_array, y_train_smoted = smote.fit_resample(X_train_scaled.values, y_train)
-    X_train_smoted = pd.DataFrame(X_train_smoted_array, columns=X_train.columns)
+    smote = SMOTE(random_state=42)
+    X_train_smoted, y_train_smoted = smote.fit_resample(X_train_scaled, y_train)
 
-    # -----------------------------
-    # 9) Save preprocessing models
-    # -----------------------------
+    # Save transformers
     with open(os.path.join(MODELS_PATH, "scaler.pkl"), "wb") as f:
         pickle.dump(scaler, f)
+
     with open(os.path.join(MODELS_PATH, "encoders.pkl"), "wb") as f:
         pickle.dump(encoders, f)
 
