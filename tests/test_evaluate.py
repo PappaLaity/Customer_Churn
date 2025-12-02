@@ -1,37 +1,3 @@
-# tests/test_evaluate.py
-# import pytest
-# import numpy as np
-# from sklearn.metrics import accuracy_score, f1_score
-# from src.etl.preprocessing import preprocess_data
-# from sklearn.ensemble import RandomForestClassifier
-
-# @pytest.mark.integration
-# def test_model_evaluation_pipeline():
-#     """
-#     Vérifie que le pipeline preprocessing + modèle fonctionne et renvoie des métriques valides.
-#     """
-#     # 1️⃣ Préprocessing
-#     X_train, X_test, y_train, y_test = preprocess_data()
-
-#     # 2️⃣ Modèle simple pour test (pas besoin de MLflow ici)
-#     model = RandomForestClassifier(n_estimators=10, random_state=42)
-#     model.fit(X_train, y_train)
-
-#     # 3️⃣ Prédictions
-#     y_pred = model.predict(X_test)
-
-#     # 4️⃣ Vérifications
-#     # Les prédictions doivent avoir la même taille que y_test
-#     assert len(y_pred) == len(y_test)
-
-#     # Les valeurs doivent être 0 ou 1
-#     assert set(np.unique(y_pred)).issubset({0, 1})
-
-#     # Les métriques doivent être dans [0,1]
-#     acc = accuracy_score(y_test, y_pred)
-#     f1 = f1_score(y_test, y_pred)
-#     assert 0.0 <= acc <= 1.0
-#     assert 0.0 <= f1 <= 1.0
 import tempfile
 import pandas as pd
 import pytest
@@ -42,36 +8,37 @@ from src.etl import extract
 def test_model_evaluation_pipeline(monkeypatch):
     """
     Test d'intégration : preprocessing + modèle.
-    - Utilise un CSV temporaire mock
+    - Utilise un CSV temporaire mock de 12 lignes
     - Vérifie que le pipeline renvoie des métriques et outputs valides
     """
 
     # -----------------------------
-    # 1️⃣ Créer un CSV temporaire
+    # 1️⃣ Créer un CSV temporaire avec 12 lignes pour stratification
     # -----------------------------
-    tmp_csv = tempfile.NamedTemporaryFile(mode='w', suffix=".csv", delete=False)
     df_mock = pd.DataFrame({
-        "gender": ["Male", "Female", "Male", "Female"],
-        "SeniorCitizen": [0, 1, 0, 1],
-        "Partner": ["Yes", "No", "Yes", "No"],
-        "Dependents": ["No", "Yes", "No", "Yes"],
-        "tenure": [1, 10, 5, 8],
-        "PhoneService": ["Yes", "No", "Yes", "No"],
-        "MultipleLines": ["No", "Yes", "No", "Yes"],
-        "InternetService": ["DSL", "Fiber optic", "DSL", "Fiber optic"],
-        "OnlineSecurity": ["Yes", "No", "Yes", "No"],
-        "OnlineBackup": ["No", "Yes", "No", "Yes"],
-        "DeviceProtection": ["No", "Yes", "No", "Yes"],
-        "TechSupport": ["No", "Yes", "No", "Yes"],
-        "StreamingTV": ["No", "Yes", "No", "Yes"],
-        "StreamingMovies": ["No", "Yes", "No", "Yes"],
-        "Contract": ["Month-to-month", "Two year", "Month-to-month", "Two year"],
-        "PaperlessBilling": ["Yes", "No", "Yes", "No"],
-        "PaymentMethod": ["Mailed check", "Bank transfer", "Mailed check", "Bank transfer"],
-        "MonthlyCharges": [70.35, 99.65, 80.0, 90.0],
-        "TotalCharges": ["70.35", "1000.50", "80.0", "90.0"],
-        "Churn": ["No", "Yes", "No", "Yes"]
+        "gender": ["Male", "Female"] * 6,
+        "SeniorCitizen": [0, 1] * 6,
+        "Partner": ["Yes", "No"] * 6,
+        "Dependents": ["No", "Yes"] * 6,
+        "tenure": [1, 10, 5, 8, 12, 3, 7, 6, 15, 2, 9, 4],
+        "PhoneService": ["Yes", "No"] * 6,
+        "MultipleLines": ["No", "Yes"] * 6,
+        "InternetService": ["DSL", "Fiber optic"] * 6,
+        "OnlineSecurity": ["Yes", "No"] * 6,
+        "OnlineBackup": ["No", "Yes"] * 6,
+        "DeviceProtection": ["No", "Yes"] * 6,
+        "TechSupport": ["No", "Yes"] * 6,
+        "StreamingTV": ["No", "Yes"] * 6,
+        "StreamingMovies": ["No", "Yes"] * 6,
+        "Contract": ["Month-to-month", "Two year"] * 6,
+        "PaperlessBilling": ["Yes", "No"] * 6,
+        "PaymentMethod": ["Mailed check", "Bank transfer"] * 6,
+        "MonthlyCharges": [70.35, 99.65, 80.0, 90.0, 75.0, 85.5, 65.0, 95.0, 78.0, 88.0, 72.5, 91.0],
+        "TotalCharges": ["70.35", "1000.50", "80.0", "90.0", "75.0", "85.5", "65.0", "95.0", "78.0", "88.0", "72.5", "91.0"],
+        "Churn": ["No", "Yes"] * 6
     })
+
+    tmp_csv = tempfile.NamedTemporaryFile(mode='w', suffix=".csv", delete=False)
     df_mock.to_csv(tmp_csv.name, index=False)
 
     # -----------------------------------------
