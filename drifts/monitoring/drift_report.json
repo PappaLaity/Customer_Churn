@@ -1,0 +1,39 @@
+{
+  "is_drift": true,
+  "drift_percentage": 50.0,
+  "features_with_drift": [
+    "tenure"
+  ],
+  "features_analyzed": [
+    "PaperlessBilling",
+    "tenure"
+  ],
+  "needs_retraining": true,
+  "production_samples": 46,
+  "reference_samples": 12,
+  "timestamp": "2025-12-03T20:49:05.123484",
+  "drift_results": {
+    "PaperlessBilling": {
+      "psi": 0.0018915552453908852,
+      "ks_statistic": 0.021739130434782608,
+      "ks_p_value": 1.0,
+      "has_drift_psi": false,
+      "has_drift_ks": false,
+      "has_drift": false,
+      "ref_mean": 0.5,
+      "prod_mean": 0.5217391304347826,
+      "mean_change_pct": 4.347826086956519
+    },
+    "tenure": {
+      "psi": 5.108753111344768,
+      "ks_statistic": 0.8260869565217391,
+      "ks_p_value": 4.008388524724994e-07,
+      "has_drift_psi": true,
+      "has_drift_ks": true,
+      "has_drift": true,
+      "ref_mean": 6.833333333333333,
+      "prod_mean": 39.41304347826087,
+      "mean_change_pct": 476.7762460233298
+    }
+  }
+}

@@ -2,7 +2,8 @@ from pwdlib import PasswordHash
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
-from src.api.core.database import get_session
+# Importez get_db au lieu de get_session
+from src.api.core.database import get_db 
 from src.api.core.logger import api_logger as logger
 from src.api.entities.users import User
 from src.api.utils.enum.UserRole import UserRole
@@ -12,8 +13,8 @@ pwd_context = PasswordHash.recommended()  # par défaut, utilise Argon2id
 
 
 def seed_admin():
-    # Use next() to get the session from the generator
-    db = next(get_session())
+    # Use next() to get the session from the generator (maintenant get_db)
+    db = next(get_db())
     try:
         existing_admin = db.exec(select(User).where(User.email == "admin@example.com")).first()
 
@@ -31,11 +32,12 @@ def seed_admin():
         else:
             logger.info("Admin déjà existant.")
     except IntegrityError as e:
+        # Assurez-vous que logger.info accepte e comme argument positionnel ou utilisez f-string
+        logger.info(f"Erreur lors de la création de l'admin : {e}")
         db.rollback()
-        logger.info("Erreur lors de la création de l'admin :", e)
     except Exception as e:
-        db.rollback()
         logger.info(f"Erreur inattendue: {e}")
+        db.rollback()
     finally:
         db.close()
 

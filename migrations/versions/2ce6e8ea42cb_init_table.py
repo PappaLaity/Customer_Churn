@@ -11,13 +11,11 @@ from alembic import op
 import sqlalchemy as sa
 import sqlmodel
 
-
 # revision identifiers, used by Alembic.
 revision: str = '2ce6e8ea42cb'
-down_revision: Union[str, Sequence[str], None] = None
+down_revision: Union[str, Sequence[str], None] = None # DOIT être None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
-
 
 def upgrade() -> None:
     """Upgrade schema."""
@@ -34,7 +32,6 @@ def upgrade() -> None:
     sa.UniqueConstraint('phone')
     )
     # ### end Alembic commands ###
-
 
 def downgrade() -> None:
     """Downgrade schema."""

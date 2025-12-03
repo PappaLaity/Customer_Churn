@@ -238,6 +238,9 @@ __pycache__/
 data
 
 # Files
+test_db.sh
 run_bash.sh
 fix_database.sh
 master_script.sh
+trash/
+mlflow_db_data/

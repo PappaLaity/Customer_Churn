@@ -53,6 +53,7 @@ services:
       - ./mlflow_artifacts:/mlflow/artifacts
       - ./tests:/app/tests
       - ./src:/app/src
+      - ./migrations:/app/migrations
 
     ports:
       - "8000:8000"
@@ -99,6 +100,7 @@ services:
       - ./.gitignore:/opt/airflow/.gitignore
       - ./remote:/opt/airflow/remote
       - ./mlflow_artifacts:/mlflow/artifacts
+      - ./src/monitoring/reports_drift:/opt/airflow/reports/drift/
     depends_on:
       - mlflow
     ports:
