@@ -1,137 +1,297 @@
-# API Security Configuration
+# API Security Model
 
-## Public Endpoint Security: `/survey/submit`
+## Overview
 
-### Overview
-The `/survey/submit` endpoint is publicly accessible (no API key) and requires robust security measures to prevent abuse.
+The Customer Churn API implements a **two-tier security model** to support both guest users and authenticated administrators.
 
-### Implemented Security Layers
+## Access Levels
 
-#### 1. Rate Limiting ⏱️
-- **Limit**: 10 requests/minute per IP address
-- **Global Fallback**: 100 requests/hour per IP
-- **Technology**: SlowAPI middleware
-- **Protection**: Prevents DoS attacks and API abuse
+### 🌐 Guest Access (No Authentication Required)
 
-```python
-@limiter.limit("10/minute")
-async def submit_survey(...):
-```
+Guest users can access public endpoints without any API key or login:
 
-#### 2. Input Validation 🛡️
-- **Tenure**: 0-120 months (10 years max)
-- **MonthlyCharges**: $0-$500
-- **TotalCharges**: $0-$100,000
-- **Binary fields**: Strict 0/1 or boolean validation
-- **Custom validators**: Ensure non-negative values and business logic
+| Endpoint | Purpose | Rate Limit |
+|----------|---------|------------|
+| `/` | API root | None |
+| `/api/v1/auth/login` | Admin login | None |
+| `/api/v1/survey/submit` | Submit survey for prediction | 10/minute per IP |
+| `/api/v1/health` | Health check | None |
+| `/api/v1/models` | View available models | None |
 
-#### 3. CORS Configuration 🌐
-- **Allowed Origins**:
-  - `http://localhost:8081` (development)
-  - `https://customer-churn-dusky.vercel.app` (production)
-- **Credentials**: Disabled for security
-- **Methods**: Only GET, POST
-- **Headers**: Content-Type, X-API-Key only
+### 🔐 Admin Access (API Key Required)
 
-#### 4. Error Handling 🔒
-- **Generic errors**: No stack traces exposed
-- **Global handler**: Catches all exceptions
-- **Logging**: Errors logged server-side only
+Admin users must authenticate to access protected endpoints:
 
-### What's NOT Exposed
-
-| ❌ Hidden | Why |
-|-----------|-----|
-| Model version | Prevents version enumeration |
-| Request latency | Prevents timing attacks |
-| A/B bucket assignment | Protects experiment integrity |
-| File paths | Prevents path traversal |
-| Database errors | Prevents SQL injection clues |
-
-### Response Format
-
-**Secure response** (what users see):
-```json
-{
-  "success": "Thank you for your submission",
-  "prediction": 1,
-  "will_churn": true,
-  "message": "Customer likely to churn"
-}
-```
-
-**Removed fields** (no longer exposed):
-- `model_used` ❌
-- `latency` ❌
-
-### Rate Limit Response
-
-When limit exceeded:
-```json
-{
-  "error": "Rate limit exceeded: 10 per 1 minute"
-}
-```
-
-### Testing Rate Limiting
-
-```bash
-# Test rate limit (run 11 times quickly)
-for i in {1..11}; do
-  curl -X POST "http://localhost:8000/survey/submit" \
-    -H "Content-Type: application/json" \
-    -d '{
-      "tenure": 12.0,
-      "InternetService_Fiber_optic": true,
-      "Contract_Two_year": false,
-      "PaymentMethod_Electronic_check": true,
-      "No_internet_service": 0,
-      "TotalCharges": 840.0,
-      "MonthlyCharges": 70.0,
-      "PaperlessBilling": 1
-    }'
-  echo "Request $i"
-done
-```
-
-**Expected**: First 10 succeed, 11th fails with 429 Too Many Requests
-
-### Production Checklist
-
-Before deploying:
-- [ ] Add production domain to CORS origins in `main.py`
-- [ ] Review rate limits for expected traffic
-- [ ] Set up monitoring for rate limit violations
-- [ ] Configure proper logging (not just `print()`)
-- [ ] Test with actual production load
-- [ ] Add CAPTCHA for additional protection (optional)
-
-### Dependencies
-
-```
-slowapi>=0.1.9
-pydantic>=2.0
-fastapi>=0.100.0
-```
-
-### Files Modified
-
-1. `requirements.txt` - Added slowapi
-2. `src/api/main.py` - Rate limiter, CORS, error handler
-3. `src/api/routes/predictions.py` - Rate limit decorator
-4. `src/api/entities/customerInput.py` - Input validation
-
-### Security Best Practices Applied
-
-✅ Principle of least privilege  
-✅ Defense in depth (multiple layers)  
-✅ Fail securely (generic errors)  
-✅ Don't trust client input  
-✅ Rate limiting  
-✅ CORS restrictions  
-✅ Input validation  
-✅ No information leakage  
+| Endpoint | Purpose |
+|----------|---------|
+| `/api/v1/model/version` | Get current model versions |
+| `/api/v1/predict` | Batch predictions |
+| `/api/v1/ab/config` | A/B test configuration |
+| `/api/v1/ab/results` | A/B test results |
+| `/api/v1/monitoring/baseline` | Drift detection baseline |
+| `/api/v1/customers/infos` | Customer data (dashboard) |
+| `/api/v1/users/*` | User management |
 
 ---
 
-**Status**: ✅ Production-ready with enterprise-grade security
+## Guest User Flow
+
+### 1. Access Public Endpoints
+
+No authentication needed:
+
+```bash
+# Check API health
+curl http://localhost:8000/api/v1/health
+
+# View available models
+curl http://localhost:8000/api/v1/models
+
+# Submit survey for prediction
+curl -X POST http://localhost:8000/api/v1/survey/submit \
+  -H "Content-Type: application/json" \
+  -d '{
+    "tenure": 12.0,
+    "InternetService_Fiber_optic": true,
+    "Contract_Two_year": false,
+    "PaymentMethod_Electronic_check": true,
+    "No_internet_service": 0,
+    "TotalCharges": 1200.50,
+    "MonthlyCharges": 85.25,
+    "PaperlessBilling": 1
+  }'
+```
+
+**Response:**
+```json
+{
+  "success": "Thank you for your submission"
+}
+```
+
+### 2. Rate Limiting
+
+Public endpoints have rate limits to prevent abuse:
+- `/survey/submit`: 10 requests per minute per IP
+- Other public endpoints: 100 requests per hour per IP
+
+If you exceed the limit, you'll receive:
+```json
+{
+  "detail": "Rate limit exceeded"
+}
+```
+**HTTP Status**: 429 Too Many Requests
+
+---
+
+## Admin User Flow
+
+### 1. Login to Get API Key
+
+```bash
+curl -X POST http://localhost:8000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "admin@example.com",
+    "password": "admin"
+  }'
+```
+
+**Response:**
+```json
+{
+  "user": {
+    "id": 1,
+    "email": "admin@example.com",
+    "name": "Admin",
+    "role": "admin"
+  },
+  "api_key": "your-api-key-here"
+}
+```
+
+**Default Credentials:**
+- Email: `admin@example.com`
+- Password: `admin`
+
+> ⚠️ **IMPORTANT**: Change the default password in production!
+
+### 2. Use API Key for Protected Endpoints
+
+Include the API key in the `X-API-Key` header:
+
+```bash
+# Get model versions
+curl http://localhost:8000/api/v1/model/version \
+  -H "X-API-Key: your-api-key-here"
+
+# Get A/B test configuration
+curl http://localhost:8000/api/v1/ab/config \
+  -H "X-API-Key: your-api-key-here"
+
+# Get customer data
+curl http://localhost:8000/api/v1/customers/infos \
+  -H "X-API-Key: your-api-key-here"
+
+# Batch predictions
+curl -X POST http://localhost:8000/api/v1/predict \
+  -H "X-API-Key: your-api-key-here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "instances": [
+      {"tenure": 12.0, "TotalCharges": 1200.50, ...}
+    ]
+  }'
+```
+
+### 3. Error Handling
+
+**Missing API Key:**
+```json
+{
+  "detail": "Invalid or missing API Key"
+}
+```
+**HTTP Status**: 403 Forbidden
+
+**Invalid API Key:**
+```json
+{
+  "detail": "Invalid or missing API Key"
+}
+```
+**HTTP Status**: 403 Forbidden
+
+---
+
+## Frontend Integration
+
+### Guest User (Survey Page)
+
+```javascript
+// No authentication needed
+const submitSurvey = async (customerData) => {
+  const response = await fetch('http://localhost:8000/api/v1/survey/submit', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(customerData)
+  });
+  
+  return await response.json();
+};
+```
+
+### Admin User (Dashboard)
+
+```javascript
+// Store API key after login
+const login = async (email, password) => {
+  const response = await fetch('http://localhost:8000/api/v1/auth/login', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email, password })
+  });
+  
+  const data = await response.json();
+  localStorage.setItem('api_key', data.api_key);
+  return data;
+};
+
+// Use API key for protected requests
+const getModelVersion = async () => {
+  const apiKey = localStorage.getItem('api_key');
+  
+  const response = await fetch('http://localhost:8000/api/v1/model/version', {
+    headers: {
+      'X-API-Key': apiKey
+    }
+  });
+  
+  return await response.json();
+};
+```
+
+---
+
+## Security Best Practices
+
+### For API Administrators
+
+1. **Change Default Credentials**
+   ```bash
+   # Generate new API key
+   python scripts/generate_api_key.py --update-env
+   
+   # Restart API
+   docker compose restart fastapi
+   ```
+
+2. **Rotate API Keys Regularly**
+   - Rotate keys every 90 days
+   - Immediately rotate if compromised
+
+3. **Monitor Rate Limits**
+   - Check `/metrics` endpoint for rate limit hits
+   - Adjust limits if needed in `main.py`
+
+4. **Use HTTPS in Production**
+   - Never send API keys over HTTP
+   - Configure TLS certificates
+
+### For Frontend Developers
+
+1. **Never Expose API Keys in Frontend Code**
+   - Store API keys securely (localStorage, cookies with httpOnly)
+   - Don't commit API keys to git
+
+2. **Handle Authentication Errors**
+   ```javascript
+   if (response.status === 403) {
+     // Redirect to login
+     window.location.href = '/login';
+   }
+   ```
+
+3. **Implement Token Refresh**
+   - Re-authenticate when API key expires
+   - Handle 403 responses gracefully
+
+---
+
+## API Documentation
+
+### Interactive Documentation
+
+Visit these URLs when the API is running:
+
+- **Swagger UI**: http://localhost:8000/docs
+- **ReDoc**: http://localhost:8000/redoc
+
+Both interfaces show:
+- All available endpoints
+- Required authentication
+- Request/response schemas
+-Try-it-out functionality
+
+### Security Scheme
+
+The API uses **API Key** authentication with the following scheme:
+
+- **Type**: API Key
+- **Header Name**: `X-API-Key`
+- **Location**: Header
+
+---
+
+## Summary
+
+✅ **Public Endpoints**: Anyone can submit surveys and view basic info  
+✅ **Protected Endpoints**: Admins only, requires API key  
+✅ **Rate Limiting**: Prevents abuse of public endpoints  
+✅ **Simple Authentication**: Login once, get API key  
+✅ **Frontend Friendly**: Easy integration without barriers for guests

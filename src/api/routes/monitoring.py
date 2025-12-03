@@ -52,7 +52,7 @@ async def get_baseline(request: Request):
     return {"features": list(app_state.baseline_numeric_sorted.keys())}
 
 
-@router.get("/health", dependencies=[Depends(verify_api_key)])
+@router.get("/health")
 async def check_health():
     """Health check endpoint.
     

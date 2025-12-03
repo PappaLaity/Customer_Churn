@@ -40,8 +40,28 @@ limiter = Limiter(key_func=get_remote_address, default_limits=["100/hour"])
 
 # Create FastAPI application
 app = FastAPI(
-    title="Customer Churn Prediction",
-    description="ML platform for customer churn prediction with A/B testing",
+    title="Customer Churn Prediction API",
+    description="""
+    ML platform for customer churn prediction with A/B testing.
+    
+    ## Security Model
+    
+    **Public Endpoints** (No auth required):
+    - `/api/v1/survey/submit` - Submit survey for prediction
+    - `/api/v1/health` - Health check
+    - `/api/v1/models` - View available models
+    - `/api/v1/auth/login` - Admin login
+    
+    **Protected Endpoints** (API key required):
+    - `/api/v1/predict` - Batch predictions
+    - `/api/v1/model/version` - Model versions
+    - `/api/v1/ab/*` - A/B testing management
+    - `/api/v1/monitoring/*` - Monitoring & drift detection
+    - `/api/v1/customers/infos` - Customer data
+    - `/api/v1/users/*` - User management
+    
+    See `/api/v1/health` for API status and `docs/API_SECURITY.md` for full documentation.
+    """,
     version="2.0.0",
     lifespan=lifespan,
 )
