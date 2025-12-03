@@ -27,3 +27,4 @@ httpx
 evidently
 alibi-detect
 pytest-mock
+slowapi

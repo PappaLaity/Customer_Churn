@@ -1,5 +1,5 @@
-from pydantic import BaseModel
-from sqlmodel import Column, Field, String
+from pydantic import BaseModel, Field, field_validator
+from sqlmodel import Column, String
 
 
 # class InputCustomer(BaseModel):
@@ -16,11 +16,66 @@ from sqlmodel import Column, Field, String
 #     PaperlessBilling: int = Field(..., description="Facturation sans papier (0=Non, 1=Oui)")
 
 class InputCustomer(BaseModel):
-    tenure: float = Field(..., description="Durée d'abonnement en mois")
-    InternetService_Fiber_optic: bool = Field(..., description="Client avec fibre optique")
-    Contract_Two_year: bool = Field(..., description="Contrat sur deux ans")
-    PaymentMethod_Electronic_check: bool = Field(..., description="Paiement par chèque électronique")
-    No_internet_service: int = Field(..., description="Pas de service internet (0/1)")
-    TotalCharges: float = Field(..., description="Total facturé au client")
-    MonthlyCharges: float = Field(..., description="Montant mensuel facturé")
-    PaperlessBilling: int = Field(..., description="Facturation sans papier (0/1)")
+    """Customer survey input with security validations."""
+    
+    # Numeric fields with reasonable business constraints
+    tenure: float = Field(
+        ..., 
+        ge=0, 
+        le=120,
+        description="Subscription duration in months (0-120)"
+    )
+    TotalCharges: float = Field(
+        ..., 
+        ge=0, 
+        le=100000,
+        description="Total charges ($0-$100,000)"
+    )
+    MonthlyCharges: float = Field(
+        ..., 
+        ge=0, 
+        le=500,
+        description="Monthly charges ($0-$500)"
+    )
+    
+    # Boolean/binary fields
+    InternetService_Fiber_optic: bool = Field(
+        ..., 
+        description="Customer has fiber optic internet"
+    )
+    Contract_Two_year: bool = Field(
+        ..., 
+        description="Has two-year contract"
+    )
+    PaymentMethod_Electronic_check: bool = Field(
+        ..., 
+        description="Pays by electronic check"
+    )
+    No_internet_service: int = Field(
+        ..., 
+        ge=0, 
+        le=1,
+        description="No internet service (0/1)"
+    )
+    PaperlessBilling: int = Field(
+        ..., 
+        ge=0, 
+        le=1,
+        description="Paperless billing (0/1)"
+    )
+    
+    @field_validator('TotalCharges', 'MonthlyCharges', 'tenure')
+    @classmethod
+    def check_positive_values(cls, v, info):
+        """Ensure financial and tenure values are non-negative."""
+        if v < 0:
+            raise ValueError(f'{info.field_name} must be non-negative')
+        return v
+    
+    @field_validator('TotalCharges')
+    @classmethod
+    def validate_total_charges(cls, v, info):
+        """Business logic: TotalCharges should be reasonable."""
+        if v > 100000:  # $100k seems unrealistic for telecom
+            raise ValueError('TotalCharges exceeds reasonable limit')
+        return v

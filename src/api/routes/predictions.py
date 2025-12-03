@@ -18,6 +18,8 @@ import numpy as np
 import pandas as pd
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from mlflow.tracking import MlflowClient
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from src.api.core.metrics import (
     FEATURE_DRIFT_STAT,
@@ -36,6 +38,9 @@ from src.experiments.ab import assign_bucket, log_exposure
 
 
 router = APIRouter(tags=["predictions"])
+
+# Initialize rate limiter (used for public endpoints)
+limiter = Limiter(key_func=get_remote_address)
 
 # Environment variables
 MODEL_NAME = os.getenv("MODEL_REGISTRY_NAME", "CustomerChurnModel")
@@ -166,12 +171,15 @@ async def predict(payload: PredictPayload, request: Request):
 
 
 @router.post("/survey/submit")
+@limiter.limit("10/minute")  # Rate limit: 10 requests per minute per IP
 async def submit_survey(
     input: InputCustomer, 
     background_tasks: BackgroundTasks, 
     request: Request
 ):
     """Submit customer survey and get churn prediction.
+    
+    Public endpoint with rate limiting (10 requests/minute per IP).
     
     This endpoint:
     1. Performs A/B tested prediction
@@ -214,7 +222,22 @@ async def submit_survey(
     # DVC push in background
     background_tasks.add_task(dvc_push_background)
     
-    return {"success": "Thank you for your submission"}
+    # Return prediction with interpretation
+    # NOTE: This is a public endpoint - do not expose:
+    # - Model version numbers
+    # - Internal system paths
+    # - Latency/timing (timing attacks)
+    # - A/B test bucket assignment
+    churn_prediction = result["prediction"]
+    return {
+        "success": "Thank you for your submission",
+        "prediction": churn_prediction,
+        "will_churn": bool(churn_prediction),
+        "message": "Customer likely to churn" if churn_prediction == 1 else "Customer likely to stay"
+        # REMOVED for security:
+        # - "model_used": reveals internal model versions
+        # - "latency": enables timing attacks
+    }
 
 
 async def predict_single(data: InputCustomer, request: Request) -> Dict[str, Any]:
