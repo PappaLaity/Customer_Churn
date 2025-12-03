@@ -15,9 +15,7 @@ def seed_admin():
     # Use next() to get the session from the generator
     db = next(get_session())
     try:
-        existing_admin = db.exec(
-            select(User).where(User.email == "admin@example.com")
-        ).first()
+        existing_admin = db.exec(select(User).where(User.email == "admin@example.com")).first()
 
         if not existing_admin:
             admin = User(

@@ -31,7 +31,11 @@ services:
       dockerfile: Dockerfile.api
     container_name: churn_api
     environment:
-      DATABASE_URL: ${DATABASE_URL}
+      #DATABASE_URL: ${DATABASE_URL}
+      DB_HOST: db  
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: churn_db
       MLFLOW_TRACKING_URI: http://mlflow:5000
       MODEL_REGISTRY_NAME: CustomerChurnModel
       MODEL_STAGE: Production

@@ -2,7 +2,6 @@
 Customer Churn Prediction API
 FastAPI application - Refactored version
 """
-
 import asyncio
 
 import mlflow
@@ -42,7 +41,9 @@ async def lifespan(app: FastAPI):
         logger.info("✅ ML models loaded")
 
         # Lancer le rechargement périodique
-        task = asyncio.create_task(_model_reloader(interval=settings.MODEL_RELOAD_INTERVAL))
+        task = asyncio.create_task(
+            _model_reloader(interval=settings.MODEL_RELOAD_INTERVAL)
+        )
     else:
         task = asyncio.create_task(asyncio.sleep(0))
 

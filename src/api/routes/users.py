@@ -13,18 +13,12 @@ router = APIRouter(prefix="/users", tags=["Users"])
 @router.post("/", response_model=UserRead, dependencies=[Depends(verify_api_key)])
 def create_user(user_data: UserCreate):
     with Session(engine) as session:
-        existing = session.exec(
-            select(User).where(User.email == user_data.email)
-        ).first()
+        existing = session.exec(select(User).where(User.email == user_data.email)).first()
         if existing:
             raise HTTPException(status_code=400, detail="Email already registered")
-        existing = session.exec(
-            select(User).where(User.phone == user_data.phone)
-        ).first()
+        existing = session.exec(select(User).where(User.phone == user_data.phone)).first()
         if existing:
-            raise HTTPException(
-                status_code=400, detail="Phone Number already registered"
-            )
+            raise HTTPException(status_code=400, detail="Phone Number already registered")
 
         user_data.password = hash_password(user_data.password)
 
@@ -70,9 +64,7 @@ def update_user(id: int, user_data: UserUpdate):
                 select(User).where(User.phone == user_data.phone, User.id != id)
             ).first()
             if existing:
-                raise HTTPException(
-                    status_code=400, detail="Phone number already registered"
-                )
+                raise HTTPException(status_code=400, detail="Phone number already registered")
 
         # Met à jour les champs
         for key, value in user_data.model_dump(exclude_unset=True).items():

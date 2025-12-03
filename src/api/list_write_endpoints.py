@@ -1,10 +1,12 @@
 import importlib
+
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
 
 # 🔹 Adapte ce chemin vers ton app FastAPI
 # Exemple : from src.api.main import app
-from src.api.main import app  
+from src.api.main import app
+
 
 def list_routes(app: FastAPI):
     print("=== Tous les endpoints ===\n")
@@ -32,6 +34,7 @@ def list_routes(app: FastAPI):
         print(e)
 
     return write_endpoints, read_endpoints
+
 
 if __name__ == "__main__":
     writes, reads = list_routes(app)

@@ -17,9 +17,7 @@ from sqlmodel import Field
 
 class InputCustomer(BaseModel):
     tenure: float = Field(..., description="Durée d'abonnement en mois")
-    InternetService_Fiber_optic: bool = Field(
-        ..., description="Client avec fibre optique"
-    )
+    InternetService_Fiber_optic: bool = Field(..., description="Client avec fibre optique")
     Contract_Two_year: bool = Field(..., description="Contrat sur deux ans")
     PaymentMethod_Electronic_check: bool = Field(
         ..., description="Paiement par chèque électronique"

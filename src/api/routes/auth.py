@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from sqlmodel import Session, select
 
 from src.api.core.database import engine
+
 # from src.api.core.database import get_session
 from src.api.core.security import API_KEY_SECRET, verify_password
 from src.api.entities.users import User, UserRead
