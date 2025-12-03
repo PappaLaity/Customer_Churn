@@ -1,0 +1,259 @@
+customerID,gender,SeniorCitizen,Partner,Dependents,tenure,PhoneService,MultipleLines,InternetService,OnlineSecurity,OnlineBackup,DeviceProtection,TechSupport,StreamingTV,StreamingMovies,Contract,PaperlessBilling,PaymentMethod,MonthlyCharges,TotalCharges,Churn,InternetService_Fiber_optic,Contract_Two_year,PaymentMethod_Electronic_check,No_internet_service
+PROD-0000,Female,1.0,No,Yes,24.0,Yes,No,DSL,No,No internet service,No internet service,Yes,Yes,No,Month-to-month,No,Bank transfer (automatic),93.70861069626262,2231.1299405909854,Yes,,,,
+PROD-0001,Male,1.0,Yes,Yes,11.0,Yes,No phone service,DSL,No internet service,No internet service,No,Yes,No,No,Month-to-month,No,Bank transfer (automatic),145.56428757689247,1589.0014623029986,Yes,,,,
+PROD-0002,Female,1.0,Yes,No,8.0,Yes,No phone service,Fiber optic,No internet service,Yes,Yes,Yes,Yes,No internet service,Month-to-month,No,Mailed check,125.87945476302646,1000.3436108223996,Yes,,,,
+PROD-0003,Female,1.0,No,Yes,20.0,Yes,No,No,No internet service,Yes,Yes,Yes,Yes,No internet service,Month-to-month,Yes,Credit card (automatic),113.8792635777333,2289.204644732134,Yes,,,,
+PROD-0004,Female,1.0,No,No,35.0,No,Yes,Fiber optic,No,Yes,No internet service,No internet service,Yes,No,Month-to-month,Yes,Bank transfer (automatic),74.04167763981928,2606.987315152068,Yes,,,,
+PROD-0005,Male,1.0,No,No,25.0,Yes,No,No,Yes,Yes,No internet service,No internet service,Yes,Yes,Month-to-month,No,Bank transfer (automatic),74.03950683025823,1846.592492001713,Yes,,,,
+PROD-0006,Male,1.0,No,No,35.0,Yes,No phone service,Fiber optic,Yes,Yes,No internet service,No internet service,Yes,No internet service,Month-to-month,No,Bank transfer (automatic),65.22752509513795,2278.884224802115,Yes,,,,
+PROD-0007,Female,1.0,Yes,No,25.0,No,No,Fiber optic,Yes,Yes,No internet service,No internet service,No,Yes,Month-to-month,Yes,Mailed check,137.95585311974418,3451.5125585533287,Yes,,,,
+PROD-0008,Male,1.0,Yes,No,29.0,Yes,Yes,Fiber optic,No,No,No,Yes,Yes,No internet service,Month-to-month,Yes,Credit card (automatic),114.1003510568888,3309.0316457405074,No,,,,
+PROD-0009,Female,1.0,No,Yes,18.0,Yes,No phone service,Fiber optic,No,Yes,Yes,No internet service,No,Yes,Month-to-month,No,Credit card (automatic),123.72653200164407,2236.3869168693345,Yes,,,,
+PROD-0010,Male,1.0,Yes,Yes,18.0,Yes,No,Fiber optic,No,No internet service,No internet service,Yes,Yes,Yes,Month-to-month,Yes,Credit card (automatic),61.85260448662222,1108.1149998233288,No,,,,
+PROD-0011,Male,0.0,No,No,2.0,Yes,Yes,Fiber optic,No,No,No,No internet service,No internet service,Yes,Month-to-month,Yes,Credit card (automatic),147.2918866945795,304.07520326696897,No,,,,
+PROD-0012,Male,1.0,No,No,35.0,Yes,No phone service,Fiber optic,No,Yes,No internet service,No,No internet service,No,Month-to-month,No,Electronic check,134.91983767203794,4719.80207054263,No,,,,
+PROD-0013,Male,1.0,Yes,Yes,16.0,Yes,Yes,Fiber optic,Yes,No internet service,No internet service,No internet service,No internet service,Yes,Month-to-month,Yes,Electronic check,79.11051996104486,1274.3080664873962,Yes,,,,
+PROD-0014,Female,0.0,No,Yes,33.0,Yes,No phone service,Fiber optic,No,No,Yes,No internet service,No internet service,Yes,One year,No,Credit card (automatic),76.36424704863906,2517.309747982203,Yes,,,,
+PROD-0015,Female,1.0,Yes,Yes,4.0,Yes,No,Fiber optic,No,No internet service,No internet service,Yes,No,Yes,Month-to-month,Yes,Mailed check,76.50640588680905,299.8946767181524,No,,,,
+PROD-0016,Female,1.0,Yes,Yes,33.0,Yes,Yes,DSL,Yes,Yes,Yes,No internet service,No,No internet service,Month-to-month,No,Electronic check,87.3818018663584,2902.722637988227,No,,,,
+PROD-0017,Male,1.0,Yes,No,14.0,Yes,No phone service,Fiber optic,No,Yes,Yes,No,Yes,Yes,One year,Yes,Bank transfer (automatic),107.2280788469014,1511.845374682089,No,,,,
+PROD-0018,Female,1.0,Yes,No,21.0,Yes,Yes,Fiber optic,Yes,Yes,Yes,Yes,No internet service,No internet service,Month-to-month,No,Electronic check,98.87505167779042,2058.4556342322467,Yes,,,,
+PROD-0019,Female,0.0,No,Yes,20.0,No,Yes,DSL,Yes,Yes,No,Yes,No,Yes,Month-to-month,No,Bank transfer (automatic),86.21062261782377,1719.7447172385764,Yes,,,,
+PROD-0020,Female,0.0,Yes,No,8.0,Yes,No,No,No internet service,No,No,No internet service,Yes,Yes,Month-to-month,No,Credit card (automatic),115.06676052501416,932.5833134178988,No,,,,
+PROD-0021,Male,1.0,No,Yes,7.0,Yes,Yes,DSL,No internet service,No,Yes,Yes,Yes,No,Month-to-month,No,Electronic check,72.55444745868377,495.9145275186512,No,,,,
+PROD-0022,Male,1.0,No,No,3.0,Yes,No phone service,Fiber optic,No internet service,No internet service,No internet service,Yes,No,No internet service,One year,Yes,Mailed check,86.29301836816964,266.58583839974,No,,,,
+PROD-0023,Male,1.0,No,Yes,17.0,Yes,No phone service,No,No internet service,Yes,Yes,Yes,No internet service,Yes,Month-to-month,Yes,Electronic check,92.97256589643226,1587.2041812740465,No,,,,
+PROD-0024,Female,1.0,No,No,33.0,Yes,No phone service,Fiber optic,No,No internet service,No internet service,Yes,Yes,No internet service,Two year,No,Electronic check,101.04629857953324,3327.5363873436777,Yes,,,,
+PROD-0025,Female,1.0,Yes,Yes,12.0,No,No phone service,Fiber optic,No internet service,No,Yes,Yes,No internet service,No internet service,Month-to-month,Yes,Electronic check,130.66583652537122,1567.9018678419966,No,,,,
+PROD-0026,Female,1.0,Yes,Yes,22.0,Yes,No,Fiber optic,Yes,Yes,No internet service,Yes,No internet service,No,Month-to-month,Yes,Credit card (automatic),77.97064039425237,1694.4539111872496,Yes,,,,
+PROD-0027,Male,1.0,No,No,22.0,Yes,Yes,Fiber optic,No,Yes,No,No,No internet service,No,Month-to-month,Yes,Mailed check,106.28109945722504,2355.888503224618,Yes,,,,
+PROD-0028,Male,1.0,No,Yes,30.0,Yes,No,Fiber optic,No internet service,No,No internet service,No internet service,Yes,No,Month-to-month,Yes,Electronic check,113.31731119758382,3396.428410835545,No,,,,
+PROD-0029,Female,1.0,Yes,No,8.0,Yes,Yes,Fiber optic,Yes,No,Yes,No,No internet service,No,Month-to-month,Yes,Mailed check,64.1805371447998,521.482427672161,No,,,,
+PROD-0030,Male,1.0,No,No,27.0,Yes,Yes,DSL,No,No,No,Yes,Yes,No,Two year,No,Credit card (automatic),114.67903667112944,3102.4724035352497,Yes,,,,
+PROD-0031,Male,1.0,Yes,Yes,27.0,Yes,Yes,Fiber optic,No,No,No internet service,Yes,No internet service,No,Month-to-month,No,Bank transfer (automatic),75.34717113185624,2047.9524284411184,Yes,,,,
+PROD-0032,Male,0.0,No,No,34.0,Yes,No,No,No internet service,No,No internet service,No internet service,Yes,No,Month-to-month,No,Electronic check,65.85464336867516,2234.72484046593,No,,,,
+PROD-0033,Male,1.0,Yes,No,21.0,Yes,Yes,Fiber optic,No,Yes,No internet service,No,No internet service,No,Month-to-month,No,Mailed check,145.3996983528,3055.4318926840742,Yes,,,,
+PROD-0034,Female,0.0,No,No,30.0,Yes,No,Fiber optic,Yes,No,No internet service,No internet service,No,Yes,Month-to-month,Yes,Mailed check,146.90688297671034,4412.797581327455,No,,,,
+PROD-0035,Male,1.0,No,No,33.0,Yes,No phone service,Fiber optic,No,Yes,No internet service,No,No internet service,No internet service,Month-to-month,Yes,Credit card (automatic),132.7557613304815,4389.665539820195,Yes,,,,
+PROD-0036,Male,1.0,Yes,No,28.0,Yes,No phone service,Fiber optic,Yes,Yes,No,Yes,No internet service,No,Month-to-month,No,Electronic check,87.41523922560336,2459.170241700984,No,,,,
+PROD-0037,Male,0.0,No,Yes,33.0,Yes,Yes,Fiber optic,No,No,No,No internet service,Yes,No,Month-to-month,Yes,Bank transfer (automatic),68.79049026057454,2265.312361293207,No,,,,
+PROD-0038,Male,1.0,No,No,5.0,Yes,No,Fiber optic,No internet service,No,No,No internet service,Yes,No internet service,Month-to-month,Yes,Mailed check,121.58097238609412,601.2625874974264,Yes,,,,
+PROD-0039,Female,1.0,Yes,No,19.0,Yes,No phone service,Fiber optic,Yes,Yes,No,Yes,No internet service,Yes,Month-to-month,No,Electronic check,99.61372443656413,1906.2618779572,Yes,,,,
+PROD-0040,Female,1.0,No,No,4.0,Yes,No,Fiber optic,No,No,Yes,No internet service,No,No internet service,One year,Yes,Bank transfer (automatic),70.9834411360301,263.563005194399,Yes,,,,
+PROD-0041,Male,1.0,Yes,No,35.0,Yes,No,Fiber optic,No,No,No,No,No,No internet service,One year,No,Mailed check,104.56592191001432,3675.507589655928,Yes,,,,
+PROD-0042,Male,1.0,Yes,No,17.0,Yes,Yes,Fiber optic,No,No,No internet service,No,Yes,No,Month-to-month,No,Mailed check,63.094966900369656,1069.591194885521,No,,,,
+PROD-0043,Male,1.0,No,Yes,28.0,Yes,No phone service,Fiber optic,Yes,No internet service,No internet service,No,No,No internet service,Month-to-month,Yes,Bank transfer (automatic),141.83883618709038,3971.441784948628,Yes,,,,
+PROD-0044,Male,1.0,No,No,30.0,Yes,Yes,Fiber optic,Yes,Yes,No,No,No internet service,No internet service,Two year,Yes,Bank transfer (automatic),83.29019834400152,2491.882524308844,No,,,,
+PROD-0045,Male,1.0,No,Yes,29.0,Yes,Yes,Fiber optic,Yes,No internet service,No internet service,Yes,Yes,No,Month-to-month,No,Credit card (automatic),119.62700559185838,3468.701207308535,Yes,,,,
+PROD-0046,Male,1.0,No,Yes,6.0,Yes,No phone service,Fiber optic,No internet service,No,No,No internet service,No internet service,No,Two year,No,Electronic check,88.05399684804699,541.0353633480911,No,,,,
+PROD-0047,Female,1.0,No,Yes,35.0,Yes,No phone service,Fiber optic,No internet service,No internet service,No internet service,No,Yes,No,Month-to-month,Yes,Electronic check,106.80612190600296,3745.922897724744,No,,,,
+PROD-0048,Male,1.0,No,Yes,24.0,Yes,No,DSL,Yes,No,Yes,Yes,Yes,No,Month-to-month,No,Credit card (automatic),109.20392514089517,2625.821068219488,No,,,,
+PROD-0049,Female,1.0,No,No,29.0,Yes,No phone service,Fiber optic,No,No internet service,Yes,No internet service,Yes,No internet service,One year,No,Mailed check,76.63690099729743,2223.358858982943,No,,,,
+PROD-0050,Female,0.0,Yes,Yes,31.0,Yes,No,Fiber optic,No internet service,No,No,No internet service,Yes,No internet service,Two year,No,Bank transfer (automatic),147.26261649881027,4550.685011738397,No,,,,
+PROD-0051,Male,1.0,No,Yes,35.0,Yes,No,DSL,Yes,No internet service,No,Yes,No,Yes,Month-to-month,Yes,Bank transfer (automatic),129.7619541025003,4533.227024452333,Yes,,,,
+PROD-0052,Female,1.0,Yes,No,33.0,No,No,Fiber optic,No,No internet service,No,Yes,No internet service,Yes,Month-to-month,No,Bank transfer (automatic),144.55490474077703,4766.87984407933,No,,,,
+PROD-0053,Female,0.0,No,No,21.0,Yes,No phone service,Fiber optic,No internet service,No internet service,No internet service,No,No internet service,No internet service,Month-to-month,Yes,Mailed check,140.5344615384884,2955.8004568525444,No,,,,
+PROD-0054,Female,1.0,No,No,32.0,Yes,Yes,Fiber optic,No,Yes,No,No internet service,No internet service,Yes,Month-to-month,No,Bank transfer (automatic),113.81099809299766,3642.648465621114,No,,,,
+PROD-0055,Female,1.0,Yes,Yes,23.0,Yes,No,Fiber optic,No,No internet service,Yes,No internet service,Yes,No internet service,Month-to-month,Yes,Bank transfer (automatic),142.9686811520805,3298.1147095614365,Yes,,,,
+PROD-0056,Female,0.0,No,No,33.0,No,Yes,Fiber optic,No,Yes,No internet service,Yes,No,Yes,Month-to-month,No,Credit card (automatic),67.96432518467276,2247.559004971477,No,,,,
+PROD-0057,Female,1.0,No,No,3.0,Yes,Yes,DSL,No,No,No,No internet service,No internet service,No,Two year,Yes,Mailed check,77.63845761772306,233.4588786325549,No,,,,
+PROD-0058,Male,1.0,Yes,Yes,18.0,Yes,No phone service,Fiber optic,No internet service,No internet service,No internet service,No,No,Yes,Month-to-month,Yes,Electronic check,64.07045600194843,1176.0258210107438,Yes,,,,
+PROD-0059,Female,1.0,No,No,25.0,Yes,Yes,No,No internet service,No,No internet service,No internet service,Yes,No,Month-to-month,Yes,Credit card (automatic),89.27972976869378,2236.055511067844,Yes,,,,
+PROD-0060,Female,1.0,No,No,31.0,Yes,Yes,Fiber optic,No internet service,No,No,Yes,No internet service,No,Month-to-month,No,Credit card (automatic),94.98095607205336,2940.090216217571,No,,,,
+PROD-0061,Female,1.0,No,No,3.0,No,No phone service,No,Yes,No internet service,No internet service,Yes,No,No,Month-to-month,No,Electronic check,84.42141285965063,271.8639086438212,No,,,,
+PROD-0062,Male,1.0,Yes,No,24.0,No,No,Fiber optic,No internet service,Yes,Yes,No,Yes,No,Month-to-month,No,Credit card (automatic),134.58637582367365,3242.0771352523016,No,,,,
+PROD-0063,Female,1.0,No,Yes,32.0,Yes,Yes,Fiber optic,No,No internet service,Yes,No,No,Yes,Month-to-month,Yes,Mailed check,92.10779940242304,2965.6104587799755,Yes,,,,
+PROD-0064,Male,1.0,No,No,22.0,No,No phone service,Fiber optic,No internet service,No,No internet service,No internet service,No internet service,No internet service,Month-to-month,No,Bank transfer (automatic),85.28410587186427,1875.1410098247188,No,,,,
+PROD-0065,Female,1.0,No,No,23.0,Yes,Yes,Fiber optic,No,No,No,No internet service,No internet service,No,Two year,Yes,Mailed check,108.84264748424236,2513.1439834023854,Yes,,,,
+PROD-0066,Male,1.0,No,Yes,2.0,Yes,Yes,Fiber optic,Yes,No internet service,No internet service,Yes,Yes,Yes,Two year,No,Electronic check,72.68318024772864,130.8378659047337,Yes,,,,
+PROD-0067,Male,0.0,Yes,No,27.0,Yes,No,DSL,No,Yes,Yes,No,Yes,No,Month-to-month,Yes,Electronic check,132.19772826786357,3577.178727341458,Yes,,,,
+PROD-0068,Female,1.0,Yes,Yes,2.0,Yes,Yes,Fiber optic,No,Yes,No internet service,No,Yes,Yes,Two year,Yes,Credit card (automatic),66.70955793117938,131.8418762798177,No,,,,
+PROD-0069,Female,1.0,No,No,26.0,Yes,No phone service,Fiber optic,No,No,No internet service,No,No,Yes,Month-to-month,Yes,Mailed check,148.81982429404655,3855.764852090031,No,,,,
+PROD-0070,Male,0.0,No,Yes,17.0,Yes,Yes,Fiber optic,Yes,No,Yes,No internet service,No,Yes,Month-to-month,No,Mailed check,129.50202923669917,2211.8605010640654,No,,,,
+PROD-0071,Female,0.0,Yes,Yes,33.0,Yes,No,Fiber optic,No internet service,Yes,No internet service,No,No,No internet service,Month-to-month,No,Electronic check,77.88441133807552,2552.084260906532,Yes,,,,
+PROD-0072,Male,1.0,Yes,Yes,9.0,Yes,No,Fiber optic,No internet service,No internet service,No internet service,Yes,Yes,Yes,Month-to-month,No,Mailed check,60.49699054112422,525.3458496994758,No,,,,
+PROD-0073,Male,1.0,No,Yes,29.0,Yes,No phone service,Fiber optic,Yes,No,No,Yes,No internet service,Yes,Month-to-month,Yes,Electronic check,133.3915285609351,3871.9790928551706,Yes,,,,
+PROD-0074,Male,1.0,Yes,No,26.0,Yes,No,Fiber optic,No,Yes,No,No internet service,No internet service,No internet service,One year,Yes,Mailed check,123.61716094628554,3219.759659706692,No,,,,
+PROD-0075,Male,0.0,No,Yes,35.0,Yes,Yes,Fiber optic,No internet service,No,Yes,No internet service,No,No internet service,Month-to-month,No,Mailed check,125.61064512368884,4406.077817529242,No,,,,
+PROD-0076,Male,1.0,Yes,No,25.0,Yes,No,Fiber optic,Yes,No internet service,Yes,No,No,Yes,One year,No,Mailed check,129.4143312017351,3242.7779102086724,Yes,,,,
+PROD-0077,Female,1.0,Yes,Yes,24.0,No,No phone service,Fiber optic,No internet service,Yes,Yes,No internet service,No internet service,No internet service,Month-to-month,No,Electronic check,66.66401865606814,1614.7030339999314,No,,,,
+PROD-0078,Male,1.0,Yes,Yes,13.0,Yes,No,No,Yes,No,No,Yes,No internet service,No,Month-to-month,Yes,Credit card (automatic),92.26191556898452,1206.407331930423,Yes,,,,
+PROD-0079,Male,1.0,Yes,Yes,7.0,Yes,No,Fiber optic,No,No internet service,Yes,No,No,No,Two year,Yes,Mailed check,70.42821535726168,491.6745130614071,No,,,,
+PROD-0080,Female,1.0,No,No,20.0,Yes,No,Fiber optic,No internet service,No,Yes,Yes,No,No internet service,Month-to-month,Yes,Electronic check,137.67930832880342,2752.8500554181496,No,,,,
+PROD-0081,Male,1.0,Yes,Yes,1.0,Yes,No phone service,Fiber optic,Yes,No internet service,Yes,No,No internet service,No internet service,Month-to-month,Yes,Electronic check,116.0968314144802,113.2746195246081,Yes,,,,
+PROD-0082,Female,1.0,Yes,No,8.0,Yes,No,Fiber optic,No internet service,No internet service,No,No internet service,Yes,Yes,Month-to-month,Yes,Mailed check,89.78082223673843,721.2013531381393,No,,,,
+PROD-0083,Female,1.0,No,No,16.0,Yes,No,Fiber optic,No internet service,Yes,No internet service,No,No,No internet service,Month-to-month,No,Mailed check,65.72025152574213,1040.5505657262074,Yes,,,,
+PROD-0084,Female,0.0,Yes,No,14.0,Yes,Yes,Fiber optic,No internet service,No internet service,Yes,No,No internet service,Yes,Month-to-month,Yes,Credit card (automatic),87.98840895440959,1235.2469473473238,No,,,,
+PROD-0085,Male,1.0,Yes,No,12.0,No,No phone service,DSL,No internet service,No,No internet service,Yes,No internet service,No,Month-to-month,Yes,Electronic check,89.26649898240723,1070.3338527205706,No,,,,
+PROD-0086,Male,0.0,No,No,23.0,Yes,No,No,Yes,No internet service,Yes,Yes,No internet service,No internet service,Month-to-month,Yes,Electronic check,125.66455605042576,2893.041140738667,No,,,,
+PROD-0087,Male,1.0,Yes,No,15.0,Yes,No phone service,Fiber optic,No,No internet service,No internet service,No,No internet service,Yes,Two year,Yes,Bank transfer (automatic),117.38017242196918,1763.489816679244,Yes,,,,
+PROD-0088,Female,1.0,No,No,28.0,Yes,No,Fiber optic,Yes,Yes,No,No internet service,Yes,Yes,Month-to-month,Yes,Electronic check,139.84914683186938,3891.253465279185,No,,,,
+PROD-0089,Male,1.0,No,No,34.0,Yes,No,Fiber optic,Yes,No internet service,No,No internet service,No internet service,No,Month-to-month,No,Credit card (automatic),102.49934326457544,3475.9647328089177,No,,,,
+PROD-0090,Female,1.0,No,No,2.0,Yes,No,Fiber optic,Yes,No internet service,Yes,Yes,No,No internet service,Month-to-month,Yes,Bank transfer (automatic),70.76348213444716,140.44067762800577,Yes,,,,
+PROD-0091,Male,1.0,No,Yes,32.0,Yes,Yes,Fiber optic,No,No,No internet service,No internet service,Yes,No,Two year,Yes,Bank transfer (automatic),124.19203085006956,3973.590137619249,Yes,,,,
+PROD-0092,Female,1.0,Yes,Yes,23.0,No,Yes,Fiber optic,No internet service,Yes,No,Yes,No internet service,Yes,Month-to-month,Yes,Bank transfer (automatic),128.47065437552078,2957.4189437269747,No,,,,
+PROD-0093,Male,1.0,No,Yes,22.0,Yes,Yes,DSL,No internet service,Yes,Yes,No internet service,Yes,Yes,Month-to-month,No,Mailed check,110.51494778125466,2434.352334090919,No,,,,
+PROD-0094,Male,1.0,Yes,Yes,25.0,Yes,No phone service,Fiber optic,No internet service,Yes,Yes,No,No,No internet service,Month-to-month,No,Mailed check,129.3870461959105,3249.8384881271013,No,,,,
+PROD-0095,Male,1.0,Yes,Yes,22.0,Yes,No phone service,Fiber optic,No,No internet service,No,Yes,No internet service,Yes,Month-to-month,No,Electronic check,104.44160367279515,2300.8398656124727,No,,,,
+PROD-0096,Female,1.0,Yes,No,22.0,Yes,Yes,Fiber optic,No internet service,Yes,No,Yes,No,No internet service,One year,Yes,Bank transfer (automatic),107.04595464437946,2351.8807650941835,No,,,,
+PROD-0097,Female,1.0,Yes,No,6.0,Yes,No phone service,Fiber optic,No,No internet service,Yes,No,No internet service,No,Month-to-month,No,Credit card (automatic),98.47869165226946,574.8809151882419,Yes,,,,
+PROD-0098,Male,1.0,Yes,No,15.0,Yes,No,Fiber optic,No internet service,No internet service,No internet service,Yes,No internet service,No internet service,Month-to-month,Yes,Mailed check,62.287721406968565,920.62991994911,Yes,,,,
+PROD-0099,Male,1.0,Yes,No,33.0,Yes,No,DSL,No internet service,No,No internet service,No internet service,No internet service,No internet service,Month-to-month,Yes,Credit card (automatic),69.7102284293974,2305.7924562698663,Yes,,,,
+PROD-0100,Female,1.0,Yes,No,8.0,Yes,No,DSL,Yes,No,No internet service,No internet service,No internet service,Yes,Month-to-month,No,Credit card (automatic),62.82862671180608,513.2334818355533,No,,,,
+PROD-0101,Female,1.0,Yes,No,5.0,No,Yes,Fiber optic,No,No,Yes,Yes,No internet service,Yes,Two year,Yes,Mailed check,117.27693701374024,601.798395037883,Yes,,,,
+PROD-0102,Female,1.0,Yes,No,4.0,Yes,No phone service,DSL,Yes,No,No,No internet service,Yes,No internet service,Two year,Yes,Mailed check,88.2920382968694,344.8892223983205,No,,,,
+PROD-0103,Male,1.0,Yes,Yes,6.0,No,Yes,DSL,Yes,No,Yes,Yes,No internet service,Yes,Month-to-month,Yes,Mailed check,105.77136220482323,631.5895288746301,No,,,,
+PROD-0104,Female,0.0,No,Yes,32.0,Yes,No phone service,DSL,Yes,No internet service,No,No,No internet service,Yes,One year,No,Mailed check,141.68098265334837,4536.214781767979,No,,,,
+PROD-0105,Male,1.0,No,Yes,30.0,Yes,No,No,No,No internet service,No internet service,Yes,Yes,Yes,Month-to-month,Yes,Bank transfer (automatic),82.43630062339875,2493.563007913265,Yes,,,,
+PROD-0106,Female,1.0,No,Yes,35.0,Yes,Yes,Fiber optic,No,Yes,No internet service,No,Yes,No internet service,Month-to-month,Yes,Bank transfer (automatic),96.93446307320669,3393.8548222443724,No,,,,
+PROD-0107,Male,1.0,Yes,No,16.0,Yes,No phone service,Fiber optic,No internet service,No internet service,No,No internet service,Yes,Yes,Month-to-month,No,Bank transfer (automatic),127.9996024688744,2063.50626804932,Yes,,,,
+PROD-0108,Female,1.0,No,No,13.0,Yes,No phone service,Fiber optic,Yes,No internet service,No,No,Yes,No internet service,Month-to-month,Yes,Bank transfer (automatic),80.59183489424602,1049.3935826542713,No,,,,
+PROD-0109,Female,0.0,No,No,30.0,Yes,No,Fiber optic,No internet service,No,Yes,No internet service,Yes,Yes,Month-to-month,Yes,Electronic check,66.92819188459137,2019.3782084020256,Yes,,,,
+PROD-0110,Female,0.0,No,Yes,19.0,Yes,Yes,Fiber optic,Yes,No internet service,No internet service,Yes,Yes,No,Two year,No,Bank transfer (automatic),86.07763076223912,1645.740782948064,Yes,,,,
+PROD-0111,Female,1.0,Yes,No,17.0,Yes,Yes,Fiber optic,No,No,Yes,No internet service,No internet service,Yes,Month-to-month,Yes,Mailed check,74.5099158528604,1268.3294508237084,No,,,,
+PROD-0112,Female,1.0,Yes,No,19.0,Yes,Yes,Fiber optic,No,Yes,Yes,Yes,No internet service,Yes,One year,Yes,Credit card (automatic),143.67278871083158,2719.5791530331785,Yes,,,,
+PROD-0113,Male,1.0,Yes,No,28.0,Yes,No,Fiber optic,No,Yes,Yes,Yes,No,No internet service,Month-to-month,Yes,Bank transfer (automatic),132.7308341607975,3713.772412123041,Yes,,,,
+PROD-0114,Female,1.0,Yes,Yes,26.0,Yes,Yes,DSL,Yes,No internet service,No internet service,No,No internet service,No internet service,One year,Yes,Electronic check,117.00633808593813,3057.055241973236,No,,,,
+PROD-0115,Female,1.0,No,No,26.0,Yes,No,Fiber optic,No,Yes,Yes,No,No internet service,Yes,Month-to-month,Yes,Mailed check,138.4314531168946,3607.996032724061,No,,,,
+PROD-0116,Female,1.0,No,Yes,23.0,Yes,No,Fiber optic,Yes,No internet service,Yes,No,Yes,No,Month-to-month,No,Credit card (automatic),132.3304869209203,3039.264695913448,No,,,,
+PROD-0117,Male,1.0,No,Yes,9.0,Yes,No,Fiber optic,No internet service,Yes,Yes,No,Yes,Yes,Month-to-month,No,Credit card (automatic),76.79130529974323,687.6986613114451,No,,,,
+PROD-0118,Female,0.0,No,Yes,12.0,Yes,No phone service,DSL,Yes,No,Yes,No internet service,No internet service,Yes,One year,No,Bank transfer (automatic),140.330309864098,1666.6549873315205,No,,,,
+PROD-0119,Male,1.0,Yes,Yes,1.0,Yes,Yes,DSL,No internet service,No,Yes,No internet service,No,No,Month-to-month,No,Credit card (automatic),108.54080177240856,122.98418969222668,Yes,,,,
+PROD-0120,Female,1.0,Yes,No,1.0,Yes,Yes,No,Yes,No,Yes,No internet service,Yes,No internet service,One year,Yes,Bank transfer (automatic),132.66961396476563,141.53024956722717,Yes,,,,
+PROD-0121,Female,1.0,Yes,Yes,34.0,Yes,No,Fiber optic,No internet service,No,No internet service,Yes,No internet service,Yes,Month-to-month,Yes,Bank transfer (automatic),140.6482169931144,4780.668599555472,Yes,,,,
+PROD-0122,Male,1.0,No,Yes,32.0,Yes,No,Fiber optic,No,No internet service,Yes,No internet service,No internet service,No internet service,Month-to-month,Yes,Mailed check,88.62031274746775,2837.851352110702,No,,,,
+PROD-0123,Female,1.0,Yes,No,25.0,Yes,Yes,Fiber optic,No internet service,Yes,No,No internet service,No,No internet service,One year,Yes,Mailed check,69.9046732074909,1725.9081719059686,No,,,,
+PROD-0124,Male,0.0,Yes,No,1.0,Yes,No,Fiber optic,No,No internet service,Yes,No internet service,No,No,Month-to-month,Yes,Electronic check,80.51416462877475,75.64701966834726,No,,,,
+PROD-0125,Male,1.0,No,Yes,16.0,Yes,Yes,Fiber optic,No,No,Yes,No,Yes,No,Month-to-month,No,Mailed check,98.43970097636308,1588.3796720304506,No,,,,
+PROD-0126,Female,1.0,No,No,5.0,Yes,No phone service,Fiber optic,No internet service,No internet service,No internet service,No internet service,No,No internet service,Month-to-month,No,Mailed check,133.6213289330244,677.9221184324227,No,,,,
+PROD-0127,Male,1.0,Yes,Yes,22.0,Yes,No,Fiber optic,Yes,Yes,No internet service,Yes,No internet service,Yes,One year,Yes,Bank transfer (automatic),137.4657524930709,3027.5535604182,Yes,,,,
+PROD-0128,Female,1.0,Yes,Yes,29.0,Yes,Yes,Fiber optic,Yes,No internet service,No,No,No internet service,No internet service,Month-to-month,Yes,Mailed check,60.62569174780716,1757.9978781000582,No,,,,
+PROD-0129,Female,1.0,Yes,Yes,3.0,Yes,No,Fiber optic,Yes,Yes,No,Yes,No,Yes,Two year,Yes,Bank transfer (automatic),105.96725723198092,325.865825992906,No,,,,
+PROD-0130,Male,1.0,Yes,Yes,12.0,Yes,Yes,Fiber optic,Yes,No internet service,No internet service,No internet service,No,Yes,Month-to-month,No,Bank transfer (automatic),97.56699028339013,1167.9900323351706,No,,,,
+PROD-0131,Male,1.0,Yes,No,26.0,Yes,Yes,DSL,Yes,Yes,No internet service,No,No,No,Two year,Yes,Mailed check,79.98970294236572,2063.0853445395587,Yes,,,,
+PROD-0132,Male,0.0,Yes,Yes,16.0,Yes,No,No,No,Yes,Yes,Yes,No,Yes,Two year,Yes,Electronic check,70.78788306003145,1132.5441375637645,No,,,,
+PROD-0133,Male,1.0,No,No,22.0,Yes,No phone service,Fiber optic,Yes,No,No internet service,No internet service,Yes,Yes,Month-to-month,Yes,Electronic check,90.38536542632652,1992.5092326500392,No,,,,
+PROD-0134,Female,0.0,No,No,29.0,Yes,Yes,Fiber optic,No,Yes,No,Yes,No,No internet service,Month-to-month,No,Credit card (automatic),144.86187335212674,4212.221104059656,No,,,,
+PROD-0135,Female,1.0,No,No,14.0,Yes,Yes,No,No,No,Yes,Yes,Yes,No,Month-to-month,Yes,Credit card (automatic),89.08826388186797,1232.8237367411916,No,,,,
+PROD-0136,Male,1.0,Yes,No,28.0,Yes,Yes,Fiber optic,No,No,No,Yes,No internet service,Yes,Month-to-month,No,Mailed check,106.69115595690296,2986.123253727768,No,,,,
+PROD-0137,Female,0.0,No,Yes,5.0,Yes,No phone service,Fiber optic,No internet service,No,Yes,No internet service,No,Yes,Month-to-month,No,Electronic check,123.271706300566,615.6054949552788,No,,,,
+PROD-0138,Female,1.0,Yes,No,30.0,Yes,No phone service,Fiber optic,No internet service,No internet service,No internet service,No internet service,Yes,No,Month-to-month,No,Bank transfer (automatic),92.72666421413646,2770.787407375623,Yes,,,,
+PROD-0139,Female,1.0,Yes,Yes,5.0,Yes,No,Fiber optic,No,No internet service,No,Yes,No,No internet service,Month-to-month,No,Credit card (automatic),147.46038744488646,742.1786699736653,No,,,,
+PROD-0140,Female,1.0,No,No,12.0,Yes,No phone service,Fiber optic,No internet service,No internet service,Yes,No,No internet service,No,Month-to-month,No,Bank transfer (automatic),146.62025654479,1766.916758853598,No,,,,
+PROD-0141,Male,1.0,Yes,No,16.0,Yes,No,Fiber optic,Yes,No internet service,Yes,No,No internet service,No,Month-to-month,No,Credit card (automatic),82.66040662428277,1319.659582908214,No,,,,
+PROD-0142,Male,0.0,Yes,Yes,26.0,Yes,No,Fiber optic,Yes,Yes,No internet service,No internet service,No internet service,Yes,Month-to-month,Yes,Mailed check,104.75236553031468,2744.1124298743966,No,,,,
+PROD-0143,Female,1.0,No,Yes,26.0,Yes,No phone service,No,No,Yes,No internet service,No internet service,No,Yes,Two year,Yes,Electronic check,87.07904788350928,2260.8616448959046,No,,,,
+PROD-0144,Male,1.0,No,Yes,21.0,Yes,No,Fiber optic,Yes,No internet service,No internet service,No internet service,No,No internet service,Month-to-month,Yes,Credit card (automatic),85.63564449397208,1793.881699666507,No,,,,
+PROD-0145,Male,1.0,No,No,33.0,Yes,No phone service,Fiber optic,No,Yes,No,No internet service,Yes,Yes,Month-to-month,No,Electronic check,63.31982526190795,2084.7975201632767,No,,,,
+PROD-0146,Male,0.0,Yes,No,30.0,Yes,No,Fiber optic,No,Yes,Yes,No internet service,No internet service,Yes,Month-to-month,Yes,Bank transfer (automatic),114.86079005819072,3437.6687110128364,Yes,,,,
+PROD-0147,Female,1.0,No,Yes,23.0,Yes,No phone service,Fiber optic,Yes,No,No internet service,No,No,No,One year,No,Mailed check,105.24111209059754,2414.9553231514046,No,,,,
+PROD-0148,Female,1.0,No,Yes,10.0,Yes,No phone service,Fiber optic,No internet service,No,No,No internet service,No internet service,Yes,Two year,No,Electronic check,64.63308761249904,631.9899874326651,No,,,,
+PROD-0149,Female,1.0,Yes,Yes,5.0,No,No,No,Yes,No,No,Yes,No internet service,No internet service,One year,No,Mailed check,85.07818178129503,423.47558066734223,Yes,,,,
+PROD-0150,Male,1.0,No,Yes,34.0,Yes,Yes,Fiber optic,Yes,No,No,Yes,Yes,No,Two year,Yes,Electronic check,141.74392973699884,4819.868351088203,No,,,,
+PROD-0151,Female,1.0,No,No,31.0,Yes,No,Fiber optic,No,Yes,No internet service,No,Yes,No internet service,Month-to-month,No,Bank transfer (automatic),81.56057016002752,2505.5496500604454,No,,,,
+PROD-0152,Female,1.0,No,Yes,10.0,Yes,No phone service,Fiber optic,No,No internet service,No internet service,Yes,Yes,No,One year,No,Bank transfer (automatic),73.04053848821007,729.3858897573022,No,,,,
+PROD-0153,Male,0.0,Yes,Yes,19.0,Yes,Yes,Fiber optic,No,Yes,Yes,No,Yes,Yes,Month-to-month,Yes,Mailed check,104.05074842498068,1977.385560892052,No,,,,
+PROD-0154,Female,1.0,Yes,Yes,32.0,Yes,No,Fiber optic,No,Yes,Yes,No,No internet service,No,Month-to-month,Yes,Bank transfer (automatic),148.70854086995405,4763.819197745435,Yes,,,,
+PROD-0155,Female,1.0,Yes,Yes,1.0,Yes,No,Fiber optic,No internet service,Yes,No internet service,Yes,Yes,No,Two year,No,Credit card (automatic),81.78497443603504,93.8313251617933,Yes,,,,
+PROD-0156,Male,0.0,Yes,No,5.0,No,No,Fiber optic,No internet service,No,No,No internet service,Yes,Yes,Month-to-month,No,Electronic check,120.49219926652908,610.9745389786505,Yes,,,,
+PROD-0157,Male,1.0,No,Yes,4.0,Yes,Yes,Fiber optic,No internet service,No,No,Yes,Yes,Yes,Month-to-month,Yes,Bank transfer (automatic),128.5457653795846,507.97942429298286,No,,,,
+PROD-0158,Male,1.0,Yes,No,16.0,No,No phone service,Fiber optic,No,No,No,Yes,Yes,No internet service,Month-to-month,Yes,Credit card (automatic),81.38737895931597,1294.833941626479,Yes,,,,
+PROD-0159,Female,1.0,Yes,Yes,24.0,Yes,No,No,No,No internet service,Yes,No,No internet service,No internet service,Month-to-month,Yes,Mailed check,125.53947137506736,3018.7423570171154,Yes,,,,
+PROD-0160,Female,1.0,No,Yes,16.0,Yes,No,Fiber optic,No,Yes,No,Yes,Yes,Yes,Month-to-month,No,Credit card (automatic),93.1004819447328,1484.1349127523497,Yes,,,,
+PROD-0161,Female,1.0,No,No,2.0,Yes,No,Fiber optic,No internet service,No internet service,Yes,No,No internet service,Yes,Month-to-month,Yes,Mailed check,116.90752475342217,221.5345093156081,No,,,,
+PROD-0162,Male,1.0,No,Yes,28.0,Yes,No,Fiber optic,No,No,Yes,No internet service,No,Yes,Month-to-month,Yes,Mailed check,117.01767396848052,3300.236288551461,No,,,,
+PROD-0163,Male,0.0,Yes,No,32.0,Yes,No,Fiber optic,Yes,No internet service,No,No internet service,No internet service,No,Month-to-month,Yes,Electronic check,108.21972156672828,3459.9238474891326,Yes,,,,
+PROD-0164,Female,1.0,Yes,No,27.0,Yes,No phone service,Fiber optic,Yes,Yes,No,No internet service,No internet service,No,One year,No,Electronic check,68.12607930489675,1833.1388994053268,Yes,,,,
+PROD-0165,Female,1.0,Yes,Yes,20.0,Yes,No phone service,Fiber optic,No,Yes,No internet service,Yes,Yes,No,Month-to-month,Yes,Credit card (automatic),135.17722460303142,2681.6231914982086,No,,,,
+PROD-0166,Male,1.0,No,No,24.0,Yes,No,Fiber optic,Yes,No,No internet service,No,No,Yes,Month-to-month,Yes,Electronic check,88.87020584745622,2141.398961262738,No,,,,
+PROD-0167,Male,1.0,No,No,12.0,Yes,Yes,Fiber optic,Yes,No,No,No internet service,No,No internet service,Two year,Yes,Electronic check,76.78666593598687,911.560632773877,Yes,,,,
+PROD-0168,Male,1.0,Yes,No,35.0,Yes,No phone service,Fiber optic,No internet service,No internet service,Yes,No,No,Yes,One year,Yes,Electronic check,63.66976273992875,2228.7279014931846,No,,,,
+PROD-0169,Male,0.0,No,No,33.0,Yes,Yes,No,No,No,Yes,No,No,No,Month-to-month,Yes,Credit card (automatic),113.18036488694176,3744.6382728321214,Yes,,,,
+PROD-0170,Female,1.0,No,No,33.0,Yes,No phone service,No,No,No,Yes,No internet service,No internet service,No,Month-to-month,No,Bank transfer (automatic),120.98079256580542,3982.643469194338,Yes,,,,
+PROD-0171,Male,1.0,No,No,12.0,Yes,No,DSL,No internet service,Yes,Yes,No internet service,No,Yes,One year,No,Electronic check,61.49290460350706,738.7096797602601,No,,,,
+PROD-0172,Female,0.0,Yes,No,3.0,Yes,No phone service,Fiber optic,Yes,No,Yes,No,No internet service,Yes,One year,No,Electronic check,106.08837524693529,333.5029998427439,No,,,,
+PROD-0173,Female,1.0,No,No,1.0,Yes,No,Fiber optic,Yes,No,No internet service,No internet service,No internet service,No,Month-to-month,Yes,Credit card (automatic),80.38461976781441,55.81714919917962,No,,,,
+PROD-0174,Female,1.0,No,Yes,33.0,Yes,No phone service,Fiber optic,No,Yes,No,No,No internet service,No,Month-to-month,No,Bank transfer (automatic),118.06555113685047,3888.0581290462737,Yes,,,,
+PROD-0175,Male,1.0,Yes,Yes,10.0,Yes,No,Fiber optic,Yes,Yes,No internet service,No,No,No,Month-to-month,No,Electronic check,75.69297861044923,747.8843672666217,No,,,,
+PROD-0176,Male,1.0,Yes,No,29.0,Yes,No,Fiber optic,No internet service,No internet service,Yes,No internet service,Yes,Yes,Month-to-month,No,Mailed check,122.18439642922192,3541.4784452218323,No,,,,
+PROD-0177,Male,1.0,No,Yes,13.0,Yes,No,Fiber optic,No internet service,No,Yes,Yes,Yes,No,Month-to-month,Yes,Credit card (automatic),94.80618116704836,1232.0024463978934,Yes,,,,
+PROD-0178,Male,1.0,No,No,12.0,Yes,No,Fiber optic,No,Yes,Yes,No internet service,No,No,Month-to-month,Yes,Electronic check,144.3056989863061,1721.0557615062075,No,,,,
+PROD-0179,Female,1.0,Yes,No,31.0,Yes,Yes,Fiber optic,No internet service,No internet service,Yes,Yes,Yes,No internet service,Month-to-month,No,Electronic check,72.3768849731394,2237.139700706191,Yes,,,,
+PROD-0180,Male,1.0,Yes,Yes,2.0,Yes,No,Fiber optic,No internet service,No internet service,No,No,Yes,Yes,Month-to-month,No,Mailed check,90.69597159452329,173.6596934845183,No,,,,
+PROD-0181,Male,1.0,No,No,35.0,No,Yes,Fiber optic,No,No,Yes,No,No internet service,No internet service,Month-to-month,Yes,Mailed check,70.21261691165301,2453.9336994561268,Yes,,,,
+PROD-0182,Female,1.0,No,No,23.0,Yes,Yes,Fiber optic,No internet service,No,No,Yes,No internet service,No internet service,One year,Yes,Credit card (automatic),143.22242564507064,3296.298017161936,No,,,,
+PROD-0183,Male,1.0,No,No,17.0,Yes,No,Fiber optic,No internet service,No internet service,Yes,No,No,No,Month-to-month,No,Credit card (automatic),138.96054180428828,2371.434851896612,Yes,,,,
+PROD-0184,Female,1.0,No,No,26.0,Yes,Yes,Fiber optic,No internet service,Yes,No,Yes,No,Yes,Month-to-month,Yes,Mailed check,83.21474649436401,2174.1367188189283,No,,,,
+PROD-0185,Female,1.0,Yes,Yes,8.0,Yes,No phone service,Fiber optic,Yes,No internet service,No internet service,Yes,Yes,No,One year,No,Credit card (automatic),119.39856414307611,961.724855757962,No,,,,
+PROD-0186,Female,1.0,No,No,29.0,Yes,No,Fiber optic,No,No,Yes,No,No internet service,Yes,Month-to-month,Yes,Mailed check,133.54999801810942,3864.2102013303215,No,,,,
+PROD-0187,Female,1.0,No,No,26.0,No,Yes,Fiber optic,No,Yes,No,Yes,No,No internet service,Month-to-month,No,Electronic check,109.9680730439516,2859.136939939468,Yes,,,,
+PROD-0188,Female,1.0,Yes,No,10.0,Yes,No,Fiber optic,No,Yes,No internet service,No internet service,No,Yes,Month-to-month,No,Mailed check,107.66855205204058,1100.4288145553296,No,,,,
+PROD-0189,Female,1.0,No,Yes,26.0,Yes,No,Fiber optic,Yes,No internet service,Yes,No internet service,No,No,Month-to-month,Yes,Mailed check,81.76670618104065,2136.07968763393,Yes,,,,
+PROD-0190,Female,1.0,Yes,No,34.0,Yes,No,Fiber optic,Yes,No,Yes,No,No,No,One year,No,Bank transfer (automatic),68.37924910253093,2320.489423897317,No,,,,
+PROD-0191,Female,1.0,No,Yes,7.0,Yes,Yes,DSL,No,No internet service,Yes,No,No,No,Month-to-month,No,Mailed check,140.7494182157994,1001.0663093402336,Yes,,,,
+PROD-0192,Male,1.0,No,Yes,4.0,Yes,No phone service,Fiber optic,Yes,No internet service,No,Yes,No,Yes,Month-to-month,No,Mailed check,141.03762514469977,560.2698086808249,Yes,,,,
+PROD-0193,Male,0.0,Yes,No,11.0,Yes,No phone service,Fiber optic,No,No internet service,No,Yes,Yes,No internet service,Month-to-month,Yes,Bank transfer (automatic),116.97913115459411,1280.0864230175027,Yes,,,,
+PROD-0194,Male,1.0,Yes,No,29.0,Yes,Yes,No,Yes,Yes,No internet service,Yes,No internet service,No internet service,Month-to-month,Yes,Credit card (automatic),90.51268119438306,2638.825073996394,No,,,,
+PROD-0195,Male,1.0,No,Yes,25.0,Yes,No,DSL,No internet service,Yes,No,Yes,No internet service,Yes,Two year,Yes,Bank transfer (automatic),91.42886171513948,2272.625049978368,No,,,,
+PROD-0196,Female,0.0,No,No,21.0,No,Yes,Fiber optic,No internet service,No,No,No internet service,No,No,Month-to-month,No,Electronic check,125.33601109832156,2612.918457262069,Yes,,,,
+PROD-0197,Male,1.0,No,Yes,10.0,Yes,Yes,Fiber optic,No,No,Yes,No internet service,No internet service,No internet service,Month-to-month,Yes,Bank transfer (automatic),140.73992339573195,1416.8120797379245,No,,,,
+PROD-0198,Female,0.0,Yes,Yes,9.0,Yes,Yes,Fiber optic,Yes,No internet service,Yes,No,No internet service,No,Month-to-month,No,Electronic check,139.83777818386056,1258.8169129709072,No,,,,
+PROD-0199,Male,1.0,No,No,24.0,Yes,No,Fiber optic,Yes,No internet service,Yes,Yes,No internet service,Yes,Month-to-month,No,Credit card (automatic),130.18879912718614,3125.804833837839,No,,,,
+,,,,,12.0,,,,,,,,,,,1,,70.0,840.0,0,True,False,True,0.0
+,,,,,24.0,,,,,,,,,,,0,,50.0,1200.0,0,False,True,False,0.0
+,,,,,12.0,,,,,,,,,,,1,,70.0,840.0,0,True,False,True,0.0
+,,,,,24.0,,,,,,,,,,,0,,50.0,1200.0,0,False,True,False,0.0
+,,,,,12.0,,,,,,,,,,,1,,70.0,840.0,0,True,False,True,0.0
+,,,,,6.0,,,,,,,,,,,1,,90.0,540.0,0,False,False,False,1.0
+,,,,,12.0,,,,,,,,,,,1,,70.0,840.0,0,True,False,True,0.0
+,,,,,12.0,,,,,,,,,,,1,,70.0,840.0,0,True,False,True,0.0
+,,,,,24.0,,,,,,,,,,,0,,50.0,1200.0,0,False,True,False,0.0
+,,,,,6.0,,,,,,,,,,,1,,90.0,540.0,0,False,False,False,1.0
+,,,,,6.0,,,,,,,,,,,1,,90.0,540.0,0,False,False,False,1.0
+,,,,,24.0,,,,,,,,,,,0,,50.0,1200.0,0,False,True,False,0.0
+,,,,,24.0,,,,,,,,,,,0,,50.0,1200.0,0,False,True,False,0.0
+,,,,,24.0,,,,,,,,,,,0,,50.0,1200.0,0,False,True,False,0.0
+,,,,,12.0,,,,,,,,,,,1,,70.0,840.0,0,True,False,True,0.0
+,,,,,6.0,,,,,,,,,,,1,,90.0,540.0,0,False,False,False,1.0
+,,,,,6.0,,,,,,,,,,,1,,90.0,540.0,0,False,False,False,1.0
+,,,,,6.0,,,,,,,,,,,1,,90.0,540.0,0,False,False,False,1.0
+,,,,,24.0,,,,,,,,,,,0,,50.0,1200.0,0,False,True,False,0.0
+,,,,,24.0,,,,,,,,,,,0,,50.0,1200.0,0,False,True,False,0.0
+,,,,,0.0,,,,,,,,,,,0,,0.0,0.0,1,True,True,True,0.0
+,,,,,0.0,,,,,,,,,,,0,,0.0,0.0,1,True,True,True,0.0
+,,,,,0.0,,,,,,,,,,,0,,0.0,0.0,1,True,True,True,0.0
+,,,,,0.0,,,,,,,,,,,0,,0.0,0.0,1,True,True,True,0.0
+,,,,,0.0,,,,,,,,,,,0,,0.0,0.0,1,True,True,True,0.0
+,,,,,0.0,,,,,,,,,,,0,,0.0,0.0,1,True,True,True,0.0
+,,,,,0.0,,,,,,,,,,,0,,0.0,0.0,1,True,True,True,0.0
+,,,,,0.0,,,,,,,,,,,0,,0.0,0.0,1,True,True,True,0.0
+,,,,,0.0,,,,,,,,,,,0,,0.0,0.0,1,True,True,True,0.0
+,,,,,0.0,,,,,,,,,,,0,,0.0,0.0,1,True,True,True,0.0
+,,,,,2.0,,,,,,,,,,,1,,4.0,11.0,0,False,False,False,1.0
+,,,,,2.0,,,,,,,,,,,1,,48.0,23.0,0,True,True,True,1.0
+,,,,,2.0,,,,,,,,,,,1,,48.0,23.0,0,True,True,True,1.0
+,,,,,12.0,,,,,,,,,,,1,,70.0,840.0,0,True,False,True,0.0
+,,,,,12.0,,,,,,,,,,,1,,70.0,840.0,0,True,False,True,0.0
+,,,,,23.0,,,,,,,,,,,1,,6.0,123.0,0,True,True,True,1.0
+,,,,,23.0,,,,,,,,,,,1,,6.0,123.0,0,False,True,False,1.0
+,,,,,23.0,,,,,,,,,,,1,,6.0,123.0,0,False,True,False,1.0
+,,,,,2.0,,,,,,,,,,,1,,6.0,123.0,0,False,True,False,1.0
+,,,,,2.0,,,,,,,,,,,1,,6.0,123.0,0,False,False,False,0.0
+,,,,,2.0,,,,,,,,,,,1,,6.0,123.0,0,False,False,False,0.0
+,,,,,2.0,,,,,,,,,,,1,,6.0,123.0,0,False,False,False,0.0
+,,,,,2.0,,,,,,,,,,,1,,6.0,123.0,0,False,False,False,0.0
+,,,,,2.0,,,,,,,,,,,1,,6.0,123.0,0,False,False,False,0.0
+,,,,,2.0,,,,,,,,,,,1,,6.0,123.0,0,False,False,False,0.0
+,,,,,2.0,,,,,,,,,,,1,,6.0,123.0,0,False,False,False,0.0
+,,,,,2.0,,,,,,,,,,,1,,6.0,123.0,0,False,False,False,0.0
+,,,,,2.0,,,,,,,,,,,1,,6.0,123.0,0,False,False,False,0.0
+,,,,,2.0,,,,,,,,,,,1,,6.0,123.0,0,False,False,False,0.0
+,,,,,1.0,,,,,,,,,,,1,,2.0,3.0,0,True,False,True,1.0
+,,,,,12.0,,,,,,,,,,,1,,12.0,124545.0,0,False,False,False,1.0
+,,,,,2.0,,,,,,,,,,,0,,2.0,7.0,0,False,False,True,0.0
+,,,,,2.0,,,,,,,,,,,1,,34.5,2376.9,0,False,False,False,1.0
+,,,,,120.0,,,,,,,,,,,1,,500.0,100000.0,0,True,True,True,1.0
+,,,,,0.0,,,,,,,,,,,1,,0.02,0.01,0,False,False,False,1.0
+,,,,,0.0,,,,,,,,,,,1,,0.04,0.01,0,False,False,False,1.0
+,,,,,0.0,,,,,,,,,,,0,,0.0,0.0,0,True,True,True,0.0
+,,,,,120.0,,,,,,,,,,,1,,500.0,100000.0,0,True,True,True,1.0

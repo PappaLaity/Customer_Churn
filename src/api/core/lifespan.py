@@ -84,6 +84,24 @@ async def load_models(app: FastAPI, model_name: str = MODEL_NAME) -> None:
             app.state.app_state.model_A = None
             app.state.app_state.model_B = None
             logger.error("Error loading sklearn model(s); continuing without preload: %s", e, exc_info=True)
+        
+        # Preload PyFunc fallback model to avoid first-request latency
+        try:
+            uri = f"models:/{model_name}/{MODEL_STAGE}"
+            app.state.app_state.pyfunc_model = mlflow.pyfunc.load_model(uri)
+            logger.info("Preloaded PyFunc model from: %s", uri)
+            
+            # Get version number
+            try:
+                client = MlflowClient()
+                versions = client.get_latest_versions(model_name, stages=[MODEL_STAGE])
+                if versions:
+                    app.state.app_state.pyfunc_model_version = versions[0].version
+                    logger.info("PyFunc model version: %s", app.state.app_state.pyfunc_model_version)
+            except Exception:
+                pass
+        except Exception as e:
+            logger.warning("PyFunc model preload failed: %s", e)
             
     except Exception as e:
         logger.error("Error loading models from registry: %s", e, exc_info=True)

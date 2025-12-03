@@ -59,13 +59,16 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  const protectedRoutes = ['dashboard', 'about', 'customers-dashboard', 'users']
+  // Admin routes (require API key authentication)
+  const adminRoutes = ['dashboard', 'about', 'customers-dashboard', 'users']
+
   const token = localStorage.getItem('api-key')
 
-  if (protectedRoutes.includes(to.name) && !token) {
-    // Si route protégée et pas de token → redirection vers login
+  if (adminRoutes.includes(to.name) && !token) {
+    // Admin route without auth → redirect to login
     next({ name: 'login' })
   } else {
+    // Public route or authenticated → allow access
     next()
   }
 })
