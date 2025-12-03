@@ -1,0 +1,193 @@
+name: Load Tests
+
+on:
+  # Run weekly on Sundays at 2 AM UTC
+  schedule:
+    - cron: '0 2 * * 0'
+  
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      scenario:
+        description: 'Load test scenario'
+        required: true
+        default: 'normal'
+        type: choice
+        options:
+          - smoke
+          - normal
+          - stress
+          - spike
+      duration:
+        description: 'Test duration (e.g., 5m, 10m)'
+        required: false
+        default: '5m'
+
+jobs:
+  load-test:
+    name: Run Load Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install locust
+          pip install -r requirements.txt
+      
+      - name: Start services with Docker Compose
+        run: |
+          # Create necessary directories
+          mkdir -p data/production
+          mkdir -p mlruns
+          
+          # Start all services
+          docker compose up -d
+          
+          # Wait for services to be healthy
+          echo "Waiting for services to be ready..."
+          sleep 30
+          
+          # Check API health
+          for i in {1..30}; do
+            if curl -f http://localhost:8000/ -H "X-API-Key: ${{ secrets.API_KEY_SECRET }}" > /dev/null 2>&1; then
+              echo "API is ready!"
+              break
+            fi
+            echo "Waiting for API... ($i/30)"
+            sleep 5
+          done
+      
+      - name: Run Load Test
+        env:
+          API_URL: http://localhost:8000
+          API_KEY_SECRET: ${{ secrets.API_KEY_SECRET }}
+          SCENARIO: ${{ github.event.inputs.scenario || 'normal' }}
+        run: |
+          # Create reports directory
+          mkdir -p reports/load-tests
+          
+          # Determine test parameters based on scenario
+          USERS=50
+          SPAWN_RATE=5
+          RUN_TIME="${{ github.event.inputs.duration || '5m' }}"
+          
+          if [ "$SCENARIO" = "smoke" ]; then
+            USERS=5
+            SPAWN_RATE=1
+            RUN_TIME="1m"
+          elif [ "$SCENARIO" = "stress" ]; then
+            USERS=200
+            SPAWN_RATE=20
+            RUN_TIME="10m"
+          elif [ "$SCENARIO" = "spike" ]; then
+            USERS=500
+            SPAWN_RATE=100
+            RUN_TIME="2m"
+          fi
+          
+          echo "Running $SCENARIO load test..."
+          echo "Users: $USERS, Spawn Rate: $SPAWN_RATE, Duration: $RUN_TIME"
+          
+          # Run locust in headless mode
+          cd tests/load
+          locust -f locustfile.py \
+            --host=$API_URL \
+            --users=$USERS \
+            --spawn-rate=$SPAWN_RATE \
+            --run-time=$RUN_TIME \
+            --headless \
+            --html=../../reports/load-tests/report.html \
+            --csv=../../reports/load-tests/results
+      
+      - name: Check performance thresholds
+        run: |
+          # Parse CSV results and check thresholds
+          STATS_FILE="reports/load-tests/results_stats.csv"
+          
+          if [ -f "$STATS_FILE" ]; then
+            echo "Checking performance thresholds..."
+            
+            # Get P95 latency (should be < 1000ms for normal operations)
+            P95=$(awk -F',' 'NR>1 && $1 ~ /survey\/submit/ {print $11}' "$STATS_FILE")
+            
+            if [ -n "$P95" ]; then
+              echo "P95 Latency: ${P95}ms"
+              
+              if (( $(echo "$P95 > 1000" | bc -l) )); then
+                echo "⚠️ WARNING: P95 latency exceeds 1000ms threshold"
+              else
+                echo "✅ P95 latency within acceptable range"
+              fi
+            fi
+            
+            # Check failure rate (should be < 5%)
+            FAILURE_RATE=$(awk -F',' 'NR>1 && $1 ~ /Aggregated/ {print $5}' "$STATS_FILE")
+            
+            if [ -n "$FAILURE_RATE" ]; then
+              echo "Failure Rate: ${FAILURE_RATE}%"
+              
+              if (( $(echo "$FAILURE_RATE > 5" | bc -l) )); then
+                echo "❌ FAIL: Failure rate exceeds 5% threshold"
+                exit 1
+              else
+                echo "✅ Failure rate within acceptable range"
+              fi
+            fi
+          fi
+      
+      - name: Upload load test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: load-test-results-${{ github.event.inputs.scenario || 'normal' }}
+          path: reports/load-tests/
+          retention-days: 30
+      
+      - name: Comment results on PR (if applicable)
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const statsFile = 'reports/load-tests/results_stats.csv';
+            
+            if (fs.existsSync(statsFile)) {
+              const stats = fs.readFileSync(statsFile, 'utf8');
+              const lines = stats.split('\n');
+              
+              let comment = '## 📊 Load Test Results\n\n';
+              comment += '```\n';
+              comment += lines.slice(0, 10).join('\n');
+              comment += '\n```\n\n';
+              comment += '[View full report in artifacts](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})';
+              
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment
+              });
+            }
+      
+      - name: Stop services
+        if: always()
+        run: |
+          docker compose logs fastapi > logs_fastapi.txt || true
+          docker compose down -v
+      
+      - name: Upload service logs
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: service-logs
+          path: logs_*.txt
+          retention-days: 7

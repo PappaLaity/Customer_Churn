@@ -1,0 +1,228 @@
+name: Deploy to Production
+
+on:
+  release:
+    types: [published]
+  
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to deploy (e.g., v1.0.0)'
+        required: true
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build:
+    name: Build Production Image
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.version || github.ref }}
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            VERSION=${GITHUB_REF#refs/tags/}
+          else
+            VERSION=${{ github.event.inputs.version }}
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "Deploying version: $VERSION"
+      
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.api
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.VERSION }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+  
+  deploy-production:
+    name: Deploy to Production (Blue-Green)
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: production
+      url: https://api.your-domain.com
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Extract version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            VERSION=${GITHUB_REF#refs/tags/}
+          else
+            VERSION=${{ github.event.inputs.version }}
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+      
+      # Blue-Green Deployment Strategy
+      - name: Deploy to Green environment
+        env:
+          VERSION: ${{ steps.version.outputs.VERSION }}
+        run: |
+          echo "Deploying version $VERSION to GREEN environment..."
+          
+          # Example: Deploy to green slot/environment
+          # This is a placeholder - customize for your infrastructure
+          
+          # For Kubernetes:
+          # kubectl set image deployment/api-green api=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$VERSION
+          
+          # For AWS ECS:
+          # aws ecs update-service --cluster prod --service api-green --force-new-deployment
+          
+          # For Cloud Run:
+          # gcloud run deploy api-green --image ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$VERSION
+          
+          echo "✅ Deployed to GREEN environment"
+      
+      - name: Health check GREEN environment
+        env:
+          PROD_API_URL: https://green-api.your-domain.com
+          API_KEY_SECRET: ${{ secrets.PROD_API_KEY }}
+        run: |
+          echo "Running health checks on GREEN environment..."
+          
+          # Wait for deployment to stabilize
+          sleep 30
+          
+          # Health check
+          for i in {1..10}; do
+            if curl -f $PROD_API_URL/api/v1/health -H "X-API-Key: $API_KEY_SECRET" > /dev/null 2>&1; then
+              echo "✅ GREEN environment is healthy!"
+              break
+            fi
+            
+            if [ $i -eq 10 ]; then
+              echo "❌ GREEN environment health check failed!"
+              exit 1
+            fi
+            
+            echo "Waiting for GREEN environment... ($i/10)"
+            sleep 10
+          done
+      
+      - name: Run smoke tests on GREEN
+        env:
+          PROD_API_URL: https://green-api.your-domain.com
+          API_KEY_SECRET: ${{ secrets.PROD_API_KEY }}
+        run: |
+          echo "Running smoke tests..."
+          
+          # Test critical endpoints
+          curl -f $PROD_API_URL/ || exit 1
+          curl -f $PROD_API_URL/api/v1/health -H "X-API-Key: $API_KEY_SECRET" || exit 1
+          curl -f $PROD_API_URL/api/v1/model/version -H "X-API-Key: $API_KEY_SECRET" || exit 1
+          
+          # Test prediction endpoint
+          curl -f $PROD_API_URL/api/v1/models || exit 1
+          
+          echo "✅ Smoke tests passed on GREEN!"
+      
+      - name: Switch traffic to GREEN (Blue-Green swap)
+        run: |
+          echo "Switching production traffic to GREEN environment..."
+          
+          # Update load balancer / ingress / DNS to point to GREEN
+          
+          # Example for Kubernetes Ingress:
+          # kubectl patch ingress api-ingress -p '{"spec":{"rules":[{"host":"api.your-domain.com","http":{"paths":[{"backend":{"service":{"name":"api-green"}}}]}}]}}'
+          
+          # Example for AWS ALB:
+          # Update target group to point to green instances
+          
+          # Example for Cloud Run:
+          # Update traffic split to 100% green
+          
+          echo "✅ Traffic switched to GREEN environment"
+      
+      - name: Monitor production for errors
+        env:
+          PROD_API_URL: https://api.your-domain.com
+          API_KEY_SECRET: ${{ secrets.PROD_API_KEY }}
+        run: |
+          echo "Monitoring production for 2 minutes..."
+          
+          ERROR_COUNT=0
+          
+          for i in {1..24}; do
+            if ! curl -f $PROD_API_URL/api/v1/health -H "X-API-Key: $API_KEY_SECRET" > /dev/null 2>&1; then
+              ERROR_COUNT=$((ERROR_COUNT + 1))
+              echo "⚠️  Health check failed (attempt $i)"
+            fi
+            
+            if [ $ERROR_COUNT -ge 3 ]; then
+              echo "❌ Too many errors detected! Initiating rollback..."
+              exit 1
+            fi
+            
+            sleep 5
+          done
+          
+          echo "✅ Production is stable!"
+      
+      - name: Decommission BLUE environment
+        if: success()
+        run: |
+          echo "Decommissioning old BLUE environment..."
+          
+          # Scale down or delete blue deployment
+          # kubectl scale deployment/api-blue --replicas=0
+          
+          echo "✅ Old version decommissioned"
+      
+      - name: Rollback on failure
+        if: failure()
+        run: |
+          echo "🔄 Rolling back to BLUE environment..."
+          
+          # Switch traffic back to blue
+          # kubectl patch ingress api-ingress -p '{"spec":{"rules":[{"host":"api.your-domain.com","http":{"paths":[{"backend":{"service":{"name":"api-blue"}}}]}}]}}'
+          
+          echo "✅ Rolled back to previous version"
+          exit 1
+      
+      - name: Notify deployment success
+        if: success()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const version = '${{ steps.version.outputs.VERSION }}';
+            console.log(`🚀 Successfully deployed ${version} to production!`);
+            
+            // Add Slack/Discord/Email notification here
+      
+      - name: Notify deployment failure
+        if: failure()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const version = '${{ steps.version.outputs.VERSION }}';
+            console.log(`❌ Deployment of ${version} to production failed!`);
+            
+            // Add Slack/Discord/Email notification here

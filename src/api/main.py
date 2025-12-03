@@ -86,11 +86,11 @@ async def home():
     return {"msg": "Customer Churn System"}
 
 
-# Include all routers
-app.include_router(auth.router)
-app.include_router(users.router)
-app.include_router(predictions.router)
-app.include_router(models.router)
-app.include_router(monitoring.router)
-app.include_router(ab_testing.router)
-app.include_router(data.router)
+# Include all routers with /api/v1 prefix
+app.include_router(auth.router, prefix="/api/v1")
+app.include_router(users.router, prefix="/api/v1")
+app.include_router(predictions.router, prefix="/api/v1")
+app.include_router(models.router, prefix="/api/v1")
+app.include_router(monitoring.router, prefix="/api/v1")
+app.include_router(ab_testing.router, prefix="/api/v1")
+app.include_router(data.router, prefix="/api/v1")
