@@ -7,10 +7,11 @@ Generates a few test prediction requests to both variants.
 import requests
 import time
 import random
+import os
 
 # Configuration
 API_URL = "http://localhost:8000"
-API_KEY = "secret-api-key"  # From .env file
+API_KEY = os.getenv("API_KEY_SECRET", "your-api-key")  # Load from environment
 
 # Sample customer data for predictions (matching InputCustomer schema)
 SAMPLE_CUSTOMERS = [

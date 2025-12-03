@@ -36,7 +36,7 @@ async def get_model_version(request: Request):
     }
 
 
-@router.get("/models")
+@router.get("/models", dependencies=[Depends(verify_api_key)])
 async def get_models():
     """Get all registered model versions from MLflow.
     
