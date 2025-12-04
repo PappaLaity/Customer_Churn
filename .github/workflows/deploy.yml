@@ -53,70 +53,39 @@
 #             docker compose up -d
 #             docker system prune -af
 
-name: CD to Azure VM (Branch refactor/mlops-improvements)
+name: CD to Azure VM (Minimal)
 
 on:
   push:
     branches:
-      - refactor/mlops-improvements  # déclenche le CD sur ta branche
+      - refactor/mlops-improvements  # Déclenche le CD sur ta branche
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout repository
+      # 1️⃣ Checkout du repo GitHub Actions
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2️⃣ Build Docker images locally
-      - name: Build Docker images
-        run: docker compose build --no-cache
-
-      # 3️⃣ Login Docker Hub (optionnel)
-      - name: Login to Docker Hub
-        if: env.DOCKERHUB_USERNAME != ''
-        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
-
-      # 4️⃣ Push Docker images to Docker Hub (optionnel)
-      - name: Push Docker images
-        if: env.DOCKERHUB_USERNAME != ''
-        run: docker compose push
-
-      # 5️⃣ Deploy to Azure VM via SSH (key-based)
-      - name: Deploy to Azure VM
+      # 2️⃣ Déploiement minimal sur Azure VM via SSH (key-based)
+      - name: Deploy repo to Azure VM
         uses: appleboy/ssh-action@v0.1.10
         with:
           host: ${{ secrets.AZURE_HOST }}
           username: ${{ secrets.AZURE_USER }}
           key: ${{ secrets.AZURE_SSH_KEY }}
           script: |
-            # --- Cloner ou mettre à jour le repo sur la branche spécifique ---
+            # --- Créer le répertoire et cloner la branche si nécessaire ---
             cd /home/${{ secrets.AZURE_USER }}/Customer_Churn || git clone -b refactor/mlops-improvements https://github.com/mamad9633/Customer_Churn.git Customer_Churn
-            cd Customer_Churn 
+
+            # --- Aller dans le répertoire du projet ---
+            cd /home/${{ secrets.AZURE_USER }}/Customer_Churn
+
+            # --- Mettre à jour la branche ---
             git reset --hard
-            git pull origin refactor/mlops-improvements 
+            git pull origin refactor/mlops-improvements
 
-            # --- Créer le fichier .env à partir des secrets ---
-            cat <<EOF > .env
-            DB_USER=${{ secrets.DB_USER }}
-            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-            MLFLOW_DB_USER=${{ secrets.MLFLOW_DB_USER }}
-            MLFLOW_DB_PASSWORD=${{ secrets.MLFLOW_DB_PASSWORD }}
-            DATABASE_URL=postgresql+psycopg2://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@localhost:5432/churn_db
-            API_KEY_SECRET=${{ secrets.API_KEY_SECRET }}
-            GF_SECURITY_ADMIN_USER=${{ secrets.GF_SECURITY_ADMIN_USER }}
-            GF_SECURITY_ADMIN_PASSWORD=${{ secrets.GF_SECURITY_ADMIN_PASSWORD }}
-            EOF
-
-            # --- Stop containers existants ---
-            docker compose down || true
-
-            # --- Pull les dernières images depuis Docker Hub ---
-            docker compose pull
-
-            # --- Lancer les services en arrière-plan ---
-            docker compose up -d
-
-            # --- Nettoyer images et containers inutilisés (optionnel) ---
-            docker system prune -af
+            # --- Information de succès ---
+            echo "✅ Repo mis à jour sur la branche refactor/mlops-improvements"
