@@ -13,10 +13,11 @@ Guest users can access public endpoints without any API key or login:
 | Endpoint | Purpose | Rate Limit |
 |----------|---------|------------|
 | `/` | API root | None |
-| `/api/v1/auth/login` | Admin login | None |
-| `/api/v1/survey/submit` | Submit survey for prediction | 10/minute per IP |
-| `/api/v1/health` | Health check | None |
-| `/api/v1/models` | View available models | None |
+| `/` | API root | None |
+| `/auth/login` | Admin login | None |
+| `/survey/submit` | Submit survey for prediction | 10/minute per IP |
+| `/health` | Health check | None |
+| `/models` | View available models | None |
 
 ### 🔐 Admin Access (API Key Required)
 
@@ -24,13 +25,13 @@ Admin users must authenticate to access protected endpoints:
 
 | Endpoint | Purpose |
 |----------|---------|
-| `/api/v1/model/version` | Get current model versions |
-| `/api/v1/predict` | Batch predictions |
-| `/api/v1/ab/config` | A/B test configuration |
-| `/api/v1/ab/results` | A/B test results |
-| `/api/v1/monitoring/baseline` | Drift detection baseline |
-| `/api/v1/customers/infos` | Customer data (dashboard) |
-| `/api/v1/users/*` | User management |
+| `/model/version` | Get current model versions |
+| `/predict` | Batch predictions |
+| `/ab/config` | A/B test configuration |
+| `/ab/results` | A/B test results |
+| `/monitoring/baseline` | Drift detection baseline |
+| `/customers/infos` | Customer data (dashboard) |
+| `/users/*` | User management |
 
 ---
 

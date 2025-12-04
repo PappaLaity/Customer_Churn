@@ -4,17 +4,16 @@ This guide provides quick commands for using the new API features.
 
 ## API Versioning
 
-All endpoints now use `/api/v1/` prefix for future compatibility.
+## API Endpoints
 
-### Updated Endpoints
-
-| Old Endpoint | New Endpoint | Status |
-|--------------|--------------|--------|
-| `/auth/login` | `/api/v1/auth/login` | ✅ Active |
-| `/survey/submit` | `/api/v1/survey/submit` | ✅ Active |
-| `/model/version` | `/api/v1/model/version` | ✅ Active |
-| `/health` | `/api/v1/health` | ✅ Active |
-| `/ab/config` | `/api/v1/ab/config` | ✅ Active |
+| Endpoint | Path | Status |
+|----------|------|--------|
+| `/auth/login` | `/auth/login` | ✅ Active |
+| `/survey/submit` | `/survey/submit` | ✅ Active |
+| `/model/version` | `/model/version` | ✅ Active |
+| `/health` | `/health` | ✅ Active |
+| `/ab/config` | `/ab/config` | ✅ Active |
+| `/predict` | `/predict` | ✅ Active |
 
 ### Testing New Endpoints
 

@@ -12,9 +12,9 @@ def test_root(client: TestClient):
 
 
 def test_health_without_auth(client: TestClient):
-    """Test health endpoint requires authentication."""
+    """Test health endpoint is public."""
     response = client.get("/health")
-    assert response.status_code == 403
+    assert response.status_code == 200
 
 
 def test_health_with_auth(client: TestClient, auth_headers, mock_app_state):

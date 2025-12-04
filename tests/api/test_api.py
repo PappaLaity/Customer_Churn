@@ -19,7 +19,8 @@ def test_root(client: TestClient):
 
 def test_check_health_without_key(client: TestClient):
     response = client.get("/health")
-    assert response.status_code == 403
+    assert response.status_code == 200
+    assert response.json() == {'check': "I'm ok! No worry"}
 
 
 # def test_check_health(client: TestClient):

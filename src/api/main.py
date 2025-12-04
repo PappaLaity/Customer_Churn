@@ -47,20 +47,20 @@ app = FastAPI(
     ## Security Model
     
     **Public Endpoints** (No auth required):
-    - `/api/v1/survey/submit` - Submit survey for prediction
-    - `/api/v1/health` - Health check
-    - `/api/v1/models` - View available models
-    - `/api/v1/auth/login` - Admin login
+    - `/survey/submit` - Submit survey for prediction
+    - `/health` - Health check
+    - `/models` - View available models
+    - `/auth/login` - Admin login
     
     **Protected Endpoints** (API key required):
-    - `/api/v1/predict` - Batch predictions
-    - `/api/v1/model/version` - Model versions
-    - `/api/v1/ab/*` - A/B testing management
-    - `/api/v1/monitoring/*` - Monitoring & drift detection
-    - `/api/v1/customers/infos` - Customer data
-    - `/api/v1/users/*` - User management
+    - `/predict` - Batch predictions
+    - `/model/version` - Model versions
+    - `/ab/*` - A/B testing management
+    - `/monitoring/*` - Monitoring & drift detection
+    - `/customers/infos` - Customer data
+    - `/users/*` - User management
     
-    See `/api/v1/health` for API status and `docs/API_SECURITY.md` for full documentation.
+    See `/health` for API status and `docs/API_SECURITY.md` for full documentation.
     """,
     version="2.0.0",
     lifespan=lifespan,
@@ -106,11 +106,11 @@ async def home():
     return {"msg": "Customer Churn System"}
 
 
-# Include all routers with /api/v1 prefix
-app.include_router(auth.router, prefix="/api/v1")
-app.include_router(users.router, prefix="/api/v1")
-app.include_router(predictions.router, prefix="/api/v1")
-app.include_router(models.router, prefix="/api/v1")
-app.include_router(monitoring.router, prefix="/api/v1")
-app.include_router(ab_testing.router, prefix="/api/v1")
-app.include_router(data.router, prefix="/api/v1")
+# Include all routers without prefix
+app.include_router(auth.router)
+app.include_router(users.router)
+app.include_router(predictions.router)
+app.include_router(models.router)
+app.include_router(monitoring.router)
+app.include_router(ab_testing.router)
+app.include_router(data.router)

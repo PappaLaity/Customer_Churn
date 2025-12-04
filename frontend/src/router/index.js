@@ -1,7 +1,13 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
-import LoginView from '@/views/LoginView.vue'
-import SurveyForm from '@/views/SurveyForm.vue'
+
+// Lazy load all components for optimal code splitting
+const HomeView = () => import(/* webpackChunkName: "home" */ '../views/HomeView.vue')
+const LoginView = () => import(/* webpackChunkName: "auth" */ '../views/LoginView.vue')
+const SurveyForm = () => import(/* webpackChunkName: "survey" */ '../views/SurveyForm.vue')
+const AboutView = () => import(/* webpackChunkName: "about" */ '../views/AboutView.vue')
+const DashboardView = () => import(/* webpackChunkName: "dashboard" */ '../views/DashboardView.vue')
+const CustomerInfos = () => import(/* webpackChunkName: "dashboard" */ '../views/CustomerInfos.vue')
+const UserView = () => import(/* webpackChunkName: "users" */ '../views/users/UserView.vue')
 
 const routes = [
   {
@@ -22,34 +28,25 @@ const routes = [
   {
     path: '/about',
     name: 'about',
-    // route level code-splitting
-    // this generates a separate chunk (about.[hash].js) for this route
-    // which is lazy-loaded when the route is visited.
-    component: () => import(/* webpackChunkName: "about" */ '../views/AboutView.vue')
+    component: AboutView
   },
   {
     path: '/dashboard',
     name: 'dashboard',
-    // route level code-splitting
-    // this generates a separate chunk (about.[hash].js) for this route
-    // which is lazy-loaded when the route is visited.
-    component: () => import(/* webpackChunkName: "about" */ '../views/DashboardView.vue')
+    component: DashboardView,
+    // Prefetch dashboard for faster navigation after login
+    meta: { prefetch: true }
   },
   {
     path: '/customers-dashboard',
     name: 'customers-dashboard',
-    // route level code-splitting
-    // this generates a separate chunk (about.[hash].js) for this route
-    // which is lazy-loaded when the route is visited.
-    component: () => import(/* webpackChunkName: "about" */ '../views/CustomerInfos.vue')
+    component: CustomerInfos,
+    meta: { prefetch: true }
   },
   {
     path: '/users',
     name: 'users',
-    // route level code-splitting
-    // this generates a separate chunk (about.[hash].js) for this route
-    // which is lazy-loaded when the route is visited.
-    component: () => import(/* webpackChunkName: "about" */ '../views/users/UserView.vue')
+    component: UserView
   }
 ]
 

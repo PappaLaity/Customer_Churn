@@ -138,8 +138,8 @@ locust -f tests/load/locustfile.py --worker --master-host=127.0.0.1
 ```
 Response time (ms)
  Name                          # reqs      50%     95%     99%    Avg
- /api/v1/survey/submit         10000       150     350     600    200
- /api/v1/model/version          5000        50     150     300     80
+ /survey/submit         10000       150     350     600    200
+ /model/version          5000        50     150     300     80
  
 Total RPS: 450
 Failure Rate: 0.2%
@@ -149,7 +149,7 @@ Failure Rate: 0.2%
 ```
 Response time (ms)
  Name                          # reqs      50%     95%     99%    Avg
- /api/v1/survey/submit         10000       800    2500    5000   1200
+ /survey/submit         10000       800    2500    5000   1200
  
 Total RPS: 50
 Failure Rate: 5.0%

@@ -43,13 +43,13 @@ class ChurnAPIUser(HttpUser):
     
     @task(10)
     def submit_survey(self):
-        """Test the survey submission endpoint (most common operation)."""
-        customer_data = random.choice(SAMPLE_CUSTOMERS)
+        """Submit a survey response (most frequent action)."""
+        # Generate random customer data
+        customer_data = self.generate_customer_data()
         
         with self.client.post(
-            "/api/v1/survey/submit",
+            "/survey/submit",
             json=customer_data,
-            headers=self.headers,
             catch_response=True
         ) as response:
             if response.status_code == 200:
@@ -66,7 +66,7 @@ class ChurnAPIUser(HttpUser):
     def get_model_version(self):
         """Test model version endpoint."""
         with self.client.get(
-            "/api/v1/model/version",
+            "/model/version",
             headers=self.headers,
             catch_response=True
         ) as response:
@@ -82,7 +82,7 @@ class ChurnAPIUser(HttpUser):
     def get_ab_config(self):
         """Test A/B testing configuration endpoint."""
         with self.client.get(
-            "/api/v1/ab/config",
+            "/ab/config",
             headers=self.headers,
             catch_response=True
         ) as response:
@@ -98,7 +98,7 @@ class ChurnAPIUser(HttpUser):
     def health_check(self):
         """Test health check endpoint."""
         with self.client.get(
-            "/api/v1/health",
+            "/health",
             headers=self.headers,
             catch_response=True
         ) as response:
@@ -114,7 +114,7 @@ class ChurnAPIUser(HttpUser):
     def get_models(self):
         """Test models listing endpoint."""
         with self.client.get(
-            "/api/v1/models",
+            "/models",
             catch_response=True
         ) as response:
             if response.status_code == 200:
@@ -143,7 +143,7 @@ class RateLimitTestUser(HttpUser):
         customer_data = random.choice(SAMPLE_CUSTOMERS)
         
         with self.client.post(
-            "/api/v1/survey/submit",
+            "/survey/submit",
             json=customer_data,
             headers=self.headers,
             catch_response=True

@@ -26,33 +26,34 @@ else
 fi
 
 # Check health endpoint
-printf "Checking health endpoint... "
-if curl -s -f "$API_URL/api/v1/health" -H "X-API-Key: $API_KEY" > /dev/null 2>&1; then
-  printf "${GREEN}✓${NC} OK\n"
+echo "Checking API health..."
+if curl -s -f "$API_URL/health" -H "X-API-Key: $API_KEY" > /dev/null 2>&1; then
+    echo "✅ API is healthy"
 else
-  printf "${RED}✗${NC} FAILED\n"
-  exit 1
+    echo "❌ API is not healthy"
+    exit 1
 fi
 
-# Check model version endpoint
-printf "Checking model version... "
-RESPONSE=$(curl -s "$API_URL/api/v1/model/version" -H "X-API-Key: $API_KEY")
-if [ $? -eq 0 ]; then
-  printf "${GREEN}✓${NC} OK\n"
-  echo "  Response: $RESPONSE"
+# Check model version
+echo "Checking model version..."
+RESPONSE=$(curl -s "$API_URL/model/version" -H "X-API-Key: $API_KEY")
+if [[ $RESPONSE == *"production_model_version"* ]]; then
+    echo "✅ Model version endpoint working"
+    echo "   Response: $RESPONSE"
 else
-  printf "${RED}✗${NC} FAILED\n"
-  exit 1
+    echo "❌ Model version endpoint failed"
+    echo "   Response: $RESPONSE"
+    exit 1
 fi
 
-# Check models endpoint
-printf "Checking models endpoint... "
-if curl -s -f "$API_URL/api/v1/models" > /dev/null 2>&1; then
-  printf "${GREEN}✓${NC} OK\n"
+# Check public models endpoint
+echo "Checking public models endpoint..."
+if curl -s -f "$API_URL/models" > /dev/null 2>&1; then
+    echo "✅ Public models endpoint working"
 else
-  printf "${RED}✗${NC} FAILED\n"
+    echo "❌ Public models endpoint failed"
+    exit 1
 fi
-
 echo ""
 echo "========================================"
 echo " ${GREEN}All critical checks passed!${NC}"
