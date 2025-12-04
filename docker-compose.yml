@@ -100,7 +100,7 @@ services:
       - ./.gitignore:/opt/airflow/.gitignore
       - ./remote:/opt/airflow/remote
       - ./mlflow_artifacts:/mlflow/artifacts
-      - ./src/monitoring/reports_drift:/opt/airflow/reports/drift/
+      - ./src/monitoring/reports_drift:/opt/airflow/drifts/monitoring/reports
     depends_on:
       - mlflow
     ports:
