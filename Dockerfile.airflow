@@ -10,6 +10,8 @@ RUN git config --global user.email "airflow@pipeline.local" && \
     git config --global user.name "Airflow DAG" && \
     git config --global --add safe.directory /opt/airflow
 
+RUN pip install --no-cache-dir evidently==0.4.11 alibi-detect==0.11.4
+
 COPY dags ./dags
 COPY src ./src
 
