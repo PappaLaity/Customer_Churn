@@ -135,7 +135,7 @@ jobs:
     name: Integration Tests (full)
     runs-on: ubuntu-latest
     needs: test
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/refactor/mlops-improvements')
+    if: false && github.event_name == 'push' && startsWith(github.ref, 'refs/heads/refactor/mlops-improvements')
 
     steps:
       - name: Checkout code

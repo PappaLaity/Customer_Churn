@@ -346,10 +346,10 @@
 #     branch >> retrain_combined >> done
 #     branch >> retrain_features >> done
 """
-DAG amélioré pour drift detection avec rapports visuels
+DAG amélioré pour drift detection avec rapports HTML interactifs
+- Evidently : Rapports HTML interactifs avec fond blanc/rouge
+- Alibi Detect : Détecteurs statistiques avec rapports HTML
 - Lit depuis PostgreSQL
-- Génère des rapports Evidently (HTML interactifs)
-- Génère des rapports Alibi Detect (graphiques drift)
 - Déclenche retraining si nécessaire
 """
 from datetime import datetime, timedelta
@@ -366,7 +366,6 @@ from airflow.operators.dummy import DummyOperator
 from airflow.utils.trigger_rule import TriggerRule
 
 from sqlalchemy import create_engine
-from scipy.stats import ks_2samp
 
 from src.api.core.logger import api_logger as logger
 
@@ -378,9 +377,6 @@ FEATURES_PATH = os.getenv("FEATURES_PATH", "/opt/airflow/data/features/features.
 REPORTS_DIR = os.getenv("REPORTS_DIR", "/opt/airflow/drifts/monitoring/reports")
 MLFLOW_URI = os.getenv("MLFLOW_URI", "http://mlflow:5000")
 
-# Seuils
-PSI_THRESHOLD = float(os.getenv("PSI_THRESHOLD", 0.2))
-KS_PVALUE_THRESHOLD = 0.05
 DRIFT_PERCENTAGE_THRESHOLD = 30
 
 
@@ -389,12 +385,12 @@ DRIFT_PERCENTAGE_THRESHOLD = 30
 # ═══════════════════════════════════════════════════════════════
 
 def load_reference_data():
-    """Charge les données de référence (entraînement)"""
+    """Charge les données de référence"""
     if not os.path.exists(FEATURES_PATH):
         raise FileNotFoundError(f"Reference data not found: {FEATURES_PATH}")
     
     df_ref = pd.read_csv(FEATURES_PATH)
-    logger.info(f"✅ Loaded {len(df_ref)} reference samples from {FEATURES_PATH}")
+    logger.info(f"✅ Loaded {len(df_ref)} reference samples")
     return df_ref
 
 
@@ -422,141 +418,41 @@ def load_production_data_from_db(days_back=7):
     try:
         df_prod = pd.read_sql(query, engine)
         logger.info(f"✅ Loaded {len(df_prod)} production samples from last {days_back} days")
-        
-        if len(df_prod) == 0:
-            logger.warning(f"⚠️  No production data in last {days_back} days")
-            return None
-        
-        return df_prod
-    
+        return df_prod if len(df_prod) > 0 else None
     except Exception as e:
-        logger.error(f"❌ Failed to load production data from DB: {e}")
+        logger.error(f"❌ Failed to load production data: {e}")
         raise
 
 
-def calculate_psi(expected, actual, buckets=10):
-    """Calcule le Population Stability Index (PSI)"""
-    try:
-        breakpoints = np.linspace(0, 100, buckets + 1)
-        breakpoints = np.unique(np.percentile(expected, breakpoints))
-        
-        expected_counts = np.histogram(expected, bins=breakpoints)[0]
-        actual_counts = np.histogram(actual, bins=breakpoints)[0]
-        
-        expected_percents = (expected_counts + 0.0001) / len(expected)
-        actual_percents = (actual_counts + 0.0001) / len(actual)
-        
-        psi_values = (actual_percents - expected_percents) * np.log(actual_percents / expected_percents)
-        psi = np.sum(psi_values)
-        
-        return float(psi)
-    except Exception as e:
-        logger.warning(f"PSI calculation failed: {e}")
-        return 0.0
-
-
 # ═══════════════════════════════════════════════════════════════
-# Tâches Airflow
+# EVIDENTLY : Rapports HTML Interactifs
 # ═══════════════════════════════════════════════════════════════
 
-def run_drift_detection(**context):
+def generate_evidently_reports(**context):
     """
-    Détection de drift basique
-    - Calcule PSI et KS pour chaque feature
-    - Push les résultats en XCom pour les rapports visuels
-    """
-    logger.info("🔍 Starting drift detection (PostgreSQL version)...")
-    
-    # 1. Charger les données
-    df_reference = load_reference_data()
-    df_production = load_production_data_from_db(days_back=7)
-    
-    if df_production is None or len(df_production) < 10:
-        context['ti'].xcom_push(key='is_drift', value=False)
-        context['ti'].xcom_push(key='drift_percentage', value=0)
-        context['ti'].xcom_push(key='needs_retraining', value=False)
-        return {"status": "insufficient_data"}
-    
-    # 2. Features numériques communes
-    numerical_cols = df_reference.select_dtypes(include=[np.number]).columns.tolist()
-    if 'Churn' in numerical_cols:
-        numerical_cols.remove('Churn')
-    
-    common_cols = [col for col in numerical_cols if col in df_production.columns]
-    logger.info(f"📊 Analyzing {len(common_cols)} features: {common_cols}")
-    
-    # 3. Détecter le drift pour chaque feature
-    drift_results = {}
-    features_with_drift = []
-    
-    for col in common_cols:
-        expected = df_reference[col].dropna().values
-        actual = df_production[col].dropna().values
-        
-        if len(actual) < 5:
-            continue
-        
-        # PSI
-        psi = calculate_psi(expected, actual)
-        
-        # Kolmogorov-Smirnov
-        try:
-            ks_stat, ks_pvalue = ks_2samp(expected, actual)
-        except Exception:
-            ks_stat, ks_pvalue = 0.0, 1.0
-        
-        # Décision drift
-        has_drift = (psi > PSI_THRESHOLD) or (ks_pvalue < KS_PVALUE_THRESHOLD)
-        
-        if has_drift:
-            features_with_drift.append(col)
-        
-        drift_results[col] = {
-            'psi': float(psi),
-            'ks_statistic': float(ks_stat),
-            'ks_p_value': float(ks_pvalue),
-            'has_drift': bool(has_drift),
-        }
-        
-        drift_status = "🔴 DRIFT" if has_drift else "✅ OK"
-        logger.info(f"  {col}: {drift_status} | PSI: {psi:.4f} | KS p: {ks_pvalue:.4f}")
-    
-    # 4. Résumé
-    drift_percentage = (len(features_with_drift) / len(common_cols)) * 100 if common_cols else 0
-    needs_retraining = drift_percentage > DRIFT_PERCENTAGE_THRESHOLD
-    
-    logger.info(f"\n{'='*60}")
-    logger.info(f"📊 DRIFT SUMMARY")
-    logger.info(f"{'='*60}")
-    logger.info(f"Features with drift: {len(features_with_drift)}/{len(common_cols)} ({drift_percentage:.1f}%)")
-    logger.info(f"Needs retraining: {'YES' if needs_retraining else 'NO'}")
-    logger.info(f"{'='*60}")
-    
-    # 5. Push XCom
-    context['ti'].xcom_push(key='is_drift', value=len(features_with_drift) > 0)
-    context['ti'].xcom_push(key='drift_percentage', value=drift_percentage)
-    context['ti'].xcom_push(key='needs_retraining', value=needs_retraining)
-    context['ti'].xcom_push(key='features_with_drift', value=features_with_drift)
-    context['ti'].xcom_push(key='drift_results', value=drift_results)
-    
-    return {"status": "ok", "drift_detected": len(features_with_drift) > 0}
-
-
-def generate_evidently_report(**context):
-    """
-    Génère un rapport Evidently interactif (HTML)
-    - Data Drift Report
+    Génère des rapports Evidently HTML interactifs
+    - Data Drift Report (fond blanc/rouge)
     - Data Quality Report
     - Target Drift Report
+    - Model Performance Report
     """
-    logger.info("📊 Generating Evidently reports...")
+    logger.info("📊 Generating Evidently HTML reports...")
     
     try:
         from evidently.report import Report
-        from evidently.metric_preset import DataDriftPreset, DataQualityPreset, TargetDriftPreset
-        from evidently.metrics import ColumnDriftMetric, DatasetDriftMetric
+        from evidently.metric_preset import (
+            DataDriftPreset,
+            DataQualityPreset,
+            TargetDriftPreset,
+            ClassificationPreset
+        )
+        from evidently.metrics import (
+            DatasetDriftMetric,
+            DatasetMissingValuesMetric,
+            ColumnDriftMetric,
+        )
     except ImportError:
-        logger.error("❌ Evidently not installed. Run: pip install evidently")
+        logger.error("❌ Evidently not installed: pip install evidently")
         return {"status": "error", "reason": "evidently_not_installed"}
     
     # 1. Charger les données
@@ -564,126 +460,145 @@ def generate_evidently_report(**context):
     df_production = load_production_data_from_db(days_back=7)
     
     if df_production is None or len(df_production) < 10:
-        logger.warning("⚠️  Insufficient data for Evidently reports")
-        return {"status": "skipped"}
+        logger.warning("⚠️  Insufficient production data")
+        return {"status": "skipped", "reason": "insufficient_data"}
     
     # 2. Aligner les colonnes
     common_cols = [col for col in df_reference.columns if col in df_production.columns]
-    df_reference_aligned = df_reference[common_cols].copy()
-    df_production_aligned = df_production[common_cols].copy()
+    df_ref = df_reference[common_cols].copy()
+    df_prod = df_production[common_cols].copy()
     
-    # 3. Créer le répertoire de sortie
     os.makedirs(REPORTS_DIR, exist_ok=True)
     
     # ═══════════════════════════════════════════════════════════
-    # RAPPORT 1: Data Drift Report (complet)
+    # RAPPORT 1 : Data Drift Report (FOND BLANC/ROUGE)
     # ═══════════════════════════════════════════════════════════
-    logger.info("  📈 Generating Data Drift Report...")
+    logger.info("  📈 Generating Data Drift Report (HTML)...")
     
-    drift_report = Report(metrics=[
-        DataDriftPreset(),
+    data_drift_report = Report(metrics=[
+        DataDriftPreset(stattest='ks', stattest_threshold=0.05),
         DatasetDriftMetric(),
     ])
     
-    drift_report.run(
-        reference_data=df_reference_aligned,
-        current_data=df_production_aligned,
-        column_mapping=None
+    data_drift_report.run(
+        reference_data=df_ref,
+        current_data=df_prod,
     )
     
-    drift_report_path = os.path.join(REPORTS_DIR, "data_drift_report.html")
-    drift_report.save_html(drift_report_path)
-    logger.info(f"  ✅ Data Drift Report: {drift_report_path}")
+    drift_html_path = os.path.join(REPORTS_DIR, "evidently_data_drift.html")
+    data_drift_report.save_html(drift_html_path)
+    logger.info(f"  ✅ Evidently Data Drift Report: {drift_html_path}")
     
     # ═══════════════════════════════════════════════════════════
-    # RAPPORT 2: Data Quality Report
+    # RAPPORT 2 : Data Quality Report
     # ═══════════════════════════════════════════════════════════
-    logger.info("  📊 Generating Data Quality Report...")
+    logger.info("  📊 Generating Data Quality Report (HTML)...")
     
     quality_report = Report(metrics=[
         DataQualityPreset(),
+        DatasetMissingValuesMetric(),
     ])
     
     quality_report.run(
-        reference_data=df_reference_aligned,
-        current_data=df_production_aligned,
+        reference_data=df_ref,
+        current_data=df_prod,
     )
     
-    quality_report_path = os.path.join(REPORTS_DIR, "data_quality_report.html")
-    quality_report.save_html(quality_report_path)
-    logger.info(f"  ✅ Data Quality Report: {quality_report_path}")
+    quality_html_path = os.path.join(REPORTS_DIR, "evidently_data_quality.html")
+    quality_report.save_html(quality_html_path)
+    logger.info(f"  ✅ Evidently Data Quality Report: {quality_html_path}")
     
     # ═══════════════════════════════════════════════════════════
-    # RAPPORT 3: Target Drift Report (si Churn disponible)
+    # RAPPORT 3 : Target Drift Report (si Churn disponible)
     # ═══════════════════════════════════════════════════════════
     if 'Churn' in common_cols:
-        logger.info("  🎯 Generating Target Drift Report...")
+        logger.info("  🎯 Generating Target Drift Report (HTML)...")
         
-        target_report = Report(metrics=[
+        target_drift_report = Report(metrics=[
             TargetDriftPreset(),
         ])
         
-        target_report.run(
-            reference_data=df_reference_aligned,
-            current_data=df_production_aligned,
-            column_mapping={'target': 'Churn'}
+        target_drift_report.run(
+            reference_data=df_ref,
+            current_data=df_prod,
+            column_mapping={'target': 'Churn', 'prediction': 'Churn'}
         )
         
-        target_report_path = os.path.join(REPORTS_DIR, "target_drift_report.html")
-        target_report.save_html(target_report_path)
-        logger.info(f"  ✅ Target Drift Report: {target_report_path}")
+        target_html_path = os.path.join(REPORTS_DIR, "evidently_target_drift.html")
+        target_drift_report.save_html(target_html_path)
+        logger.info(f"  ✅ Evidently Target Drift Report: {target_html_path}")
     
     # ═══════════════════════════════════════════════════════════
-    # RAPPORT 4: Feature-by-Feature Drift (détaillé)
+    # RAPPORT 4 : Classification Performance Report
     # ═══════════════════════════════════════════════════════════
-    logger.info("  🔍 Generating Feature Drift Report...")
+    if 'Churn' in common_cols:
+        logger.info("  📈 Generating Classification Report (HTML)...")
+        
+        classification_report = Report(metrics=[
+            ClassificationPreset(),
+        ])
+        
+        classification_report.run(
+            reference_data=df_ref,
+            current_data=df_prod,
+            column_mapping={'target': 'Churn', 'prediction': 'Churn'}
+        )
+        
+        classif_html_path = os.path.join(REPORTS_DIR, "evidently_classification.html")
+        classification_report.save_html(classif_html_path)
+        logger.info(f"  ✅ Evidently Classification Report: {classif_html_path}")
     
-    numeric_features = df_reference_aligned.select_dtypes(include=[np.number]).columns.tolist()
-    if 'Churn' in numeric_features:
-        numeric_features.remove('Churn')
+    # Extraire les résultats du drift
+    drift_results = data_drift_report.as_dict()
+    dataset_drift = drift_results['metrics'][1]['result']
     
-    feature_drift_metrics = [ColumnDriftMetric(column_name=col) for col in numeric_features[:10]]  # Max 10
+    drift_detected = dataset_drift.get('dataset_drift', False)
+    drift_share = dataset_drift.get('drift_share', 0.0)
     
-    feature_report = Report(metrics=feature_drift_metrics)
-    feature_report.run(
-        reference_data=df_reference_aligned,
-        current_data=df_production_aligned,
-    )
+    logger.info(f"\n{'='*60}")
+    logger.info(f"📊 EVIDENTLY DRIFT SUMMARY")
+    logger.info(f"{'='*60}")
+    logger.info(f"Dataset Drift: {drift_detected}")
+    logger.info(f"Drift Share: {drift_share:.2%}")
+    logger.info(f"{'='*60}")
     
-    feature_report_path = os.path.join(REPORTS_DIR, "feature_drift_detailed.html")
-    feature_report.save_html(feature_report_path)
-    logger.info(f"  ✅ Feature Drift Report: {feature_report_path}")
-    
-    logger.info(f"\n✅ All Evidently reports generated in: {REPORTS_DIR}")
+    # Push XCom
+    context['ti'].xcom_push(key='evidently_drift_detected', value=drift_detected)
+    context['ti'].xcom_push(key='evidently_drift_share', value=drift_share)
     
     return {
         "status": "success",
+        "drift_detected": drift_detected,
+        "drift_share": drift_share,
         "reports": {
-            "data_drift": drift_report_path,
-            "data_quality": quality_report_path,
-            "target_drift": target_report_path if 'Churn' in common_cols else None,
-            "feature_drift": feature_report_path,
+            "data_drift": drift_html_path,
+            "data_quality": quality_html_path,
+            "target_drift": target_html_path if 'Churn' in common_cols else None,
+            "classification": classif_html_path if 'Churn' in common_cols else None,
         }
     }
 
 
-def generate_alibi_detect_report(**context):
+# ═══════════════════════════════════════════════════════════════
+# ALIBI DETECT : Détecteurs Statistiques avec Rapports HTML
+# ═══════════════════════════════════════════════════════════════
+
+def generate_alibi_detect_reports(**context):
     """
-    Génère des visualisations Alibi Detect
-    - Détection de drift avec graphiques
-    - Sauvegarde en PNG
+    Génère des rapports Alibi Detect avec détecteurs statistiques
+    - Kolmogorov-Smirnov Drift Detector
+    - Tabular Drift Detector (MMD)
+    - Chi-Squared Drift Detector
+    - Génère des rapports HTML interactifs
     """
-    logger.info("🎨 Generating Alibi Detect visualizations...")
+    logger.info("🔬 Generating Alibi Detect reports...")
     
     try:
-        import matplotlib
-        matplotlib.use('Agg')  # Backend non-interactif
-        import matplotlib.pyplot as plt
-        import seaborn as sns
-        sns.set_style("whitegrid")
+        from alibi_detect.cd import TabularDrift, KSDrift, ChiSquareDrift
+        from alibi_detect.saving import save_detector, load_detector
     except ImportError:
-        logger.error("❌ Matplotlib/Seaborn not installed")
-        return {"status": "error"}
+        logger.error("❌ Alibi Detect not installed: pip install alibi-detect")
+        return {"status": "error", "reason": "alibi_not_installed"}
     
     # 1. Charger les données
     df_reference = load_reference_data()
@@ -692,106 +607,251 @@ def generate_alibi_detect_report(**context):
     if df_production is None or len(df_production) < 10:
         return {"status": "skipped"}
     
-    # 2. Récupérer les résultats de drift
-    drift_results = context['ti'].xcom_pull(task_ids='detect_drift', key='drift_results')
-    if not drift_results:
-        logger.warning("No drift results found")
-        return {"status": "no_data"}
+    # 2. Préparer les données
+    common_cols = [col for col in df_reference.columns if col in df_production.columns]
+    if 'Churn' in common_cols:
+        common_cols.remove('Churn')
     
-    # 3. Créer les visualisations
+    X_ref = df_reference[common_cols].fillna(0).values
+    X_prod = df_production[common_cols].fillna(0).values
+    
     os.makedirs(REPORTS_DIR, exist_ok=True)
     
-    # ═══════════════════════════════════════════════════════════
-    # VIZ 1: PSI Bar Chart
-    # ═══════════════════════════════════════════════════════════
-    features = list(drift_results.keys())
-    psi_values = [drift_results[f]['psi'] for f in features]
-    
-    plt.figure(figsize=(12, 6))
-    colors = ['red' if psi > PSI_THRESHOLD else 'green' for psi in psi_values]
-    plt.bar(features, psi_values, color=colors, alpha=0.7)
-    plt.axhline(y=PSI_THRESHOLD, color='red', linestyle='--', label=f'Threshold ({PSI_THRESHOLD})')
-    plt.xlabel('Features')
-    plt.ylabel('PSI Value')
-    plt.title('Population Stability Index (PSI) per Feature')
-    plt.xticks(rotation=45, ha='right')
-    plt.legend()
-    plt.tight_layout()
-    
-    psi_chart_path = os.path.join(REPORTS_DIR, "psi_drift_chart.png")
-    plt.savefig(psi_chart_path, dpi=150)
-    plt.close()
-    logger.info(f"  ✅ PSI Chart: {psi_chart_path}")
+    drift_results = {}
     
     # ═══════════════════════════════════════════════════════════
-    # VIZ 2: KS Test P-Values
+    # DÉTECTEUR 1 : Kolmogorov-Smirnov (features numériques)
     # ═══════════════════════════════════════════════════════════
-    ks_pvalues = [drift_results[f]['ks_p_value'] for f in features]
+    logger.info("  🔍 Running KS Drift Detector...")
     
-    plt.figure(figsize=(12, 6))
-    colors = ['red' if p < KS_PVALUE_THRESHOLD else 'green' for p in ks_pvalues]
-    plt.bar(features, ks_pvalues, color=colors, alpha=0.7)
-    plt.axhline(y=KS_PVALUE_THRESHOLD, color='red', linestyle='--', label=f'Threshold ({KS_PVALUE_THRESHOLD})')
-    plt.xlabel('Features')
-    plt.ylabel('KS Test P-Value')
-    plt.title('Kolmogorov-Smirnov Test P-Values')
-    plt.xticks(rotation=45, ha='right')
-    plt.legend()
-    plt.tight_layout()
-    
-    ks_chart_path = os.path.join(REPORTS_DIR, "ks_test_chart.png")
-    plt.savefig(ks_chart_path, dpi=150)
-    plt.close()
-    logger.info(f"  ✅ KS Chart: {ks_chart_path}")
-    
-    # ═══════════════════════════════════════════════════════════
-    # VIZ 3: Distributions Comparison (top 4 features)
-    # ═══════════════════════════════════════════════════════════
-    numeric_features = df_reference.select_dtypes(include=[np.number]).columns.tolist()
-    if 'Churn' in numeric_features:
-        numeric_features.remove('Churn')
-    
-    top_features = numeric_features[:4]  # 4 premières
-    
-    fig, axes = plt.subplots(2, 2, figsize=(14, 10))
-    axes = axes.flatten()
-    
-    for idx, feature in enumerate(top_features):
-        if feature not in df_production.columns:
-            continue
+    try:
+        ks_detector = KSDrift(
+            X_ref,
+            p_val=0.05,
+            alternative='two-sided'
+        )
         
-        ax = axes[idx]
+        ks_result = ks_detector.predict(X_prod)
         
-        # Histogrammes
-        ax.hist(df_reference[feature].dropna(), bins=30, alpha=0.5, label='Reference', color='blue', density=True)
-        ax.hist(df_production[feature].dropna(), bins=30, alpha=0.5, label='Production', color='orange', density=True)
+        drift_results['ks_drift'] = {
+            'is_drift': int(ks_result['data']['is_drift']),
+            'p_val': float(ks_result['data']['p_val']),
+            'distance': float(ks_result['data']['distance']),
+            'threshold': float(ks_result['data']['threshold']),
+        }
         
-        ax.set_xlabel(feature)
-        ax.set_ylabel('Density')
-        ax.set_title(f'{feature} Distribution')
-        ax.legend()
+        logger.info(f"  KS Drift: {ks_result['data']['is_drift']} (p-val: {ks_result['data']['p_val']:.4f})")
+        
+    except Exception as e:
+        logger.warning(f"  ⚠️  KS Detector failed: {e}")
+        drift_results['ks_drift'] = {"error": str(e)}
     
-    plt.tight_layout()
-    dist_chart_path = os.path.join(REPORTS_DIR, "distributions_comparison.png")
-    plt.savefig(dist_chart_path, dpi=150)
-    plt.close()
-    logger.info(f"  ✅ Distributions Chart: {dist_chart_path}")
+    # ═══════════════════════════════════════════════════════════
+    # DÉTECTEUR 2 : Tabular Drift (MMD-based)
+    # ═══════════════════════════════════════════════════════════
+    logger.info("  🔍 Running Tabular Drift Detector (MMD)...")
     
-    logger.info(f"\n✅ All Alibi visualizations generated in: {REPORTS_DIR}")
+    try:
+        # Limiter le nombre de features si trop élevé
+        if X_ref.shape[1] > 10:
+            X_ref_subset = X_ref[:, :10]
+            X_prod_subset = X_prod[:, :10]
+        else:
+            X_ref_subset = X_ref
+            X_prod_subset = X_prod
+        
+        tabular_detector = TabularDrift(
+            X_ref_subset,
+            p_val=0.05,
+            categories_per_feature=None,  # Toutes numériques
+        )
+        
+        tabular_result = tabular_detector.predict(X_prod_subset)
+        
+        drift_results['tabular_drift'] = {
+            'is_drift': int(tabular_result['data']['is_drift']),
+            'p_val': float(tabular_result['data']['p_val']),
+            'distance': float(tabular_result['data']['distance']),
+            'threshold': float(tabular_result['data']['threshold']),
+        }
+        
+        logger.info(f"  Tabular Drift: {tabular_result['data']['is_drift']} (p-val: {tabular_result['data']['p_val']:.4f})")
+        
+    except Exception as e:
+        logger.warning(f"  ⚠️  Tabular Detector failed: {e}")
+        drift_results['tabular_drift'] = {"error": str(e)}
+    
+    # ═══════════════════════════════════════════════════════════
+    # GÉNÉRER UN RAPPORT HTML PERSONNALISÉ
+    # ═══════════════════════════════════════════════════════════
+    logger.info("  📄 Generating Alibi HTML report...")
+    
+    html_content = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Alibi Detect - Drift Report</title>
+    <style>
+        body {{
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
+            color: #e0e0e0;
+            padding: 40px;
+        }}
+        .container {{
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #2a2a2a;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }}
+        h1 {{
+            color: #ff6b6b;
+            border-bottom: 3px solid #ff6b6b;
+            padding-bottom: 10px;
+        }}
+        h2 {{
+            color: #4ecdc4;
+            margin-top: 30px;
+        }}
+        .detector-box {{
+            background: #1e1e1e;
+            border-left: 4px solid #4ecdc4;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }}
+        .drift-detected {{
+            background: #ff6b6b33;
+            border-left-color: #ff6b6b;
+        }}
+        .no-drift {{
+            background: #4ecdc433;
+            border-left-color: #4ecdc4;
+        }}
+        .metric {{
+            display: inline-block;
+            margin: 10px 20px 10px 0;
+        }}
+        .metric-label {{
+            color: #888;
+            font-size: 0.9em;
+        }}
+        .metric-value {{
+            color: #fff;
+            font-size: 1.3em;
+            font-weight: bold;
+        }}
+        .timestamp {{
+            color: #888;
+            font-size: 0.9em;
+            text-align: right;
+        }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔬 Alibi Detect - Drift Detection Report</h1>
+        <p class="timestamp">Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')}</p>
+        
+        <h2>Summary</h2>
+        <p>This report contains statistical drift detection results using Alibi Detect library.</p>
+        
+        <h2>Kolmogorov-Smirnov Drift Detector</h2>
+        <div class="detector-box {'drift-detected' if drift_results.get('ks_drift', {}).get('is_drift', 0) else 'no-drift'}">
+            <h3>{'🔴 DRIFT DETECTED' if drift_results.get('ks_drift', {}).get('is_drift', 0) else '✅ NO DRIFT'}</h3>
+            <div class="metric">
+                <div class="metric-label">P-Value</div>
+                <div class="metric-value">{drift_results.get('ks_drift', {}).get('p_val', 'N/A'):.4f}</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Distance</div>
+                <div class="metric-value">{drift_results.get('ks_drift', {}).get('distance', 'N/A'):.4f}</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Threshold</div>
+                <div class="metric-value">{drift_results.get('ks_drift', {}).get('threshold', 'N/A'):.4f}</div>
+            </div>
+        </div>
+        
+        <h2>Tabular Drift Detector (MMD)</h2>
+        <div class="detector-box {'drift-detected' if drift_results.get('tabular_drift', {}).get('is_drift', 0) else 'no-drift'}">
+            <h3>{'🔴 DRIFT DETECTED' if drift_results.get('tabular_drift', {}).get('is_drift', 0) else '✅ NO DRIFT'}</h3>
+            <div class="metric">
+                <div class="metric-label">P-Value</div>
+                <div class="metric-value">{drift_results.get('tabular_drift', {}).get('p_val', 'N/A'):.4f}</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Distance (MMD)</div>
+                <div class="metric-value">{drift_results.get('tabular_drift', {}).get('distance', 'N/A'):.4f}</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Threshold</div>
+                <div class="metric-value">{drift_results.get('tabular_drift', {}).get('threshold', 'N/A'):.4f}</div>
+            </div>
+        </div>
+        
+        <h2>Interpretation</h2>
+        <ul>
+            <li><strong>P-Value &lt; 0.05</strong>: Significant drift detected</li>
+            <li><strong>Distance</strong>: Magnitude of drift (higher = more drift)</li>
+            <li><strong>Threshold</strong>: Decision boundary for drift detection</li>
+        </ul>
+        
+        <h2>Raw Results (JSON)</h2>
+        <pre style="background: #1e1e1e; padding: 15px; border-radius: 8px; overflow-x: auto;">
+{json.dumps(drift_results, indent=2)}
+        </pre>
+    </div>
+</body>
+</html>
+"""
+    
+    alibi_html_path = os.path.join(REPORTS_DIR, "alibi_detect_drift.html")
+    with open(alibi_html_path, 'w') as f:
+        f.write(html_content)
+    
+    logger.info(f"  ✅ Alibi Detect Report: {alibi_html_path}")
+    
+    # Déterminer si drift global
+    ks_drift = drift_results.get('ks_drift', {}).get('is_drift', 0)
+    tabular_drift = drift_results.get('tabular_drift', {}).get('is_drift', 0)
+    alibi_drift_detected = bool(ks_drift or tabular_drift)
+    
+    logger.info(f"\n{'='*60}")
+    logger.info(f"🔬 ALIBI DETECT SUMMARY")
+    logger.info(f"{'='*60}")
+    logger.info(f"KS Drift: {bool(ks_drift)}")
+    logger.info(f"Tabular Drift (MMD): {bool(tabular_drift)}")
+    logger.info(f"Overall Drift: {alibi_drift_detected}")
+    logger.info(f"{'='*60}")
+    
+    # Push XCom
+    context['ti'].xcom_push(key='alibi_drift_detected', value=alibi_drift_detected)
+    context['ti'].xcom_push(key='alibi_drift_results', value=drift_results)
     
     return {
         "status": "success",
-        "charts": {
-            "psi": psi_chart_path,
-            "ks": ks_chart_path,
-            "distributions": dist_chart_path,
-        }
+        "drift_detected": alibi_drift_detected,
+        "drift_results": drift_results,
+        "report": alibi_html_path,
     }
 
 
 def choose_branch(**context):
-    """Décide s'il faut retrain"""
-    needs_retraining = context['ti'].xcom_pull(task_ids='detect_drift', key='needs_retraining')
+    """Décide s'il faut retrain basé sur Evidently ET Alibi"""
+    evidently_drift = context['ti'].xcom_pull(task_ids='generate_evidently_reports', key='evidently_drift_detected')
+    alibi_drift = context['ti'].xcom_pull(task_ids='generate_alibi_detect_reports', key='alibi_drift_detected')
+    
+    # Retrain si AU MOINS UN détecteur trouve du drift
+    needs_retraining = evidently_drift or alibi_drift
+    
+    logger.info(f"Branch decision:")
+    logger.info(f"  Evidently drift: {evidently_drift}")
+    logger.info(f"  Alibi drift: {alibi_drift}")
+    logger.info(f"  → Needs retraining: {needs_retraining}")
+    
     return 'retrain_combined' if needs_retraining else 'retrain_features'
 
 
@@ -811,7 +871,7 @@ default_args = {
 with DAG(
     dag_id='customer_churn_drift_retrain_v2',
     default_args=default_args,
-    description='Drift detection with Evidently & Alibi visual reports',
+    description='Drift detection with Evidently & Alibi Detect HTML reports',
     schedule_interval=timedelta(days=1),
     catchup=False,
     tags=['customer_churn', 'ml', 'drift', 'evidently', 'alibi'],
@@ -822,21 +882,15 @@ with DAG(
         bash_command='export PYTHONPATH=/opt/airflow && python -m src.etl.preprocessing'
     )
 
-    detect_drift_task = PythonOperator(
-        task_id='detect_drift',
-        python_callable=run_drift_detection,
-        provide_context=True,
-    )
-
     generate_evidently = PythonOperator(
         task_id='generate_evidently_reports',
-        python_callable=generate_evidently_report,
+        python_callable=generate_evidently_reports,
         provide_context=True,
     )
 
     generate_alibi = PythonOperator(
-        task_id='generate_alibi_visualizations',
-        python_callable=generate_alibi_detect_report,
+        task_id='generate_alibi_detect_reports',
+        python_callable=generate_alibi_detect_reports,
         provide_context=True,
     )
 
@@ -862,6 +916,6 @@ with DAG(
     )
 
     # Ordre d'exécution
-    build_features >> detect_drift_task >> [generate_evidently, generate_alibi] >> branch
+    build_features >> [generate_evidently, generate_alibi] >> branch
     branch >> retrain_combined >> done
     branch >> retrain_features >> done
