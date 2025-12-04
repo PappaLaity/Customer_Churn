@@ -5,14 +5,27 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     gcc \
     python3-dev \
-    build-essential
+    build-essential \
+     g++ \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
 RUN apt-get update && apt-get install -y git
-COPY requirements.txt .
+##
+RUN useradd -m appuser
+USER appuser
+##
+#COPY requirements.txt .
+COPY --chown=appuser:appuser requirements.txt .
 #RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install --no-cache-dir \
     "tensorflow-cpu==2.16.1" \
     -r requirements.txt
 
+
+# Ajoute le chemin .local/bin au PATH
+ENV PATH="/home/appuser/.local/bin:${PATH}"
+##   
+    
 COPY alembic.ini .
 COPY migrations/ ./migrations/
 
