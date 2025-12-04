@@ -92,10 +92,10 @@ jobs:
           key: ${{ secrets.AZURE_SSH_KEY }}
           script: |
             # --- Cloner ou mettre à jour le repo sur la branche spécifique ---
-            cd /home/${{ secrets.AZURE_USER }}/Customer_Churn || git clone -b refactor/mlops-improvements https://github.com/PappaLaity/Customer_Churn.git Customer_Churn
-            cd Customer_Churn
+            cd /home/${{ secrets.AZURE_USER }}/Customer_Churn || git clone -b refactor/mlops-improvements https://github.com/mamad9633/Customer_Churn.git Customer_Churn
+            cd Customer_Churn 
             git reset --hard
-            git pull origin refactor/mlops-improvements
+            git pull origin refactor/mlops-improvements 
 
             # --- Créer le fichier .env à partir des secrets ---
             cat <<EOF > .env
