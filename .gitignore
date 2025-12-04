@@ -244,3 +244,4 @@ fix_database.sh
 master_script.sh
 trash/
 mlflow_db_data/
+predictchurn_key.pem

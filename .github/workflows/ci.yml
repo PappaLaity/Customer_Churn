@@ -1,5 +1,5 @@
 
-name: CI/CD TEST Pipeline
+name: CI Pipeline
 run-name: CI/CD Pipeline - by  @${{ github.actor }}
 on:
   push:
