@@ -490,6 +490,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: lint
     env:
+      PYTHONPATH: ${{ github.workspace }}
       DATABASE_URL: postgresql://user:password@localhost:5432/churn_test
       ENV: test
     services:
