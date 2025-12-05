@@ -211,7 +211,7 @@ mlruns
 artifacts
 mlflow_artifacts
 test.db
-models
+#models
 encoders.pkl
 # Remove model
 data
@@ -225,7 +225,7 @@ src/**/__pycache__/
 
 # DVC cache/remote local
 # remote/
-models
+#models
 
 # Python
 __pycache__/
@@ -236,3 +236,12 @@ __pycache__/
 # Docker
 *.pid
 data
+
+# Files
+test_db.sh
+run_bash.sh
+fix_database.sh
+master_script.sh
+trash/
+mlflow_db_data/
+predictchurn_key.pem

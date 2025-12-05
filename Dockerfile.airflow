@@ -10,6 +10,8 @@ RUN git config --global user.email "airflow@pipeline.local" && \
     git config --global user.name "Airflow DAG" && \
     git config --global --add safe.directory /opt/airflow
 
+
+
 COPY dags ./dags
 COPY src ./src
 

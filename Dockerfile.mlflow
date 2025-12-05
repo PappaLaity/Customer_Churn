@@ -18,7 +18,7 @@ ENV MLFLOW_HOST=0.0.0.0
 EXPOSE 5000
 
 CMD ["mlflow", "server", \
-     "--backend-store-uri", "${MLFLOW_BACKEND_STORE_URI}}", \
+     "--backend-store-uri", "${MLFLOW_BACKEND_STORE_URI}", \
      "--artifacts-destination", "file:///mlflow/artifacts", \
      "--serve-artifacts", \
      "--allowed-hosts", "mlflow,localhost,*", \

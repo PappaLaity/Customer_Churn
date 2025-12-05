@@ -1,8 +1,10 @@
+#src/api/entities/users.py
 from typing import Optional
-from pydantic import ConfigDict, EmailStr
+
+from pydantic import BaseModel, ConfigDict, EmailStr
 from sqlmodel import Column, Field, SQLModel, String
+
 from src.api.utils.enum.UserRole import UserRole
-from pydantic import BaseModel
 
 #  Telecom Company User's
 

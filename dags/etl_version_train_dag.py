@@ -2,6 +2,8 @@ from datetime import datetime, timedelta
 import shutil
 from airflow import DAG
 
+from src.api.core.logger import api_logger as logger
+
 # from airflow.operators.bash_operator import BashOperator
 # from airflow.operators.python_operator import PythonOperator
 from airflow.operators.bash import BashOperator
@@ -44,7 +46,7 @@ with DAG(
             raise AirflowException(
                 f"DVC pull failed:\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
             )
-        print(result.stdout)
+        logger.info(result.stdout)
 
     dvc_pull_task = PythonOperator(
         task_id="dvc_pull_data",

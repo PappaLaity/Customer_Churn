@@ -8,6 +8,8 @@ from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
 from airflow.operators.bash_operator import BashOperator
 
+from src.api.core.logger import api_logger as logger
+
 # # Default arguments for the DAG
 default_args = {
     'owner': 'student',
@@ -24,30 +26,30 @@ def print_system_info():
     import platform
     import socket
     
-    print(f"System: {platform.system()}")
-    print(f"Node Name: {platform.node()}")
-    print(f"Release: {platform.release()}")
-    print(f"Machine: {platform.machine()}")
-    print(f"Processor: {platform.processor()}")
-    print(f"Hostname: {socket.gethostname()}")
+    logger.info(f"System: {platform.system()}")
+    logger.info(f"Node Name: {platform.node()}")
+    logger.info(f"Release: {platform.release()}")
+    logger.info(f"Machine: {platform.machine()}")
+    logger.info(f"Processor: {platform.processor()}")
+    logger.info(f"Hostname: {socket.gethostname()}")
 
 
 def get_process_namespace():
     """Display process namespace information"""
     import os
     
-    print(f"Process ID: {os.getpid()}")
-    print(f"Parent Process ID: {os.getppid()}")
-    print(f"User ID: {os.getuid()}")
-    print(f"Group ID: {os.getgid()}")
+    logger.info(f"Process ID: {os.getpid()}")
+    logger.info(f"Parent Process ID: {os.getppid()}")
+    logger.info(f"User ID: {os.getuid()}")
+    logger.info(f"Group ID: {os.getgid()}")
     
     # Read namespace info (Linux only)
     try:
         with open(f'/proc/{os.getpid()}/cgroup', 'r') as f:
-            print("CGroup Namespaces:")
-            print(f.read())
+            logger.info("CGroup Namespaces:")
+            logger.info(f.read())
     except FileNotFoundError:
-        print("Namespace info not available (not on Linux)")
+        logger.info("Namespace info not available (not on Linux)")
 
 
 def calculate_simple_stats():
@@ -57,8 +59,8 @@ def calculate_simple_stats():
     numbers = [random.randint(1, 100) for _ in range(10)]
     avg = sum(numbers) / len(numbers)
     
-    print(f"Generated numbers: {numbers}")
-    print(f"Average: {avg}")
+    logger.info(f"Generated numbers: {numbers}")
+    logger.info(f"Average: {avg}")
     
     return avg
 

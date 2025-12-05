@@ -1,36 +1,29 @@
-import os
 import argparse
-from typing import Tuple, Dict, Any, List
-
-import numpy as np
-import pandas as pd
-from dotenv import load_dotenv
-
-import mlflow
-import mlflow.sklearn
-from mlflow.tracking import MlflowClient
-
-from sklearn.model_selection import train_test_split, StratifiedKFold, cross_val_score
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import (
-    accuracy_score,
-    confusion_matrix,
-    precision_score,
-    recall_score,
-    f1_score,
-)
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier, HistGradientBoostingClassifier
-from sklearn.neural_network import MLPClassifier
-
-from imblearn.over_sampling import SMOTE
+import os
+from typing import Any, Dict, List, Tuple
 
 import matplotlib.pyplot as plt
+import mlflow
+import mlflow.sklearn
+import numpy as np
+import pandas as pd
 import seaborn as sns
+from dotenv import load_dotenv
+from imblearn.over_sampling import SMOTE
+from mlflow.tracking import MlflowClient
+from sklearn.ensemble import (HistGradientBoostingClassifier,
+                              RandomForestClassifier)
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import (accuracy_score, confusion_matrix, f1_score,
+                             precision_score, recall_score)
+from sklearn.model_selection import (StratifiedKFold, cross_val_score,
+                                     train_test_split)
+from sklearn.neural_network import MLPClassifier
+from sklearn.preprocessing import StandardScaler
 
+from src.api.core.logger import api_logger as logger
 # Reuse existing preprocessing when training from raw features
 from src.etl.preprocessing import preprocess_data
-
 
 load_dotenv()
 mlflow_uri = os.getenv("MLFLOW_URI", "http://mlflow:5000")
@@ -47,17 +40,23 @@ def _ensure_label(df: pd.DataFrame, label: str = "Churn") -> pd.DataFrame:
     return df
 
 
-def _align_and_concat(feature_df: pd.DataFrame, prod_df: pd.DataFrame, label: str = "Churn") -> pd.DataFrame:
+def _align_and_concat(
+    feature_df: pd.DataFrame, prod_df: pd.DataFrame, label: str = "Churn"
+) -> pd.DataFrame:
     feature_df = _ensure_label(feature_df, label)
     # If production lacks label, fall back to features only
     if label not in prod_df.columns:
-        print("[WARN] Production data has no 'Churn' label. Training on features only.")
+        logger.info(
+            "[WARN] Production data has no 'Churn' label. Training on features only."
+        )
         return feature_df
 
     # Intersect columns to ensure alignment
     common_cols = [c for c in feature_df.columns if c in prod_df.columns]
     if label not in common_cols:
-        raise KeyError("'Churn' must be present in both datasets for combined training.")
+        raise KeyError(
+            "'Churn' must be present in both datasets for combined training."
+        )
 
     feature_df = feature_df[common_cols]
     prod_df = prod_df[common_cols]
@@ -67,7 +66,9 @@ def _align_and_concat(feature_df: pd.DataFrame, prod_df: pd.DataFrame, label: st
     return combined
 
 
-def _split_scale_smote(df: pd.DataFrame, label: str = "Churn") -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+def _split_scale_smote(
+    df: pd.DataFrame, label: str = "Churn"
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     X = df.drop(columns=[label])
     y = df[label].astype(int)
 
@@ -91,10 +92,22 @@ def _split_scale_smote(df: pd.DataFrame, label: str = "Churn") -> Tuple[np.ndarr
 
 def _models() -> Dict[str, Any]:
     return {
-        "Logistic Regression": LogisticRegression(max_iter=1000, class_weight="balanced"),
-        "Random Forest": RandomForestClassifier(n_estimators=300, random_state=42, class_weight="balanced"),
-        "HistGradientBoosting": HistGradientBoostingClassifier(max_iter=500, learning_rate=0.05, max_leaf_nodes=31, random_state=42),
-        "Neural Network": MLPClassifier(hidden_layer_sizes=(64, 32), activation="relu", solver="adam", max_iter=1000, random_state=42),
+        "Logistic Regression": LogisticRegression(
+            max_iter=1000, class_weight="balanced"
+        ),
+        "Random Forest": RandomForestClassifier(
+            n_estimators=300, random_state=42, class_weight="balanced"
+        ),
+        "HistGradientBoosting": HistGradientBoostingClassifier(
+            max_iter=500, learning_rate=0.05, max_leaf_nodes=31, random_state=42
+        ),
+        "Neural Network": MLPClassifier(
+            hidden_layer_sizes=(64, 32),
+            activation="relu",
+            solver="adam",
+            max_iter=1000,
+            random_state=42,
+        ),
     }
 
 
@@ -105,9 +118,11 @@ def _train_and_log_from_arrays(X_train, X_test, y_train, y_test) -> Dict[str, An
     results: List[Dict[str, Any]] = []
     for name, model in _models().items():
         with mlflow.start_run(run_name=f"Retrain - {name}") as run:
-            print(f"Training model: {name}")
+            logger.info(f"Training model: {name}")
 
-            cv_scores = cross_val_score(model, X_train, y_train, cv=skf, scoring="accuracy")
+            cv_scores = cross_val_score(
+                model, X_train, y_train, cv=skf, scoring="accuracy"
+            )
             cv_mean, cv_std = float(np.mean(cv_scores)), float(np.std(cv_scores))
 
             model.fit(X_train, y_train)
@@ -129,7 +144,7 @@ def _train_and_log_from_arrays(X_train, X_test, y_train, y_test) -> Dict[str, An
                     "test_f1_score": f1,
                 }
             )
-            
+
             # Log confusion matrix plot
             plt.figure(figsize=(6, 4))
             sns.heatmap(cm, annot=True, fmt="d", cmap="Blues")
@@ -170,11 +185,15 @@ def _train_and_log_from_arrays(X_train, X_test, y_train, y_test) -> Dict[str, An
             )
 
     best = max(results, key=lambda r: r["test_accuracy"]) if results else {}
-    print(f"Best model: {best.get('model_name')} ({best.get('test_accuracy')})")
+    logger.info(f"Best model: {best.get('model_name')} ({best.get('test_accuracy')})")
     return best
 
 
-def register_best_model(best_run: Dict[str, Any], stage: str = "Staging", model_registry_name: str = REGISTRY_NAME) -> int:
+def register_best_model(
+    best_run: Dict[str, Any],
+    stage: str = "Staging",
+    model_registry_name: str = REGISTRY_NAME,
+) -> int:
     if not best_run:
         raise RuntimeError("No runs available to register.")
 
@@ -205,7 +224,7 @@ def register_best_model(best_run: Dict[str, Any], stage: str = "Staging", model_
         archive_existing_versions=False,
     )
 
-    print(f"Registered version {version.version} transitioned to {stage}")
+    logger.info(f"Registered version {version.version} transitioned to {stage}")
     return int(version.version)
 
 
@@ -219,19 +238,21 @@ def train_combined(features_path: str, production_path: str) -> int:
     try:
         features_df = pd.read_csv(features_path)
     except (pd.errors.EmptyDataError, FileNotFoundError) as e:
-        print(f"[ERROR] Features file is empty or not found: {e}")
+        logger.info(f"[ERROR] Features file is empty or not found: {e}")
         raise
-    
+
     prod_df = pd.DataFrame()
     if os.path.exists(production_path):
         try:
             prod_df = pd.read_csv(production_path)
         except pd.errors.EmptyDataError:
-            print("[WARN] Production CSV file exists but is empty.")
+            logger.info("[WARN] Production CSV file exists but is empty.")
             prod_df = pd.DataFrame()
 
     if prod_df.empty:
-        print("[WARN] Production data not found or empty. Falling back to features-only training.")
+        logger.info(
+            "[WARN] Production data not found or empty. Falling back to features-only training."
+        )
         return train_features_only()
 
     combined = _align_and_concat(features_df, prod_df, label="Churn")
@@ -243,8 +264,16 @@ def train_combined(features_path: str, production_path: str) -> int:
 def main():
     parser = argparse.ArgumentParser(description="Retrain Customer Churn models")
     parser.add_argument("--mode", choices=["features", "combined"], default="features")
-    parser.add_argument("--features-path", default=os.getenv("FEATURES_PATH", "/opt/airflow/data/features/features.csv"))
-    parser.add_argument("--production-path", default=os.getenv("PRODUCTION_DATA_PATH", "/opt/airflow/data/production/production.csv"))
+    parser.add_argument(
+        "--features-path",
+        default=os.getenv("FEATURES_PATH", "/opt/airflow/data/features/features.csv"),
+    )
+    parser.add_argument(
+        "--production-path",
+        default=os.getenv(
+            "PRODUCTION_DATA_PATH", "/opt/airflow/data/production/production.csv"
+        ),
+    )
     args = parser.parse_args()
 
     if args.mode == "combined":

@@ -1,21 +1,23 @@
-
+# src/training/train.py
 import os
-from dotenv import load_dotenv
-import numpy as np
+
+import matplotlib.pyplot as plt
 import mlflow
 import mlflow.sklearn
-import matplotlib.pyplot as plt
+import numpy as np
 import seaborn as sns
-from sklearn.model_selection import cross_val_score, StratifiedKFold
-from sklearn.metrics import accuracy_score, confusion_matrix
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier, HistGradientBoostingClassifier
-from sklearn.neural_network import MLPClassifier
-from src.etl.preprocessing import preprocess_data
+from dotenv import load_dotenv
 from mlflow.tracking import MlflowClient
-from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score, f1_score
+from sklearn.ensemble import (HistGradientBoostingClassifier,
+                              RandomForestClassifier)
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import (accuracy_score, confusion_matrix, f1_score,
+                             precision_score, recall_score)
+from sklearn.model_selection import StratifiedKFold, cross_val_score
+from sklearn.neural_network import MLPClassifier
 
-
+from src.api.core.logger import api_logger as logger
+from src.etl.preprocessing import preprocess_data
 
 load_dotenv()
 mlflow_uri = os.getenv("MLFLOW_URI", "http://mlflow:5000")
@@ -46,7 +48,7 @@ def train_and_log_models(cv_folds=5):
             max_iter=1000,
             random_state=42,
         ),
-    } 
+    }
 
     mlflow.set_experiment("Customer_Churn_Training")
     skf = StratifiedKFold(n_splits=cv_folds, shuffle=True, random_state=42)
@@ -54,7 +56,7 @@ def train_and_log_models(cv_folds=5):
 
     for name, model in models.items():
         with mlflow.start_run(run_name=name) as run:
-            print(f"\n Training model: {name}")
+            logger.info(f"\n Training model: {name}")
             registry_name = model_registry_name + "_" + name
             # --- Train and evaluate ---
             cv_scores = cross_val_score(
@@ -111,7 +113,7 @@ def train_and_log_models(cv_folds=5):
                 mlflow.log_artifact("encoders.pkl")
             if os.path.exists("scaler.pkl"):
                 mlflow.log_artifact("scaler.pkl")
-            
+
             # --- Define and log model signature ---
 
             # --- Log model ---
@@ -142,35 +144,36 @@ def train_and_log_models(cv_folds=5):
 
     # Find the best run by test accuracy
     best_run = max(results, key=lambda x: x["test_accuracy"])
-    print(f"\n Best model: {best_run['model_name']} ({best_run['test_accuracy']:.4f})")
-    print(f"Run ID: {best_run['run_id']}")
+    logger.info(
+        f"\n Best model: {best_run['model_name']} ({best_run['test_accuracy']:.4f})"
+    )
+    logger.info(f"Run ID: {best_run['run_id']}")
     return best_run
+
 
 def register_best_model(best_run, model_registry_name="CustomerChurnModel"):
     """Register and promote the best model to Production."""
     client = MlflowClient()
     run_id = best_run["run_id"]
-    
+
     try:
         client.create_registered_model(model_registry_name)
-        print(f"Created new registered model: {model_registry_name}")
-    except Exception as e:
-        print(f"Model registry already exists: {model_registry_name}")
+        logger.info(f"Created new registered model: {model_registry_name}")
+    except Exception:
+        logger.info(f"Model registry already exists: {model_registry_name}")
 
     # Register new version
     version = client.create_model_version(
-        name=model_registry_name,
-        source=f"runs:/{run_id}/model",
-        run_id=run_id
+        name=model_registry_name, source=f"runs:/{run_id}/model", run_id=run_id
     )
-    print(f"Registered version {version.version}")
+    logger.info(f"Registered version {version.version}")
 
     # Update metadata
     client.update_model_version(
         name=model_registry_name,
         version=version.version,
         description=f"Auto-registered {best_run['model_name']} "
-                    f"with test accuracy {best_run['test_accuracy']:.4f}",
+        f"with test accuracy {best_run['test_accuracy']:.4f}",
     )
 
     # Add tags
@@ -193,15 +196,16 @@ def register_best_model(best_run, model_registry_name="CustomerChurnModel"):
         value=str(best_run["cv_mean"]),
     )
 
-    
     versions = client.search_model_versions(f"name='{model_registry_name}'")
-    prod_models = [v for v in versions if getattr(v, "current_stage", None) == "Production"]
+    prod_models = [
+        v for v in versions if getattr(v, "current_stage", None) == "Production"
+    ]
 
     if not prod_models:
         status = "Production"
     else:
         status = "Staging"
-    
+
     # Promote directly to Production (skip Staging if not needed)
     client.transition_model_version_stage(
         name=model_registry_name,
@@ -209,16 +213,19 @@ def register_best_model(best_run, model_registry_name="CustomerChurnModel"):
         stage=status,
         archive_existing_versions=True,
     )
-    print(f"Promoted version {version.version} to {status} stage")
+    logger.info(f"Promoted version {version.version} to {status} stage")
 
     # Verify all versions
     models = client.search_model_versions(f"name='{model_registry_name}'")
-    print(f"\nModel Registry Status:")
+    logger.info("\nModel Registry Status:")
     for model in models:
-        print(f" Version {model.version}: {model.current_stage} "
-              f"(Created: {model.creation_timestamp})")
+        print(
+            f" Version {model.version}: {model.current_stage} "
+            f"(Created: {model.creation_timestamp})"
+        )
 
     return version.version
+
 
 if __name__ == "__main__":
     # Train and automatically log all models

@@ -1,7 +1,6 @@
 from pydantic import BaseModel
 from sqlmodel import Column, Field, String
 
-
 # class InputCustomer(BaseModel):
 #     tenure: float = Field()
 #     totalCharges: str = Field()
@@ -15,11 +14,16 @@ from sqlmodel import Column, Field, String
 #     MonthlyCharges: float = Field(..., description="Montant des frais mensuels")
 #     PaperlessBilling: int = Field(..., description="Facturation sans papier (0=Non, 1=Oui)")
 
+
 class InputCustomer(BaseModel):
     tenure: float = Field(..., description="Durée d'abonnement en mois")
-    InternetService_Fiber_optic: bool = Field(..., description="Client avec fibre optique")
+    InternetService_Fiber_optic: bool = Field(
+        ..., description="Client avec fibre optique"
+    )
     Contract_Two_year: bool = Field(..., description="Contrat sur deux ans")
-    PaymentMethod_Electronic_check: bool = Field(..., description="Paiement par chèque électronique")
+    PaymentMethod_Electronic_check: bool = Field(
+        ..., description="Paiement par chèque électronique"
+    )
     No_internet_service: int = Field(..., description="Pas de service internet (0/1)")
     TotalCharges: float = Field(..., description="Total facturé au client")
     MonthlyCharges: float = Field(..., description="Montant mensuel facturé")

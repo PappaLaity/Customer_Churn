@@ -24,4 +24,3 @@ imbalanced-learn
 psycopg2-binary
 pydantic[email]
 httpx
-evidently

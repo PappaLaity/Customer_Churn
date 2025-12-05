@@ -1,0 +1,20 @@
+{
+  "numeric_columns": [
+    "TotalCharges",
+    "MonthlyCharges",
+    "Churn",
+    "PaperlessBilling",
+    "tenure"
+  ],
+  "psi_threshold": 0.2,
+  "per_column_psi": {
+    "TotalCharges": 11.050724676013632,
+    "MonthlyCharges": 0.2157526164896667,
+    "Churn": 0.46255737368786964,
+    "PaperlessBilling": 0.018958565062715843,
+    "tenure": 2.1205164277075226
+  },
+  "mean_psi": 2.7737019317922815,
+  "max_psi": 11.050724676013632,
+  "is_drift": true
+}

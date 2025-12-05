@@ -3,6 +3,8 @@ import os
 import json
 from airflow.utils.edgemodifier import Label
 from airflow.utils.trigger_rule import TriggerRule
+
+from src.api.core.logger import api_logger as logger
 # Optional: use scipy for KS test. pip install scipy
 from scipy.stats import ks_2samp
 
@@ -82,36 +84,36 @@ def generate_monitoring_reports(**context):
         generate_summary_report,
     )
     
-    print(f"Starting report generation...")
-    print(f"  Baseline path: {FEATURES_PATH}")
-    print(f"  Production path: {PRODUCTION_DATA_PATH}")
-    print(f"  Reports directory: {REPORTS_DIR}")
+    logger.info(f"Starting report generation...")
+    logger.info(f"  Baseline path: {FEATURES_PATH}")
+    logger.info(f"  Production path: {PRODUCTION_DATA_PATH}")
+    logger.info(f"  Reports directory: {REPORTS_DIR}")
     
     # Generate drift report
-    print("\nGenerating drift report...")
+    logger.info("\nGenerating drift report...")
     drift_report = generate_drift_report(
         baseline_path=FEATURES_PATH,
         production_path=PRODUCTION_DATA_PATH,
         output_dir=REPORTS_DIR,
         target_column="Churn",
     )
-    print(f"  Status: {drift_report.get('status')}")
+    logger.info(f"  Status: {drift_report.get('status')}")
     if drift_report.get('status') != 'completed':
-        print(f"  Reason: {drift_report.get('reason')}")
+        logger.info(f"  Reason: {drift_report.get('reason')}")
     
     # Generate data quality report for production data
-    print("\nGenerating data quality report...")
+    logger.info("\nGenerating data quality report...")
     quality_report = generate_data_quality_report(
         data_path=PRODUCTION_DATA_PATH,
         output_dir=REPORTS_DIR,
         report_name="production_data_quality",
     )
-    print(f"  Status: {quality_report.get('status')}")
+    logger.info(f"  Status: {quality_report.get('status')}")
     if quality_report.get('status') != 'completed':
-        print(f"  Reason: {quality_report.get('reason')}")
+        logger.info(f"  Reason: {quality_report.get('reason')}")
     
     # Generate summary report
-    print("\nGenerating summary report...")
+    logger.info("\nGenerating summary report...")
     summary = generate_summary_report(
         drift_report=drift_report,
         quality_report=quality_report,
@@ -123,20 +125,20 @@ def generate_monitoring_reports(**context):
     context['ti'].xcom_push(key='quality_report', value=quality_report)
     context['ti'].xcom_push(key='summary_report', value=summary)
     
-    print("\n" + "="*60)
-    print("Report Generation Summary:")
-    print("="*60)
-    print(f"Drift Report: {drift_report.get('status')}")
+    logger.info("\n" + "="*60)
+    logger.info("Report Generation Summary:")
+    logger.info("="*60)
+    logger.info(f"Drift Report: {drift_report.get('status')}")
     if drift_report.get('status') == 'completed':
-        print(f"  HTML: {drift_report.get('html_report')}")
-        print(f"  Drift Detected: {drift_report.get('drift_detected', 'N/A')}")
-    print(f"\nQuality Report: {quality_report.get('status')}")
+        logger.info(f"  HTML: {drift_report.get('html_report')}")
+        logger.info(f"  Drift Detected: {drift_report.get('drift_detected', 'N/A')}")
+    logger.info(f"\nQuality Report: {quality_report.get('status')}")
     if quality_report.get('status') == 'completed':
-        print(f"  HTML: {quality_report.get('html_report')}")
-    print(f"\nAlerts: {len(summary.get('alerts', []))}")
+        logger.info(f"  HTML: {quality_report.get('html_report')}")
+    logger.info(f"\nAlerts: {len(summary.get('alerts', []))}")
     for alert in summary.get('alerts', []):
-        print(f"  [{alert['severity'].upper()}] {alert['message']}")
-    print("="*60)
+        logger.info(f"  [{alert['severity'].upper()}] {alert['message']}")
+    logger.info("="*60)
     
     return summary
 

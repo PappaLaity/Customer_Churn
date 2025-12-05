@@ -31,7 +31,11 @@ services:
       dockerfile: Dockerfile.api
     container_name: churn_api
     environment:
-      DATABASE_URL: ${DATABASE_URL}
+      #DATABASE_URL: ${DATABASE_URL}
+      DB_HOST: db  
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: churn_db
       MLFLOW_TRACKING_URI: http://mlflow:5000
       MODEL_REGISTRY_NAME: CustomerChurnModel
       MODEL_STAGE: Production
@@ -47,6 +51,10 @@ services:
       - ./.gitignore:/app/.gitignore
       - ./remote:/app/remote
       - ./mlflow_artifacts:/mlflow/artifacts
+      - ./tests:/app/tests
+      - ./src:/app/src
+      - ./migrations:/app/migrations
+
     ports:
       - "8000:8000"
     command: >
@@ -92,6 +100,7 @@ services:
       - ./.gitignore:/opt/airflow/.gitignore
       - ./remote:/opt/airflow/remote
       - ./mlflow_artifacts:/mlflow/artifacts
+      - ./src/monitoring/reports_drift:/opt/airflow/drifts/monitoring/reports
     depends_on:
       - mlflow
     ports:
@@ -106,6 +115,9 @@ services:
     container_name: mlflow
     depends_on:
       - mlflow_db
+    environment:
+      MLFLOW_ARTIFACT_ROOT: /mlflow/artifacts
+      MLFLOW_TRACKING_URI: http://mlflow:5000
     volumes:
       - ./mlflow_artifacts:/mlflow/artifacts
     ports:
@@ -146,6 +158,16 @@ services:
     restart: unless-stopped
     networks:
       - churn_network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "80:80"  
+    volumes:
+      - ./frontend/dist:/usr/share/nginx/html
+     
  
 volumes:
   db_data:

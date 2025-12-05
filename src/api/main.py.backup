@@ -1,0 +1,98 @@
+"""
+Customer Churn Prediction API
+FastAPI application - Refactored version
+"""
+import asyncio
+
+import mlflow
+from fastapi import FastAPI
+from fastapi.concurrency import asynccontextmanager
+from fastapi.middleware.cors import CORSMiddleware
+from prometheus_fastapi_instrumentator import Instrumentator
+
+from src.api.core.config import settings
+from src.api.core.database import init_db
+from src.api.core.logger import api_logger as logger
+from src.api.routes import auth, customers, health, models, monitoring, predict, users
+from src.api.services.ml_service import load_ab_models
+
+# Configuration MLflow
+mlflow.set_tracking_uri(settings.MLFLOW_TRACKING_URI)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Gestion du cycle de vie de l'application
+    - Init database
+    - Chargement des modèles ML
+    - Rechargement périodique
+    """
+    # Startup
+    if settings.ENV != "test":
+        logger.info("🚀 Starting Customer Churn API...")
+
+        # Init DB
+        init_db()
+        logger.info("✅ Database initialized")
+
+        # Charger les modèles A/B
+        load_ab_models(settings.MODEL_NAME)
+        logger.info("✅ ML models loaded")
+
+        # Lancer le rechargement périodique
+        task = asyncio.create_task(
+            _model_reloader(interval=settings.MODEL_RELOAD_INTERVAL)
+        )
+    else:
+        task = asyncio.create_task(asyncio.sleep(0))
+
+    try:
+        yield
+    finally:
+        # Shutdown
+        task.cancel()
+        logger.info("👋 Shutting down...")
+
+
+# Création de l'application
+app = FastAPI(
+    title="Customer Churn Prediction API",
+    description="API for customer churn prediction with MLflow and monitoring",
+    version="2.0.0",
+    lifespan=lifespan,
+)
+
+# Prometheus metrics
+Instrumentator().instrument(app).expose(app)
+
+# CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Inclusion des routes
+app.include_router(health.router)
+app.include_router(models.router)
+app.include_router(predict.router)
+app.include_router(monitoring.router)
+app.include_router(customers.router)
+app.include_router(auth.router)
+app.include_router(users.router)
+
+
+# Rechargement périodique des modèles
+async def _model_reloader(interval: int = 300):
+    """Recharge les modèles A/B périodiquement"""
+    await asyncio.sleep(5)  # Attendre le démarrage complet
+    while True:
+        try:
+            load_ab_models(settings.MODEL_NAME)
+            logger.info(f"♻️  Models reloaded (interval: {interval}s)")
+        except Exception as e:
+            logger.error(f"❌ Model reload failed: {e}")
+        await asyncio.sleep(interval)
