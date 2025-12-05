@@ -1,5 +1,7 @@
 
 import os
+import pickle
+import tempfile
 from dotenv import load_dotenv
 import numpy as np
 import mlflow
@@ -111,14 +113,78 @@ def train_and_log_models(cv_folds=5):
             if os.path.exists("scaler.pkl"):
                 mlflow.log_artifact("scaler.pkl")
             
-            # --- Log model ---
-
+            # --- Log model to run artifacts (fix for artifact path issue) ---
+            # Save model files directly to a temp directory and log as artifact
+            with tempfile.TemporaryDirectory() as tmpdir:
+                model_dir = os.path.join(tmpdir, "model")
+                os.makedirs(model_dir, exist_ok=True)
+                
+                # Save the sklearn model as pickle
+                model_pkl_path = os.path.join(model_dir, "model.pkl")
+                with open(model_pkl_path, "wb") as f:
+                    pickle.dump(model, f)
+                
+                # Create MLmodel file for sklearn
+                mlmodel_content = f"""artifact_path: model
+flavors:
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.pkl
+    python_version: 3.11.0
+  sklearn:
+    code: null
+    pickled_model: model.pkl
+    serialization_format: pickle
+    sklearn_version: 1.3.0
+mlflow_version: 2.9.0
+model_uuid: {run.info.run_id}
+"""
+                with open(os.path.join(model_dir, "MLmodel"), "w") as f:
+                    f.write(mlmodel_content)
+                
+                # Create minimal conda.yaml
+                conda_content = """channels:
+- conda-forge
+dependencies:
+- python=3.11
+- pip:
+  - mlflow
+  - scikit-learn
+name: mlflow-env
+"""
+                with open(os.path.join(model_dir, "conda.yaml"), "w") as f:
+                    f.write(conda_content)
+                
+                # Create requirements.txt
+                with open(os.path.join(model_dir, "requirements.txt"), "w") as f:
+                    f.write("mlflow\nscikit-learn\n")
+                
+                # Create python_env.yaml
+                python_env_content = """python: 3.11.0
+build_dependencies:
+- pip
+dependencies:
+- -r requirements.txt
+"""
+                with open(os.path.join(model_dir, "python_env.yaml"), "w") as f:
+                    f.write(python_env_content)
+                
+                # Log the entire model directory as artifact
+                mlflow.log_artifacts(model_dir, artifact_path="model")
+            
+            # Also log using sklearn.log_model for proper signature (but don't register yet)
+            # Convert to float64 to avoid MLflow warning about integer columns with missing values
+            X_train_float = X_train.astype('float64') if hasattr(X_train, 'astype') else X_train
+            input_example_float = input_example.astype('float64') if hasattr(input_example, 'astype') else input_example
+            
             model_info = mlflow.sklearn.log_model(
                 sk_model=model,
-                artifact_path="model",
-                registered_model_name=registry_name,
-                input_example=input_example,
-                signature=mlflow.models.infer_signature(X_train, y_train),
+                artifact_path="sklearn_model",
+                input_example=input_example_float,
+                signature=mlflow.models.infer_signature(X_train_float, y_train),
             )
 
             # --- Record result for comparison ---

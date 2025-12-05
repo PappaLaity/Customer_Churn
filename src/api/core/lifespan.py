@@ -38,13 +38,19 @@ logger = logging.getLogger(__name__)
 async def load_models(app: FastAPI, model_name: str = MODEL_NAME) -> None:
     """Load Production and Staging models from MLflow registry.
     
+    Uses asyncio.to_thread() for all blocking MLflow operations to prevent
+    blocking the FastAPI event loop during model loading.
+    
     Args:
         app: FastAPI application instance
         model_name: Name of the model in MLflow registry
     """
     try:
-        models = mlflow.search_model_versions(
-            filter_string=f"name='{model_name}'", max_results=1000
+        # Run blocking MLflow search in thread pool
+        models = await asyncio.to_thread(
+            mlflow.search_model_versions,
+            filter_string=f"name='{model_name}'", 
+            max_results=1000
         )
         
         for m in models:
@@ -66,16 +72,18 @@ async def load_models(app: FastAPI, model_name: str = MODEL_NAME) -> None:
             app.state.app_state.stag_source
         )
         
-        # Try to load sklearn models for fast inference
+        # Try to load sklearn models for fast inference (in thread pool)
         try:
             if app.state.app_state.prod_source:
-                app.state.app_state.model_A = mlflow.sklearn.load_model(
+                app.state.app_state.model_A = await asyncio.to_thread(
+                    mlflow.sklearn.load_model,
                     app.state.app_state.prod_source
                 )
                 logger.info("Loaded Production model: %s", app.state.app_state.prod_source)
             
             if app.state.app_state.stag_source:
-                app.state.app_state.model_B = mlflow.sklearn.load_model(
+                app.state.app_state.model_B = await asyncio.to_thread(
+                    mlflow.sklearn.load_model,
                     app.state.app_state.stag_source
                 )
                 logger.info("Loaded Staging model: %s", app.state.app_state.stag_source)
@@ -85,16 +93,20 @@ async def load_models(app: FastAPI, model_name: str = MODEL_NAME) -> None:
             app.state.app_state.model_B = None
             logger.error("Error loading sklearn model(s); continuing without preload: %s", e, exc_info=True)
         
-        # Preload PyFunc fallback model to avoid first-request latency
+        # Preload PyFunc fallback model to avoid first-request latency (in thread pool)
         try:
             uri = f"models:/{model_name}/{MODEL_STAGE}"
-            app.state.app_state.pyfunc_model = mlflow.pyfunc.load_model(uri)
+            app.state.app_state.pyfunc_model = await asyncio.to_thread(
+                mlflow.pyfunc.load_model, uri
+            )
             logger.info("Preloaded PyFunc model from: %s", uri)
             
-            # Get version number
+            # Get version number (in thread pool)
             try:
                 client = MlflowClient()
-                versions = client.get_latest_versions(model_name, stages=[MODEL_STAGE])
+                versions = await asyncio.to_thread(
+                    client.get_latest_versions, model_name, stages=[MODEL_STAGE]
+                )
                 if versions:
                     app.state.app_state.pyfunc_model_version = versions[0].version
                     logger.info("PyFunc model version: %s", app.state.app_state.pyfunc_model_version)

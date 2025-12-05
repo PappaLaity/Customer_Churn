@@ -3,11 +3,13 @@ import { createRouter, createWebHistory } from 'vue-router'
 // Lazy load all components for optimal code splitting
 const HomeView = () => import(/* webpackChunkName: "home" */ '../views/HomeView.vue')
 const LoginView = () => import(/* webpackChunkName: "auth" */ '../views/LoginView.vue')
+const RegisterView = () => import(/* webpackChunkName: "auth" */ '../views/RegisterView.vue')
 const SurveyForm = () => import(/* webpackChunkName: "survey" */ '../views/SurveyForm.vue')
 const AboutView = () => import(/* webpackChunkName: "about" */ '../views/AboutView.vue')
 const DashboardView = () => import(/* webpackChunkName: "dashboard" */ '../views/DashboardView.vue')
 const CustomerInfos = () => import(/* webpackChunkName: "dashboard" */ '../views/CustomerInfos.vue')
 const UserView = () => import(/* webpackChunkName: "users" */ '../views/users/UserView.vue')
+const MakePredictions = () => import(/* webpackChunkName: "predictions" */ '../views/MakePredictions.vue')
 
 const routes = [
   {
@@ -19,6 +21,11 @@ const routes = [
     path: '/login',
     name: 'login',
     component: LoginView
+  },
+  {
+    path: '/register',
+    name: 'register',
+    component: RegisterView
   },
   {
     path: '/survey',
@@ -47,6 +54,12 @@ const routes = [
     path: '/users',
     name: 'users',
     component: UserView
+  },
+  {
+    path: '/predictions',
+    name: 'predictions',
+    component: MakePredictions,
+    meta: { prefetch: true }
   }
 ]
 
@@ -57,7 +70,7 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   // Admin routes (require API key authentication)
-  const adminRoutes = ['dashboard', 'about', 'customers-dashboard', 'users']
+  const adminRoutes = ['dashboard', 'about', 'customers-dashboard', 'users', 'predictions']
 
   const token = localStorage.getItem('api-key')
 

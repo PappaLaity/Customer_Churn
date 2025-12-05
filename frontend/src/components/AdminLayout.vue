@@ -80,6 +80,22 @@ function logout () {
             <!-- Navigation -->
             <nav class="flex-1 px-3 py-6 space-y-2 overflow-y-auto">
                 <p class="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Menu</p>
+
+                <router-link to="/" :class="[
+                    'flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group',
+                    $route.path === '/'
+                        ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-500/50'
+                        : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
+                ]">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
+                        </path>
+                    </svg>
+                    <span class="font-medium">Home</span>
+                    <span v-if="$route.path === '/'" class="ml-auto w-2 h-2 bg-white rounded-full"></span>
+                </router-link>
+
                 <router-link to="/dashboard" :class="[
                     'flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group',
                     $route.path === '/dashboard'
@@ -135,6 +151,21 @@ function logout () {
                     </svg>
                     <span class="font-medium">Users</span>
                     <span v-if="$route.path === '/users'"
+                        class="ml-auto w-2 h-2 bg-white rounded-full"></span>
+                </router-link>
+
+                <router-link to="/predictions" :class="[
+                    'flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group',
+                    $route.path === '/predictions'
+                        ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg shadow-purple-500/50'
+                        : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
+                ]">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <span class="font-medium">Make Predictions</span>
+                    <span v-if="$route.path === '/predictions'"
                         class="ml-auto w-2 h-2 bg-white rounded-full"></span>
                 </router-link>
             </nav>

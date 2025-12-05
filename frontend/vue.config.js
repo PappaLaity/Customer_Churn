@@ -24,9 +24,9 @@ module.exports = defineConfig({
         target: 'http://customer-churn.francecentral.cloudapp.azure.com:8000',
         changeOrigin: true,
         secure: false,
-        pathRewrite: { '^/api': '' }, // supprime /api avant d’envoyer au backend
-      },
-    },
+        pathRewrite: { '^/api': '' } // supprime /api avant d’envoyer au backend
+      }
+    }
   },
 
   // Webpack configuration

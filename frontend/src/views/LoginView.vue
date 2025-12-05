@@ -92,6 +92,15 @@ export default {
 
     <!-- Formulaire -->
     <div class="relative w-full max-w-md">
+      <!-- Bouton Retour à l'accueil -->
+      <router-link to="/"
+        class="flex items-center gap-2 text-slate-300 hover:text-white mb-4 group transition-colors">
+        <svg class="w-5 h-5 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+        </svg>
+        <span>Retour à l'accueil</span>
+      </router-link>
+
       <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl p-8 md:p-10">
 
         <!-- Header -->

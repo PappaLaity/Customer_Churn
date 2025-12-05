@@ -30,3 +30,4 @@ pytest-mock
 slowapi
 locust
 
+python-multipart

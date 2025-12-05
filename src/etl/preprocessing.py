@@ -310,10 +310,10 @@ def preprocess_data():
     if "Churn" in df.columns and df["Churn"].dtype == object:
         df["Churn"] = df["Churn"].replace({"Yes": 1, "No": 0}).astype(int)
 
-    # # Create output directories
-    # os.makedirs("/opt/airflow/data/preprocessed", exist_ok=True)
-    # os.makedirs("/opt/airflow/data/features", exist_ok=True)
-    # os.makedirs("/opt/airflow/models", exist_ok=True)
+    # Create output directories if they don't exist
+    os.makedirs("/opt/airflow/data/preprocessed", exist_ok=True)
+    os.makedirs("/opt/airflow/data/features", exist_ok=True)
+    os.makedirs("/opt/airflow/models", exist_ok=True)
 
     # Save full preprocessed dataframe for inspection
     df.to_csv("/opt/airflow/data/preprocessed/preprocessed.csv", index=False)
@@ -367,14 +367,6 @@ def preprocess_data():
     # Apply SMOTE to the training data
     smote = SMOTE(random_state=42)
     X_train_smoted, y_train_smoted = smote.fit_resample(X_train_scaled, y_train)
-
-    # # Save the SMOTE data for reference
-    # pd.DataFrame(X_train_smoted, columns=X.columns).to_csv("/opt/airflow/data/preprocessed/X_train_smoted.csv", index=False)
-    # pd.DataFrame(y_train_smoted, columns=["Churn"]).to_csv("/opt/airflow/data/preprocessed/y_train_smoted.csv", index=False)
-    # # Rename for clarity
-    # y_train_smoted = y_train_smoted.reset_index(drop=True)
-    # X_train_smoted = pd.DataFrame(X_train_smoted, columns=X.columns).reset_index(drop=True)
-    
 
     # Save scaler and encoders
     with open("/opt/airflow/models/scaler.pkl", "wb") as f:

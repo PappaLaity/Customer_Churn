@@ -148,10 +148,52 @@
             <textarea v-model="formData.message" placeholder="Partagez votre avis..." rows="3"
               class="w-full bg-white/5 border border-white/20 focus:border-blue-500 focus:bg-white/10 focus:outline-none text-white placeholder-slate-400 rounded-lg px-3 py-2 text-sm transition-all duration-200 resize-none"></textarea>
           </div>
+
+          <!-- Résultat de prédiction permanent -->
+          <transition name="slide">
+            <div v-if="predictionResult"
+              :class="[
+                'p-4 rounded-xl border-2 shadow-lg',
+                predictionResult.churn_prediction === 1
+                  ? 'bg-red-500/20 border-red-500/50'
+                  : 'bg-emerald-500/20 border-emerald-500/50'
+              ]">
+              <div class="flex items-center gap-3">
+                <!-- Icône -->
+                <div :class="[
+                  'w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0',
+                  predictionResult.churn_prediction === 1 ? 'bg-red-500/30' : 'bg-emerald-500/30'
+                ]">
+                  <svg v-if="predictionResult.churn_prediction === 1" class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                  </svg>
+                  <svg v-else class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                </div>
+                <!-- Texte -->
+                <div class="flex-1">
+                  <p :class="[
+                    'text-lg font-bold',
+                    predictionResult.churn_prediction === 1 ? 'text-red-300' : 'text-emerald-300'
+                  ]">
+                    {{ predictionResult.churn_prediction === 1 ? '⚠️ Risque de désabonnement détecté' : '✅ Client fidèle' }}
+                  </p>
+                  <p class="text-slate-300 text-sm mt-1">
+                    Probabilité: <span class="font-semibold">{{ (predictionResult.churn_probability * 100).toFixed(1) }}%</span>
+                  </p>
+                  <p v-if="predictionResult.model_version" class="text-slate-400 text-xs mt-1">
+                    Modèle: v{{ predictionResult.model_version }}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </transition>
         </form>
 
-        <!-- Bouton fixe en bas -->
-        <div class="mt-4 pt-4 border-t border-white/20 flex-shrink-0">
+        <!-- Boutons fixe en bas -->
+        <div class="mt-4 pt-4 border-t border-white/20 flex-shrink-0 space-y-3">
+          <!-- Bouton Envoyer -->
           <button @click="send" :disabled="loading"
             class="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:from-slate-600 disabled:to-slate-600 disabled:cursor-not-allowed text-white font-semibold py-2 rounded-lg transition-all duration-200 shadow-lg shadow-blue-500/50 hover:shadow-blue-500/75 flex items-center justify-center gap-2 text-sm">
             <svg v-if="loading" class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -160,6 +202,15 @@
               </path>
             </svg>
             <span>{{ loading ? 'Envoi...' : 'Envoyer' }}</span>
+          </button>
+
+          <!-- Bouton Retour -->
+          <button @click="goBack"
+            class="w-full bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/30 text-slate-300 hover:text-white font-medium py-2 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 text-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            <span>Retour à l'accueil</span>
           </button>
         </div>
       </div>
@@ -188,10 +239,14 @@ export default {
       },
       loading: false,
       errorMessage: '',
-      successMessage: ''
+      successMessage: '',
+      predictionResult: null
     }
   },
   methods: {
+    goBack () {
+      this.$router.push('/')
+    },
     mapFormToAPI () {
       return {
         tenure: this.formData.tenure,
@@ -235,17 +290,24 @@ export default {
 
         if (!response.ok) {
           this.errorMessage = data.detail || data.message || 'Erreur lors de l\'envoi du sondage'
+          this.predictionResult = null
           return
         }
 
-        this.successMessage = data.message || 'Survey succesfully Send!'
+        this.successMessage = data.message || 'Survey successfully sent!'
 
-        setTimeout(() => {
-          this.resetForm()
-        }, 2000)
+        // Store prediction result permanently
+        this.predictionResult = {
+          churn_prediction: data.churn_prediction,
+          churn_probability: data.churn_probability,
+          model_version: data.model_version || null
+        }
+
+        // Don't reset form to keep prediction visible
       } catch (err) {
         console.error(err)
         this.errorMessage = 'Impossible de contacter le serveur'
+        this.predictionResult = null
       } finally {
         this.loading = false
       }

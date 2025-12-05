@@ -2,25 +2,30 @@
 
 This router handles:
 - Batch predictions via /predict  
+- CSV file predictions via /predict/csv
 - Single predictions with data logging via /survey/submit
 - A/B testing prediction logic
 """
 
+import io
 import os
 import random
 import time
+import uuid
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import mlflow
 import mlflow.pyfunc
 import numpy as np
 import pandas as pd
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Request, UploadFile
 from mlflow.tracking import MlflowClient
 from slowapi import Limiter
 from slowapi.util import get_remote_address
+from sqlmodel import Session, select
 
+from src.api.core.database import get_session
 from src.api.core.metrics import (
     FEATURE_DRIFT_STAT,
     FEATURE_MEAN,
@@ -32,6 +37,7 @@ from src.api.core.metrics import (
 )
 from src.api.core.security import verify_api_key
 from src.api.entities.customerInput import InputCustomer
+from src.api.entities.predictions import BatchPrediction, BatchPredictionRead, BatchSummary
 from src.api.entities.schemas import PredictPayload
 from src.api.routes.data import dvc_push_background
 from src.experiments.ab import assign_bucket, log_exposure
@@ -122,6 +128,27 @@ async def predict(payload: PredictPayload, request: Request):
     try:
         preds = app_state.pyfunc_model.predict(df)
         preds_list = preds.tolist() if hasattr(preds, "tolist") else list(preds)
+        
+        # Get probabilities if model supports it
+        probabilities = None
+        if hasattr(app_state.pyfunc_model, '_model_impl'):
+            underlying_model = app_state.pyfunc_model._model_impl
+            if hasattr(underlying_model, 'predict_proba'):
+                try:
+                    proba = underlying_model.predict_proba(df)
+                    # Get probability of class 1 (churn)
+                    probabilities = [float(p[1]) for p in proba]
+                except Exception:
+                    pass
+        
+        # Try direct predict_proba on pyfunc model
+        if probabilities is None and hasattr(app_state.pyfunc_model, 'predict_proba'):
+            try:
+                proba = app_state.pyfunc_model.predict_proba(df)
+                probabilities = [float(p[1]) for p in proba]
+            except Exception:
+                pass
+        
         duration = time.time() - start
         
         PREDICTION_LATENCY.labels(model_version=model_version).observe(duration)
@@ -167,7 +194,16 @@ async def predict(payload: PredictPayload, request: Request):
         except Exception:
             pass  # Don't fail predictions if accuracy tracking fails
 
-    return {"predictions": preds_list, "model_version": model_version}
+    response = {
+        "predictions": preds_list,
+        "model_version": model_version
+    }
+    
+    # Add probabilities if available
+    if probabilities is not None:
+        response["probabilities"] = probabilities
+    
+    return response
 
 
 @router.post("/survey/submit")
@@ -223,20 +259,16 @@ async def submit_survey(
     background_tasks.add_task(dvc_push_background)
     
     # Return prediction with interpretation
-    # NOTE: This is a public endpoint - do not expose:
-    # - Model version numbers
-    # - Internal system paths
-    # - Latency/timing (timing attacks)
-    # - A/B test bucket assignment
     churn_prediction = result["prediction"]
+    churn_probability = result.get("probability", 0.5)
+    
     return {
         "success": "Thank you for your submission",
-        "prediction": churn_prediction,
+        "churn_prediction": churn_prediction,
+        "churn_probability": churn_probability,
         "will_churn": bool(churn_prediction),
-        "message": "Customer likely to churn" if churn_prediction == 1 else "Customer likely to stay"
-        # REMOVED for security:
-        # - "model_used": reveals internal model versions
-        # - "latency": enables timing attacks
+        "message": "Customer likely to churn" if churn_prediction == 1 else "Customer likely to stay",
+        "model_version": result.get("model_version")
     }
 
 
@@ -268,14 +300,23 @@ async def predict_single(data: InputCustomer, request: Request) -> Dict[str, Any
 
     # Predict based on bucket
     start = time.time()
+    probability = 0.5  # Default probability
     
     if bucket == "A" and app_state.model_A is not None:
         preds = app_state.model_A.predict(df)
+        # Get probability if model supports it
+        if hasattr(app_state.model_A, 'predict_proba'):
+            proba = app_state.model_A.predict_proba(df)
+            probability = float(proba[0][1])  # Probability of class 1 (churn)
         model_used = f"Production(v{app_state.prod_version})"
         model_version = str(app_state.prod_version)
         
     elif bucket == "B" and app_state.model_B is not None:
         preds = app_state.model_B.predict(df)
+        # Get probability if model supports it
+        if hasattr(app_state.model_B, 'predict_proba'):
+            proba = app_state.model_B.predict_proba(df)
+            probability = float(proba[0][1])  # Probability of class 1 (churn)
         model_used = f"Staging(v{app_state.stag_version})"
         model_version = str(app_state.stag_version)
         
@@ -283,6 +324,8 @@ async def predict_single(data: InputCustomer, request: Request) -> Dict[str, Any
         # Fallback to PyFunc model
         _ensure_model_loaded(request)
         preds = app_state.pyfunc_model.predict(df)
+        # PyFunc models may not have predict_proba, use prediction as probability
+        probability = float(preds[0]) if preds[0] in [0, 1] else 0.5
         model_used = f"Registry({MODEL_STAGE})"
         model_version = str(app_state.pyfunc_model_version)
         
@@ -303,6 +346,267 @@ async def predict_single(data: InputCustomer, request: Request) -> Dict[str, Any
 
     return {
         "model": model_used, 
-        "prediction": int(preds[0]), 
+        "prediction": int(preds[0]),
+        "probability": probability,
+        "model_version": model_version,
         "latency": latency
     }
+
+
+# ============================================================================
+# CSV Batch Prediction Endpoints
+# ============================================================================
+
+REQUIRED_COLUMNS = [
+    "tenure", "InternetService_Fiber_optic", "Contract_Two_year",
+    "PaymentMethod_Electronic_check", "No_internet_service",
+    "TotalCharges", "MonthlyCharges", "PaperlessBilling"
+]
+
+
+@router.post("/predict/csv", dependencies=[Depends(verify_api_key)])
+async def predict_csv(
+    file: UploadFile = File(...),
+    request: Request = None,
+    session: Session = Depends(get_session)
+):
+    """Upload CSV file and get batch predictions.
+    
+    Protected endpoint requiring API key authentication.
+    
+    The CSV must have the following columns:
+    - tenure (float, 0-120)
+    - InternetService_Fiber_optic (bool/int)
+    - Contract_Two_year (bool/int)
+    - PaymentMethod_Electronic_check (bool/int)
+    - No_internet_service (int, 0/1)
+    - TotalCharges (float)
+    - MonthlyCharges (float)
+    - PaperlessBilling (int, 0/1)
+    
+    Args:
+        file: CSV file upload
+        request: FastAPI request
+        session: Database session
+        
+    Returns:
+        Batch predictions with batch_id for retrieval
+    """
+    # Validate file type
+    if not file.filename.endswith('.csv'):
+        raise HTTPException(status_code=400, detail="File must be a CSV")
+    
+    # Read CSV content
+    try:
+        contents = await file.read()
+        df = pd.read_csv(io.BytesIO(contents))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error reading CSV: {e}")
+    
+    # Validate columns
+    missing_cols = set(REQUIRED_COLUMNS) - set(df.columns)
+    if missing_cols:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Missing required columns: {list(missing_cols)}"
+        )
+    
+    # Keep only required columns
+    df = df[REQUIRED_COLUMNS]
+    
+    # Validate data types and ranges
+    try:
+        df["tenure"] = df["tenure"].astype(float)
+        df["TotalCharges"] = pd.to_numeric(df["TotalCharges"], errors='coerce')
+        df["MonthlyCharges"] = df["MonthlyCharges"].astype(float)
+        df["No_internet_service"] = df["No_internet_service"].astype(int)
+        df["PaperlessBilling"] = df["PaperlessBilling"].astype(int)
+        
+        # Convert string booleans to actual booleans
+        for col in ["InternetService_Fiber_optic", "Contract_Two_year", "PaymentMethod_Electronic_check"]:
+            if df[col].dtype == object:
+                df[col] = df[col].map({'true': True, 'false': False, 'True': True, 'False': False, '1': True, '0': False})
+            df[col] = df[col].astype(bool)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Data validation error: {e}")
+    
+    # Check for NaN values
+    if df.isnull().any().any():
+        null_cols = df.columns[df.isnull().any()].tolist()
+        raise HTTPException(
+            status_code=400,
+            detail=f"CSV contains null values in columns: {null_cols}"
+        )
+    
+    # Ensure model is loaded
+    _ensure_model_loaded(request)
+    app_state = request.app.state.app_state
+    
+    # Generate batch ID
+    batch_id = str(uuid.uuid4())
+    
+    # Run predictions
+    start = time.time()
+    try:
+        preds = app_state.pyfunc_model.predict(df)
+        preds_list = preds.tolist() if hasattr(preds, "tolist") else list(preds)
+        
+        # Get probabilities
+        probabilities = [0.5] * len(preds_list)  # Default
+        if hasattr(app_state.pyfunc_model, '_model_impl'):
+            underlying_model = app_state.pyfunc_model._model_impl
+            if hasattr(underlying_model, 'predict_proba'):
+                try:
+                    proba = underlying_model.predict_proba(df)
+                    probabilities = [float(p[1]) for p in proba]
+                except Exception:
+                    pass
+        
+        model_version = str(app_state.pyfunc_model_version)
+        duration = time.time() - start
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Prediction failed: {e}")
+    
+    # Store predictions in database
+    predictions_response = []
+    for idx, (pred, prob) in enumerate(zip(preds_list, probabilities)):
+        input_row = df.iloc[idx].to_dict()
+        
+        # Convert numpy types to Python types for JSON
+        input_row = {k: (bool(v) if isinstance(v, (np.bool_, )) else 
+                        float(v) if isinstance(v, (np.floating,)) else
+                        int(v) if isinstance(v, (np.integer,)) else v)
+                    for k, v in input_row.items()}
+        
+        batch_pred = BatchPrediction(
+            batch_id=batch_id,
+            row_index=idx,
+            input_data=input_row,
+            prediction=int(pred),
+            probability=prob,
+            model_version=model_version
+        )
+        session.add(batch_pred)
+        
+        predictions_response.append({
+            "row_index": idx,
+            "prediction": int(pred),
+            "probability": round(prob, 4),
+            "will_churn": bool(pred)
+        })
+    
+    session.commit()
+    
+    # Calculate summary stats
+    churn_count = sum(1 for p in preds_list if p == 1)
+    avg_probability = sum(probabilities) / len(probabilities) if probabilities else 0
+    
+    return {
+        "batch_id": batch_id,
+        "total_rows": len(preds_list),
+        "churn_count": churn_count,
+        "stay_count": len(preds_list) - churn_count,
+        "avg_probability": round(avg_probability, 4),
+        "model_version": model_version,
+        "latency_seconds": round(duration, 3),
+        "predictions": predictions_response
+    }
+
+
+@router.get("/predict/batch/{batch_id}", dependencies=[Depends(verify_api_key)])
+async def get_batch_predictions(
+    batch_id: str,
+    session: Session = Depends(get_session)
+):
+    """Retrieve predictions for a specific batch.
+    
+    Args:
+        batch_id: UUID of the batch to retrieve
+        session: Database session
+        
+    Returns:
+        List of predictions for the batch
+    """
+    statement = select(BatchPrediction).where(
+        BatchPrediction.batch_id == batch_id
+    ).order_by(BatchPrediction.row_index)
+    
+    results = session.exec(statement).all()
+    
+    if not results:
+        raise HTTPException(status_code=404, detail=f"Batch {batch_id} not found")
+    
+    predictions = []
+    for r in results:
+        predictions.append({
+            "row_index": r.row_index,
+            "input_data": r.input_data,
+            "prediction": r.prediction,
+            "probability": r.probability,
+            "will_churn": bool(r.prediction),
+            "created_at": r.created_at.isoformat()
+        })
+    
+    # Calculate summary
+    churn_count = sum(1 for p in predictions if p["prediction"] == 1)
+    avg_prob = sum(p["probability"] for p in predictions) / len(predictions)
+    
+    return {
+        "batch_id": batch_id,
+        "total_rows": len(predictions),
+        "churn_count": churn_count,
+        "stay_count": len(predictions) - churn_count,
+        "avg_probability": round(avg_prob, 4),
+        "model_version": results[0].model_version,
+        "created_at": results[0].created_at.isoformat(),
+        "predictions": predictions
+    }
+
+
+@router.get("/predict/batches", dependencies=[Depends(verify_api_key)])
+async def list_batches(
+    limit: int = 20,
+    session: Session = Depends(get_session)
+):
+    """List recent batch prediction jobs.
+    
+    Args:
+        limit: Maximum number of batches to return (default 20)
+        session: Database session
+        
+    Returns:
+        List of batch summaries
+    """
+    # Get distinct batch_ids with their stats
+    statement = select(BatchPrediction).order_by(
+        BatchPrediction.created_at.desc()
+    )
+    results = session.exec(statement).all()
+    
+    # Group by batch_id
+    batches = {}
+    for r in results:
+        if r.batch_id not in batches:
+            batches[r.batch_id] = {
+                "batch_id": r.batch_id,
+                "total_rows": 0,
+                "churn_count": 0,
+                "model_version": r.model_version,
+                "created_at": r.created_at.isoformat(),
+                "probabilities": []
+            }
+        batches[r.batch_id]["total_rows"] += 1
+        if r.prediction == 1:
+            batches[r.batch_id]["churn_count"] += 1
+        batches[r.batch_id]["probabilities"].append(r.probability)
+    
+    # Calculate averages and format response
+    batch_list = []
+    for b in list(batches.values())[:limit]:
+        b["stay_count"] = b["total_rows"] - b["churn_count"]
+        b["avg_probability"] = round(sum(b["probabilities"]) / len(b["probabilities"]), 4)
+        del b["probabilities"]
+        batch_list.append(b)
+    
+    return {"batches": batch_list, "count": len(batch_list)}
