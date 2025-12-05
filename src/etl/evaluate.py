@@ -37,7 +37,7 @@ from src.etl.preprocessing import preprocess_data
 # #     logger.info(f" Loading model '{model_name}' version {prod_version.version} (Production)")
 # #     model_uri = f"models:/{model_name}/Production"
 # #     model = mlflow.sklearn.load_model(model_uri)
-# #     return model, prod_version.version
+# #     returnn model, prod_version.version
 
 # def load_production_model(model_name="CustomerChurnModel"):
 #     """Load the latest Production model from the MLflow Model Registry."""
