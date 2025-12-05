@@ -43,7 +43,7 @@
 Configuration centralisée pour l'API Customer Churn
 Gère les variables d'environnement et les constantes
 """
-
+#src/api/core/config.py
 import os
 from typing import List
 

@@ -1,3 +1,4 @@
+#src/api/routes/auth.py
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from sqlmodel import Session, select
@@ -10,29 +11,6 @@ from src.api.entities.users import User, UserRead
 # from src.api.core.jwt import create_access_token
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
-
-# ------------- REGISTER -------------
-# @router.post("/register", response_model=UserRead)
-# def register_user(user_data: UserCreate):
-#     with Session(engine) as session:
-#         existing = session.exec(select(User).where(User.email == user_data.email)).first()
-#         if existing:
-#             raise HTTPException(status_code=400, detail="Email already registered")
-
-#         existing = session.exec(select(User).where(User.phone == user_data.phone)).first()
-#         if existing:
-#             raise HTTPException(status_code=400, detail="Phone number already registered")
-
-#         user_data.password = hash_password(user_data.password)
-#         # user_data.role = "guest" limit actions to this profile
-
-#         user = User(**user_data.model_dump())
-#         session.add(user)
-#         session.commit()
-#         session.refresh(user)
-#         return user
-
-# ------------- LOGIN -------------
 
 
 class LoginInput(BaseModel):

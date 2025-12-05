@@ -1,6 +1,6 @@
 """
 Customer Churn Prediction API
-FastAPI application - Refactored version
+FastAPI application 
 """
 
 import asyncio
@@ -35,11 +35,11 @@ async def lifespan(app: FastAPI):
 
         # Init DB
         init_db()
-        logger.info("✅ Database initialized")
+        logger.info(" Database initialized")
 
         # Charger les modèles A/B
         load_ab_models(settings.MODEL_NAME)
-        logger.info("✅ ML models loaded")
+        logger.info(" ML models loaded")
 
         # Lancer le rechargement périodique
         task = asyncio.create_task(_model_reloader(interval=settings.MODEL_RELOAD_INTERVAL))
@@ -91,7 +91,7 @@ async def _model_reloader(interval: int = 300):
     while True:
         try:
             load_ab_models(settings.MODEL_NAME)
-            logger.info(f"♻️  Models reloaded (interval: {interval}s)")
+            logger.info(f"  Models reloaded (interval: {interval}s)")
         except Exception as e:
-            logger.error(f"❌ Model reload failed: {e}")
+            logger.error(f" Model reload failed: {e}")
         await asyncio.sleep(interval)

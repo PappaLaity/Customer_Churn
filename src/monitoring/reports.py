@@ -300,8 +300,7 @@ def generate_summary_report(
             {
                 "severity": "warning",
                 "type": "drift",
-                "message": "Drift detected: %.1f%% features"
-                % (drift_report.get("drift_share", 0) * 100),
+                "message": f"Data drift detected in {drift_report.get('drift_share', 0)*100:.1f}% of features",
             }
         )
 

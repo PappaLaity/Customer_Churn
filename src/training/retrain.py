@@ -214,10 +214,7 @@ def register_best_model(
     client.update_model_version(
         name=model_registry_name,
         version=version.version,
-        description=(
-            f"Auto-registered {best_run['model_name']} "
-            f"(acc={best_run['test_accuracy']})"
-        ),
+        description=f"Auto-registered {best_run['model_name']} with test accuracy {best_run['test_accuracy']}",
     )
 
     client.transition_model_version_stage(

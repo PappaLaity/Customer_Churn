@@ -81,7 +81,6 @@ services:
       "
     environment:
       - AIRFLOW_HOME=/opt/airflow
-      - _PIP_ADDITIONAL_REQUIREMENTS=evidently==0.4.11 alibi-detect==0.11.4 plotly==5.18.0 kaleido==0.2.1
       - MLFLOW_TRACKING_URI=http://mlflow:5000
       - MLFLOW_URI=http://mlflow:5000
       - PYTHONPATH=/opt/airflow
@@ -116,6 +115,9 @@ services:
     container_name: mlflow
     depends_on:
       - mlflow_db
+    environment:
+      MLFLOW_ARTIFACT_ROOT: /mlflow/artifacts
+      MLFLOW_TRACKING_URI: http://mlflow:5000
     volumes:
       - ./mlflow_artifacts:/mlflow/artifacts
     ports:
@@ -156,6 +158,16 @@ services:
     restart: unless-stopped
     networks:
       - churn_network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "80:80"  
+    volumes:
+      - ./frontend/dist:/usr/share/nginx/html
+     
  
 volumes:
   db_data:
