@@ -45,7 +45,7 @@ EVIDENTLY_REPORT_AGE_SECONDS = Gauge(
 )
 
 
-def _get_latest_summary_report(reports_dir: str = "/app/data/monitoring") -> Optional[Dict[str, Any]]:
+def _get_latest_summary_report(reports_dir: str = "/app/data/monitoring/reports") -> Optional[Dict[str, Any]]:
     """Find and parse the latest summary report.
     
     Args:

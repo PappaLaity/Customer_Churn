@@ -42,6 +42,7 @@ services:
       - db
     volumes:
       - ./data:/app/data
+      - ./drifts:/app/drifts
       - ./.git:/app/.git
       - ./.dvc:/app/.dvc
       - ./.gitignore:/app/.gitignore

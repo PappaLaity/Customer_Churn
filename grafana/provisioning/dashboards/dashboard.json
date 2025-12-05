@@ -6,13 +6,24 @@
   "refresh": "30s",
   "panels": [
     {
+      "type": "row",
+      "title": "📊 Evidently Drift Detection",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "collapsed": false
+    },
+    {
       "type": "stat",
-      "title": "🚨 Drift Status",
+      "title": "🚨 Evidently Drift",
       "gridPos": {
         "h": 4,
         "w": 4,
         "x": 0,
-        "y": 0
+        "y": 1
       },
       "targets": [
         {
@@ -65,7 +76,7 @@
         "h": 4,
         "w": 4,
         "x": 4,
-        "y": 0
+        "y": 1
       },
       "targets": [
         {
@@ -109,7 +120,7 @@
         "h": 4,
         "w": 4,
         "x": 8,
-        "y": 0
+        "y": 1
       },
       "targets": [
         {
@@ -146,7 +157,7 @@
         "h": 4,
         "w": 6,
         "x": 12,
-        "y": 0
+        "y": 1
       },
       "targets": [
         {
@@ -184,7 +195,7 @@
         "h": 4,
         "w": 6,
         "x": 18,
-        "y": 0
+        "y": 1
       },
       "targets": [
         {
@@ -215,13 +226,415 @@
       }
     },
     {
+      "type": "row",
+      "title": "🔬 Alibi Detect - Statistical Tests (KS / Chi²)",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 5
+      },
+      "collapsed": false
+    },
+    {
+      "type": "stat",
+      "title": "🧪 Alibi Drift Status",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 6
+      },
+      "targets": [
+        {
+          "expr": "alibi_drift_detected",
+          "legendFormat": "Drift"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "✅ No Drift",
+                  "color": "green"
+                }
+              }
+            },
+            {
+              "type": "value",
+              "options": {
+                "1": {
+                  "text": "⚠️ KS/Chi² Drift",
+                  "color": "red"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "📊 Numerical Drift",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 6
+      },
+      "targets": [
+        {
+          "expr": "alibi_numerical_drift_detected",
+          "legendFormat": "Numerical"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "✅ OK",
+                  "color": "green"
+                }
+              }
+            },
+            {
+              "type": "value",
+              "options": {
+                "1": {
+                  "text": "⚠️ KS Drift",
+                  "color": "orange"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "📊 Categorical Drift",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 6
+      },
+      "targets": [
+        {
+          "expr": "alibi_categorical_drift_detected",
+          "legendFormat": "Categorical"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "✅ OK",
+                  "color": "green"
+                }
+              }
+            },
+            {
+              "type": "value",
+              "options": {
+                "1": {
+                  "text": "⚠️ Chi² Drift",
+                  "color": "orange"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "🔢 Alibi Drifted Features",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 12,
+        "y": 6
+      },
+      "targets": [
+        {
+          "expr": "alibi_drifted_features_count",
+          "legendFormat": "Count"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 2
+              },
+              {
+                "color": "red",
+                "value": 4
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "gauge",
+      "title": "P-Value Threshold",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 16,
+        "y": 6
+      },
+      "targets": [
+        {
+          "expr": "alibi_p_value_threshold",
+          "legendFormat": "Threshold"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "max": 0.1,
+          "decimals": 2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "📅 Report Age",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 6
+      },
+      "targets": [
+        {
+          "expr": "alibi_report_age_seconds / 3600",
+          "legendFormat": "Hours"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "h",
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 24
+              },
+              {
+                "color": "red",
+                "value": 72
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "bargauge",
+      "title": "📊 Feature P-Values (Alibi KS/Chi²)",
+      "description": "P-values from Kolmogorov-Smirnov test (numerical) and Chi-Square test (categorical). Values below threshold (0.05) indicate drift.",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 10
+      },
+      "targets": [
+        {
+          "expr": "alibi_feature_pvalue",
+          "legendFormat": "{{feature}} ({{dtype}})"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "max": 1,
+          "decimals": 4,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.01
+              },
+              {
+                "color": "orange",
+                "value": 0.05
+              },
+              {
+                "color": "green",
+                "value": 0.1
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true
+      }
+    },
+    {
+      "type": "table",
+      "title": "🔍 Feature Drift Status (Alibi)",
+      "description": "Shows which features have drift detected based on p-value < 0.05",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 10
+      },
+      "targets": [
+        {
+          "expr": "alibi_feature_drift",
+          "legendFormat": "{{feature}}",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "✅ OK",
+                  "color": "green"
+                }
+              }
+            },
+            {
+              "type": "value",
+              "options": {
+                "1": {
+                  "text": "⚠️ DRIFT",
+                  "color": "red"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "feature"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 200
+              }
+            ]
+          }
+        ]
+      },
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {}
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "📈 API Performance",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 18
+      },
+      "collapsed": false
+    },
+    {
       "type": "timeseries",
       "title": "📈 Prediction Latency (p95)",
       "gridPos": {
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 4
+        "y": 19
       },
       "targets": [
         {
@@ -246,7 +659,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 4
+        "y": 19
       },
       "targets": [
         {
@@ -262,7 +675,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 11
+        "y": 26
       },
       "targets": [
         {
@@ -291,70 +704,22 @@
     },
     {
       "type": "timeseries",
-      "title": "📉 Feature Drift (KS D)",
+      "title": "📈 Drift Comparison Over Time",
+      "description": "Compare Evidently and Alibi drift detection over time",
       "gridPos": {
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 11
-      },
-      "targets": [
-        {
-          "expr": "feature_drift_statistic",
-          "legendFormat": "{{feature}}"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 0.1
-              },
-              {
-                "color": "red",
-                "value": 0.2
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "type": "timeseries",
-      "title": "📊 Feature Means",
-      "gridPos": {
-        "h": 6,
-        "w": 12,
-        "x": 0,
-        "y": 18
-      },
-      "targets": [
-        {
-          "expr": "feature_mean",
-          "legendFormat": "{{feature}}"
-        }
-      ]
-    },
-    {
-      "type": "timeseries",
-      "title": "📈 Drift Share Over Time",
-      "gridPos": {
-        "h": 6,
-        "w": 12,
-        "x": 12,
-        "y": 18
+        "y": 26
       },
       "targets": [
         {
           "expr": "evidently_drift_share * 100",
-          "legendFormat": "Drift %"
+          "legendFormat": "Evidently Drift %"
+        },
+        {
+          "expr": "alibi_drift_detected * 100",
+          "legendFormat": "Alibi Drift (0/100)"
         }
       ],
       "fieldConfig": {
@@ -382,16 +747,16 @@
     },
     {
       "type": "text",
-      "title": "📄 Evidently Reports",
+      "title": "📄 Monitoring Reports & API",
       "gridPos": {
         "h": 4,
         "w": 24,
         "x": 0,
-        "y": 24
+        "y": 33
       },
       "options": {
         "mode": "markdown",
-        "content": "### 📊 Access Detailed Evidently Reports\n\n| Report Type | Link |\n|-------------|------|\n| **HTML Reports** | [http://localhost:8888](http://localhost:8888) |\n| **API Status** | [/monitoring/evidently/status](http://localhost:8000/monitoring/evidently/status) |\n\n> **Tip**: HTML reports include interactive visualizations, distribution comparisons, and detailed drift analysis."
+        "content": "### 📊 Access Detailed Reports\n\n| Tool | Report Type | Link |\n|------|-------------|------|\n| **Evidently** | HTML Reports | [http://localhost:8888](http://localhost:8888) |\n| **Evidently** | API Status | [/monitoring/evidently/status](http://localhost:8000/monitoring/evidently/status) |\n| **Alibi** | API Status | [/monitoring/alibi/status](http://localhost:8000/monitoring/alibi/status) |\n\n> **Drift Detection Methods**:\n> - **Evidently**: Uses distribution comparison with statistical tests\n> - **Alibi Detect**: Uses **Kolmogorov-Smirnov** test for numerical features and **Chi-Square** test for categorical features (p-value threshold: 0.05)"
       }
     }
   ],
@@ -401,7 +766,7 @@
         "name": "Drift Alerts",
         "enable": true,
         "datasource": "Prometheus",
-        "expr": "changes(evidently_drift_detected[1m]) > 0",
+        "expr": "changes(evidently_drift_detected[1m]) > 0 or changes(alibi_drift_detected[1m]) > 0",
         "tagKeys": "alertname",
         "titleFormat": "Drift Status Changed"
       }
