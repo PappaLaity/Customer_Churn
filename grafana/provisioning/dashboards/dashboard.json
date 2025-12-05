@@ -152,7 +152,8 @@
     },
     {
       "type": "stat",
-      "title": "Online Accuracy",
+      "title": "🎯 Model Recall",
+      "description": "Recall score from MLflow (Production model)",
       "gridPos": {
         "h": 4,
         "w": 6,
@@ -161,13 +162,14 @@
       },
       "targets": [
         {
-          "expr": "model_accuracy",
-          "legendFormat": "Accuracy"
+          "expr": "model_recall{stage=\"Production\"}",
+          "legendFormat": "Recall"
         }
       ],
       "fieldConfig": {
         "defaults": {
           "unit": "percentunit",
+          "decimals": 2,
           "thresholds": {
             "mode": "absolute",
             "steps": [

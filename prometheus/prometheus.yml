@@ -28,3 +28,9 @@ scrape_configs:
     static_configs:
       - targets: ['fastapi:8000']
     metrics_path: '/metrics/alibi'
+
+  - job_name: 'mlflow'
+    scrape_interval: 300s
+    static_configs:
+      - targets: ['fastapi:8000']
+    metrics_path: '/metrics/mlflow'

@@ -24,6 +24,7 @@ from src.api.routes import (
 )
 from src.monitoring.evidently_exporter import router as evidently_router
 from src.monitoring.alibi_exporter import router as alibi_router
+from src.monitoring.mlflow_exporter import router as mlflow_router
 
 # CORS Configuration
 # For production, add your domain to this list
@@ -118,3 +119,4 @@ app.include_router(ab_testing.router)
 app.include_router(data.router)
 app.include_router(evidently_router)
 app.include_router(alibi_router)
+app.include_router(mlflow_router)
