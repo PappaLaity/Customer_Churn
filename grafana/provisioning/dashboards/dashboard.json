@@ -1,80 +1,410 @@
 {
-    "schemaVersion": 39,
-    "title": "Churn API - Monitoring",
-    "timezone": "browser",
-    "panels": [
-      {
-        "type": "timeseries",
-        "title": "Prediction p95 latency (s)",
-        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
-        "targets": [
-          {
-            "expr": "histogram_quantile(0.95, sum(rate(prediction_latency_seconds_bucket[5m])) by (le))",
-            "legendFormat": "p95"
-          }
-        ]
+  "schemaVersion": 39,
+  "title": "Churn API - Monitoring",
+  "uid": "churn-monitoring",
+  "timezone": "browser",
+  "refresh": "30s",
+  "panels": [
+    {
+      "type": "stat",
+      "title": "🚨 Drift Status",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 0
       },
-      {
-        "type": "timeseries",
-        "title": "Throughput (req/s)",
-        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
-        "targets": [
-          {
-            "expr": "sum(rate(prediction_requests_total[1m]))",
-            "legendFormat": "rps"
+      "targets": [
+        {
+          "expr": "evidently_drift_detected",
+          "legendFormat": "Drift"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "✅ No Drift",
+                  "color": "green"
+                }
+              }
+            },
+            {
+              "type": "value",
+              "options": {
+                "1": {
+                  "text": "⚠️ Drift Detected",
+                  "color": "red"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
           }
-        ]
+        }
+      }
+    },
+    {
+      "type": "gauge",
+      "title": "Drift Share %",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 0
       },
-      {
-        "type": "timeseries",
-        "title": "Error rate (%)",
-        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
-        "targets": [
-          {
-            "expr": "100 * (sum(rate(prediction_errors_total[5m])) / sum(rate(prediction_requests_total[5m])))",
-            "legendFormat": "error%"
+      "targets": [
+        {
+          "expr": "evidently_drift_share * 100",
+          "legendFormat": "Drift %"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 10
+              },
+              {
+                "color": "orange",
+                "value": 25
+              },
+              {
+                "color": "red",
+                "value": 50
+              }
+            ]
           }
-        ]
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Drifted Features",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 0
       },
-      {
-        "type": "timeseries",
-        "title": "Feature drift (KS D)",
-        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
-        "targets": [
-          {
-            "expr": "feature_drift_statistic",
-            "legendFormat": "{{feature}}"
+      "targets": [
+        {
+          "expr": "evidently_drifted_features_count",
+          "legendFormat": "Count"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 3
+              },
+              {
+                "color": "red",
+                "value": 5
+              }
+            ]
           }
-        ]
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Online Accuracy",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 0
       },
-      {
-        "type": "stat",
-        "title": "Online accuracy",
-        "gridPos": {"h": 6, "w": 6, "x": 0, "y": 16},
-        "targets": [
-          { "expr": "model_accuracy" }
-        ]
-      },
-      {
-        "type": "stat",
-        "title": "Current p95 latency (s)",
-        "gridPos": {"h": 6, "w": 6, "x": 6, "y": 16},
-        "targets": [
-          {
-            "expr": "histogram_quantile(0.95, sum(rate(prediction_latency_seconds_bucket[5m])) by (le))"
+      "targets": [
+        {
+          "expr": "model_accuracy",
+          "legendFormat": "Accuracy"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.7
+              },
+              {
+                "color": "green",
+                "value": 0.85
+              }
+            ]
           }
-        ]
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Current p95 Latency",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 0
       },
-      {
-        "type": "timeseries",
-        "title": "Feature means",
-        "gridPos": {"h": 6, "w": 12, "x": 12, "y": 16},
-        "targets": [
-          {
-            "expr": "feature_mean",
-            "legendFormat": "{{feature}}"
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(prediction_latency_seconds_bucket[5m])) by (le))"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.3
+              },
+              {
+                "color": "red",
+                "value": 0.5
+              }
+            ]
           }
-        ]
+        }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "📈 Prediction Latency (p95)",
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 4
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(prediction_latency_seconds_bucket[5m])) by (le))",
+          "legendFormat": "p95"
+        },
+        {
+          "expr": "histogram_quantile(0.50, sum(rate(prediction_latency_seconds_bucket[5m])) by (le))",
+          "legendFormat": "p50"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "📊 Throughput (req/s)",
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 4
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(prediction_requests_total[1m]))",
+          "legendFormat": "rps"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "❌ Error Rate (%)",
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 11
+      },
+      "targets": [
+        {
+          "expr": "100 * (sum(rate(prediction_errors_total[5m])) / sum(rate(prediction_requests_total[5m])))",
+          "legendFormat": "error%"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 5
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "📉 Feature Drift (KS D)",
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 11
+      },
+      "targets": [
+        {
+          "expr": "feature_drift_statistic",
+          "legendFormat": "{{feature}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.1
+              },
+              {
+                "color": "red",
+                "value": 0.2
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "📊 Feature Means",
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 0,
+        "y": 18
+      },
+      "targets": [
+        {
+          "expr": "feature_mean",
+          "legendFormat": "{{feature}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "📈 Drift Share Over Time",
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 12,
+        "y": 18
+      },
+      "targets": [
+        {
+          "expr": "evidently_drift_share * 100",
+          "legendFormat": "Drift %"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 20
+              },
+              {
+                "color": "red",
+                "value": 50
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "title": "📄 Evidently Reports",
+      "gridPos": {
+        "h": 4,
+        "w": 24,
+        "x": 0,
+        "y": 24
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "### 📊 Access Detailed Evidently Reports\n\n| Report Type | Link |\n|-------------|------|\n| **HTML Reports** | [http://localhost:8888](http://localhost:8888) |\n| **API Status** | [/monitoring/evidently/status](http://localhost:8000/monitoring/evidently/status) |\n\n> **Tip**: HTML reports include interactive visualizations, distribution comparisons, and detailed drift analysis."
+      }
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "name": "Drift Alerts",
+        "enable": true,
+        "datasource": "Prometheus",
+        "expr": "changes(evidently_drift_detected[1m]) > 0",
+        "tagKeys": "alertname",
+        "titleFormat": "Drift Status Changed"
       }
     ]
   }
+}

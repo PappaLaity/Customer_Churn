@@ -22,6 +22,7 @@ from src.api.routes import (
     predictions,
     users,
 )
+from src.monitoring.evidently_exporter import router as evidently_router
 
 # CORS Configuration
 # For production, add your domain to this list
@@ -114,3 +115,4 @@ app.include_router(models.router)
 app.include_router(monitoring.router)
 app.include_router(ab_testing.router)
 app.include_router(data.router)
+app.include_router(evidently_router)

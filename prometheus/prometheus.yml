@@ -16,4 +16,9 @@ scrape_configs:
       - targets: ['fastapi:8000']
       # - targets: ['churn_api:8000']
     metrics_path: '/metrics'
-    
+
+  - job_name: 'evidently'
+    scrape_interval: 60s
+    static_configs:
+      - targets: ['fastapi:8000']
+    metrics_path: '/metrics/evidently'

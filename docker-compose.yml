@@ -234,6 +234,12 @@ services:
     environment:
       - GF_SECURITY_ADMIN_USER=${GF_SECURITY_ADMIN_USER}
       - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
+      - GF_SMTP_ENABLED=true
+      - GF_SMTP_HOST=smtp.gmail.com:587
+      - GF_SMTP_USER=${SMTP_USER:-}
+      - GF_SMTP_PASSWORD=${SMTP_PASSWORD:-}
+      - GF_SMTP_FROM_ADDRESS=noreply@churn-monitoring.local
+      - GF_SMTP_FROM_NAME=Churn Monitoring
     depends_on:
       - prometheus
     volumes:
@@ -242,6 +248,23 @@ services:
     restart: unless-stopped
     networks:
       - churn_network
+
+  nginx-reports:
+    image: nginx:alpine
+    container_name: nginx-reports
+    volumes:
+      - ./data/monitoring/reports:/usr/share/nginx/html:ro
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "8888:80"
+    restart: unless-stopped
+    networks:
+      - churn_network
+    healthcheck:
+      test: [ "CMD", "wget", "-q", "--spider", "http://localhost/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 volumes:
   db_data:

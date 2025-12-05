@@ -212,10 +212,47 @@ def send_slack_alert(summary):
 
 ### 2. Dashboard Integration
 
-Options:
-- Serve HTML reports via nginx/Apache
-- Parse JSON into Grafana/Kibana
-- Store metrics in Prometheus/InfluxDB
+L'infrastructure de monitoring complète est configurée avec **Prometheus + Grafana + Nginx** :
+
+#### Services et Ports
+
+| Service | URL | Description |
+|---------|-----|-------------|
+| **Grafana** | http://localhost:3000 | Dashboards et alerting |
+| **Prometheus** | http://localhost:9090 | Métriques et requêtes |
+| **Nginx Reports** | http://localhost:8888 | Rapports HTML Evidently |
+| **API Metrics** | http://localhost:8000/metrics | Métriques FastAPI |
+| **Evidently Status** | http://localhost:8000/monitoring/evidently/status | Status JSON |
+
+#### Démarrer les services
+
+```bash
+# Démarrer tous les services de monitoring
+docker-compose up -d prometheus grafana nginx-reports
+
+# Vérifier les services
+docker-compose ps
+```
+
+#### Alerting Email
+
+Les alertes sont configurées pour être envoyées à : `amahamat@aimsammi.org`
+
+Pour activer l'envoi d'emails, ajoutez dans `.env` :
+```bash
+SMTP_USER=votre-email@gmail.com
+SMTP_PASSWORD=votre-app-password
+```
+
+#### Métriques Evidently disponibles
+
+| Métrique | Description |
+|----------|-------------|
+| `evidently_drift_detected` | 1 si drift détecté, 0 sinon |
+| `evidently_drift_share` | % de features avec drift (0.0-1.0) |
+| `evidently_drifted_features_count` | Nombre de features avec drift |
+| `evidently_report_age_seconds` | Âge du dernier rapport |
+
 
 ### 3. Baseline Updates
 

@@ -5,17 +5,24 @@ from typing import Dict, Any, Optional
 import pandas as pd
 import numpy as np
 
-# Evidently 0.4.x API (Report-based)
+# Evidently API - try 0.7.x first, fallback to 0.4.x
+HAS_EVIDENTLY = False
+Report = None
+DataDriftPreset = None
+
 try:
-    from evidently.report import Report
-    from evidently.metric_preset import DataDriftPreset
-    from evidently.metrics import DatasetMissingValuesMetric
+    # Evidently 0.7.x API
+    from evidently import Report
+    from evidently.presets import DataDriftPreset
     HAS_EVIDENTLY = True
 except ImportError:
-    HAS_EVIDENTLY = False
-    Report = None
-    DataDriftPreset = None
-    DatasetMissingValuesMetric = None
+    try:
+        # Evidently 0.4.x API (fallback)
+        from evidently.report import Report
+        from evidently.metric_preset import DataDriftPreset
+        HAS_EVIDENTLY = True
+    except ImportError:
+        pass
 
 
 def _ensure_dir(path: str):
@@ -131,13 +138,13 @@ def generate_drift_report(
         }
     
     try:
-        # Evidently 0.4.x Report API
+        # Evidently 0.7.x Report API (presets only)
         report = Report(metrics=[
             DataDriftPreset(),
-            DatasetMissingValuesMetric(),
         ])
         
-        report.run(
+        # run() returns a Snapshot in 0.7.x
+        snapshot = report.run(
             reference_data=baseline_df,
             current_data=production_df,
         )
@@ -152,10 +159,10 @@ def generate_drift_report(
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     html_path = os.path.join(output_dir, f"drift_report_{timestamp}.html")
     
-    # Save HTML report - Evidently 0.4.x Report has save_html()
+    # Save HTML report - Evidently 0.7.x Snapshot has save_html()
     try:
         print(f"Saving Evidently drift report to {html_path}")
-        report.save_html(html_path)
+        snapshot.save_html(html_path)
         print(f"✅ Successfully saved HTML drift report")
     except Exception as e:
         return {
@@ -166,8 +173,8 @@ def generate_drift_report(
     
     # Extract key metrics
     try:
-        # 0.4.x Report has as_dict()
-        report_dict = report.as_dict()
+        # 0.7.x Snapshot has dict() method
+        report_dict = snapshot.dict()
         
         # Parse drift results
         drift_detected = False
@@ -175,10 +182,11 @@ def generate_drift_report(
         
         # Look for DataDriftPreset results in the dictionary
         # Structure varies, so we'll do a best-effort search
-        metrics = report_dict.get("metrics", [])
+        metrics = report_dict.get("metric_results", [])
         for metric in metrics:
-            if "drift" in str(metric.get("metric", "")).lower():
-                result = metric.get("result", {})
+            metric_id = metric.get("metric_id", "")
+            if "DataDriftPreset" in str(metric_id) or "dataset_drift" in str(metric):
+                result = metric.get("result", metric)
                 if "dataset_drift" in result:
                     drift_detected = result.get("dataset_drift", False)
                     drift_share = result.get("drift_share", 0.0)
