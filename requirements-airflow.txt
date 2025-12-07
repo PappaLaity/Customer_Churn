@@ -1,20 +1,6 @@
-pytest
-pytest-mock
-python-dotenv
+# Minimal dependencies for DAG validation in CI
+# Full dependencies are installed via Docker (Dockerfile.airflow)
+scipy
 pandas
 numpy
 scikit-learn
-matplotlib
-requests
-mlflow
-seaborn
-xgboost
-joblib
-scipy
-# Required for DAG tests (conftest.py imports FastAPI)
-fastapi
-pydantic[email]
-sqlmodel
-email-validator>=2.0
-# Pin SQLAlchemy for compatibility with Airflow constraints
-sqlalchemy>=1.4,<2.0
