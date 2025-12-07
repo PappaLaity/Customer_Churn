@@ -1,7 +1,13 @@
-# Minimal dependencies for DAG validation in CI
-# Full dependencies are installed via Docker (Dockerfile.airflow)
+# Dependencies for Airflow DAGs and ETL/Training pipelines
 scipy
 pandas
 numpy
 scikit-learn
 mlflow
+dvc
+imbalanced-learn
+seaborn
+matplotlib
+python-dotenv
+joblib
+alibi-detect

@@ -1,26 +1,23 @@
 {
-  "timestamp": "2025-12-05T10:45:00.121094",
+  "timestamp": "2025-12-07T21:00:17.089500",
   "drift_analysis": {
-    "status": "completed",
-    "timestamp": "2025-12-05T10:45:00.098935",
-    "html_report": "/opt/airflow/drifts/monitoring/reports/drift_report_20251205_104458.html",
-    "drift_detected": true,
-    "drift_share": 0.5,
-    "num_columns": 5
+    "status": "skipped",
+    "reason": "Evidently not properly installed",
+    "timestamp": "2025-12-07T21:00:17.086617"
   },
   "data_quality": {
     "status": "completed",
-    "timestamp": "2025-12-05T10:45:00.120724",
+    "timestamp": "2025-12-07T21:00:17.089285",
     "html_report": null,
-    "json_report": "/opt/airflow/drifts/monitoring/reports/production_data_quality_20251205_104500.json",
-    "num_rows": 268,
+    "json_report": "/opt/airflow/drifts/monitoring/reports/production_data_quality_20251207_210017.json",
+    "num_rows": 263,
     "num_columns": 25
   },
   "alerts": [
     {
-      "severity": "warning",
-      "type": "drift",
-      "message": "Data drift detected in 50.0% of features"
+      "severity": "info",
+      "type": "data_availability",
+      "message": "Drift analysis skipped: Evidently not properly installed"
     }
   ]
 }

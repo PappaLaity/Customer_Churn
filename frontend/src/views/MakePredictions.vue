@@ -299,33 +299,33 @@ export default {
       if (!this.predictions) return
 
       // Generate filename with current date and time
-      var now = new Date()
-      var year = now.getFullYear()
-      var month = String(now.getMonth() + 1).padStart(2, '0')
-      var day = String(now.getDate()).padStart(2, '0')
-      var hours = String(now.getHours()).padStart(2, '0')
-      var minutes = String(now.getMinutes()).padStart(2, '0')
-      var seconds = String(now.getSeconds()).padStart(2, '0')
-      var filename = 'prediction_' + year + '-' + month + '-' + day + '_' + hours + '-' + minutes + '-' + seconds + '.csv'
+      const now = new Date()
+      const year = now.getFullYear()
+      const month = String(now.getMonth() + 1).padStart(2, '0')
+      const day = String(now.getDate()).padStart(2, '0')
+      const hours = String(now.getHours()).padStart(2, '0')
+      const minutes = String(now.getMinutes()).padStart(2, '0')
+      const seconds = String(now.getSeconds()).padStart(2, '0')
+      const filename = 'prediction_' + year + '-' + month + '-' + day + '_' + hours + '-' + minutes + '-' + seconds + '.csv'
 
       // Build CSV content
-      var lines = []
+      const lines = []
       lines.push('Ligne;Prediction;Probabilite;Va_Partir')
 
-      for (var i = 0; i < this.predictions.predictions.length; i++) {
-        var p = this.predictions.predictions[i]
-        var ligne = p.row_index + 1
-        var prediction = p.prediction === 1 ? 'Churn' : 'Fidele'
-        var probabilite = (p.probability * 100).toFixed(2) + '%'
-        var vaPartir = p.will_churn ? 'Oui' : 'Non'
+      for (let i = 0; i < this.predictions.predictions.length; i++) {
+        const p = this.predictions.predictions[i]
+        const ligne = p.row_index + 1
+        const prediction = p.prediction === 1 ? 'Churn' : 'Fidele'
+        const probabilite = (p.probability * 100).toFixed(2) + '%'
+        const vaPartir = p.will_churn ? 'Oui' : 'Non'
         lines.push(ligne + ';' + prediction + ';' + probabilite + ';' + vaPartir)
       }
 
-      var csvContent = lines.join('\r\n')
+      const csvContent = lines.join('\r\n')
 
       // Create download using data URI
-      var encodedUri = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent)
-      var link = document.createElement('a')
+      const encodedUri = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent)
+      const link = document.createElement('a')
       link.setAttribute('href', encodedUri)
       link.setAttribute('download', filename)
       document.body.appendChild(link)
