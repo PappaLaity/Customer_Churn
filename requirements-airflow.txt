@@ -1,4 +1,5 @@
 pytest
+pytest-mock
 python-dotenv
 pandas
 numpy
@@ -14,3 +15,8 @@ imbalanced-learn
 dvc
 evidently==0.4.30
 alibi-detect
+# Required for DAG tests (conftest.py imports FastAPI)
+fastapi
+pydantic[email]
+sqlmodel
+email-validator>=2.0
