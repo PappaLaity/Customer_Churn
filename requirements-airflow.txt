@@ -20,3 +20,5 @@ fastapi
 pydantic[email]
 sqlmodel
 email-validator>=2.0
+# Pin SQLAlchemy for compatibility with Airflow constraints
+sqlalchemy>=1.4,<2.0
