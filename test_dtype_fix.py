@@ -56,11 +56,14 @@ def test_preprocessing_dtypes():
     
     if all(dtype_matches):
         print("\n✓ All dtypes match! The fix is working correctly.")
-        return True
     else:
         print("\n✗ Some dtypes don't match. The fix may not be working.")
-        return False
+    
+    assert all(dtype_matches), "Some dtypes don't match between processed and baseline data"
 
 if __name__ == "__main__":
-    success = test_preprocessing_dtypes()
-    sys.exit(0 if success else 1)
+    try:
+        test_preprocessing_dtypes()
+        sys.exit(0)
+    except AssertionError:
+        sys.exit(1)

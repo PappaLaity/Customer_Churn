@@ -3,6 +3,7 @@ import numpy as np
 import pickle
 import os
 import logging
+import warnings
 
 def preprocess_inference_data(df, models_dir="/opt/airflow/models", features_path="/opt/airflow/data/features/features.csv"):
     """
@@ -28,9 +29,14 @@ def preprocess_inference_data(df, models_dir="/opt/airflow/models", features_pat
     ]
     binary_cols_present = [c for c in binary_cols if c in df.columns]
     if binary_cols_present:
-        df[binary_cols_present] = df[binary_cols_present].replace(
-            {"Yes": 1, "No": 0, "Female": 0, "Male": 1}
-        ).fillna(0).astype(int)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=FutureWarning, message=".*Downcasting.*")
+            df[binary_cols_present] = (
+                df[binary_cols_present]
+                .replace({"Yes": 1, "No": 0, "Female": 0, "Male": 1})
+                .fillna(0)
+                .astype(int)
+            )
 
     # 3. Multi-categorical columns -> one-hot encode
     multi_cat_cols = [
