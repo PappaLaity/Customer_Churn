@@ -60,17 +60,21 @@ def test_predict_with_labels_tracks_accuracy(client: TestClient, auth_headers, m
 
 def test_survey_submit(client: TestClient, mock_app_state, mocker, tmp_path):
     """Test survey submission endpoint."""
-    # Mock file path
-    production_file = tmp_path / "production.csv"
-    production_file.touch()
+    # Create a mock Path instance that behaves like a real path
+    mock_path_instance = mocker.MagicMock()
+    mock_path_instance.exists.return_value = False  # File doesn't exist, so we skip read_csv
+    mock_path_instance.parent.mkdir = mocker.MagicMock()
     
-    mocker.patch("pathlib.Path", return_value=tmp_path / "production.csv")
-    mocker.patch("pandas.DataFrame.to_csv")
+    # Mock Path constructor to return our mock
+    mocker.patch("src.api.routes.predictions.Path", return_value=mock_path_instance)
+    
+    # Mock to_csv to prevent actual file writes
+    mocker.patch.object(pd.DataFrame, "to_csv")
     
     # Mock the predict_single function
     mock_predict = mocker.patch(
         "src.api.routes.predictions.predict_single",
-        return_value={"model": "Test", "prediction": 1, "latency": 0.1}
+        return_value={"model": "Test", "prediction": 1, "probability": 0.8, "latency": 0.1}
     )
     
     # Updated payload to match InputCustomer schema (preprocessed features)

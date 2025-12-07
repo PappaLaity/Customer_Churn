@@ -14,8 +14,10 @@ def test_get_customers_infos_without_auth(client: TestClient):
 
 def test_get_customers_infos_no_file(client: TestClient, auth_headers, mocker):
     """Test /customers/infos when production file doesn't exist."""
-    # Mock the Path.exists() method directly on the data route's Path usage
-    mocker.patch("src.api.routes.data.Path.exists", return_value=False)
+    # Create a mock Path instance that returns False for exists()
+    mock_path_instance = mocker.MagicMock()
+    mock_path_instance.exists.return_value = False
+    mocker.patch("src.api.routes.data.Path", return_value=mock_path_instance)
     
     response = client.get("/customers/infos", headers=auth_headers)
     assert response.status_code == 200
@@ -51,8 +53,10 @@ def test_get_customers_infos_with_data(client: TestClient, auth_headers, mocker,
 
 def test_get_customers_infos_empty_file(client: TestClient, auth_headers, mocker):
     """Test /customers/infos with empty CSV file."""
-    # Mock pandas to raise EmptyDataError
-    mocker.patch("pathlib.Path.exists", return_value=True)
+    # Create a mock Path instance that returns True for exists()
+    mock_path_instance = mocker.MagicMock()
+    mock_path_instance.exists.return_value = True
+    mocker.patch("src.api.routes.data.Path", return_value=mock_path_instance)
     mocker.patch("pandas.read_csv", side_effect=pd.errors.EmptyDataError())
     
     response = client.get("/customers/infos", headers=auth_headers)
@@ -64,7 +68,10 @@ def test_get_customers_infos_empty_file(client: TestClient, auth_headers, mocker
 
 def test_get_customers_infos_read_error(client: TestClient, auth_headers, mocker):
     """Test /customers/infos handles read errors gracefully."""
-    mocker.patch("pathlib.Path.exists", return_value=True)
+    # Create a mock Path instance that returns True for exists()
+    mock_path_instance = mocker.MagicMock()
+    mock_path_instance.exists.return_value = True
+    mocker.patch("src.api.routes.data.Path", return_value=mock_path_instance)
     mocker.patch("pandas.read_csv", side_effect=Exception("Read error"))
     
     response = client.get("/customers/infos", headers=auth_headers)
