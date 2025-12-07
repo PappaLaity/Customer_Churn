@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 import os
 import json
 from airflow.utils.edgemodifier import Label
-from airflow.operators.trigger_rule import TriggerRule
+from airflow.utils.trigger_rule import TriggerRule
 # Optional: use scipy for KS test. pip install scipy
 from scipy.stats import ks_2samp
 
