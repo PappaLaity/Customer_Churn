@@ -7,22 +7,11 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: churn_db
     ports:
-      - "5432:5432"
+      # Bind to loopback only — the DB is reachable in-network via "db" and should
+      # not be exposed on all host interfaces.
+      - "127.0.0.1:5432:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
-    networks:
-      - churn_network
-  mlflow_db:
-    image: postgres:15
-    container_name: mlflow_db
-    environment:
-      POSTGRES_USER: ${MLFLOW_DB_USER}
-      POSTGRES_PASSWORD: ${MLFLOW_DB_PASSWORD}
-      POSTGRES_DB: mlflow_db
-    volumes:
-      - mlflow_db_data:/var/lib/postgresql/data
-    ports:
-      - "5433:5432"
     networks:
       - churn_network
   fastapi:
@@ -37,7 +26,7 @@ services:
       MODEL_STAGE: Production
       ENV: Production
       MLFLOW_URI: http://mlflow:5000
-      API_KEY_SECRET: ${API_KEY_SECRET:-changeme-in-production}
+      API_KEY_SECRET: ${API_KEY_SECRET:?API_KEY_SECRET must be set in .env}
     depends_on:
       - db
     volumes:
@@ -68,7 +57,7 @@ services:
       bash -c "
         set -e
         airflow db migrate &&
-        airflow users create -u admin -p admin -f telco -l company -r Admin -e admin@telco.com || true
+        airflow users create -u \"$${AIRFLOW_ADMIN_USER:-admin}\" -p \"$${AIRFLOW_ADMIN_PASSWORD:-admin}\" -f telco -l company -r Admin -e admin@telco.com || true
       "
     environment:
       - AIRFLOW_HOME=/opt/airflow
@@ -76,6 +65,8 @@ services:
       - MLFLOW_TRACKING_URI=http://mlflow:5000
       - MLFLOW_URI=http://mlflow:5000
       - PYTHONPATH=/opt/airflow
+      - AIRFLOW_ADMIN_USER=${AIRFLOW_ADMIN_USER:-admin}
+      - AIRFLOW_ADMIN_PASSWORD=${AIRFLOW_ADMIN_PASSWORD:-admin}
     volumes:
       - ./dags:/opt/airflow/dags
       - ./models:/opt/airflow/models
@@ -201,10 +192,12 @@ services:
       context: .
       dockerfile: Dockerfile.mlflow
     container_name: mlflow
-    depends_on:
-      - mlflow_db
+    environment:
+      # File-based backend store, persisted across restarts via mlflow_data.
+      MLFLOW_BACKEND_STORE_URI: file:///mlflow/mlruns
     volumes:
       - ./mlflow_artifacts:/mlflow/artifacts
+      - mlflow_data:/mlflow/mlruns
     ports:
       - "5001:5000"
     restart: unless-stopped
@@ -271,7 +264,8 @@ volumes:
   db_data:
   grafana-storage:
   prometheus-data:
-  mlflow_db_data:
+  mlflow_data:
+    # Persistent MLflow file-based metadata store (runs, registry)
   mlflow_artifacts:
   airflow_data:
     # Persistent Airflow database and logs

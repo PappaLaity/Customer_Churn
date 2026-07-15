@@ -5,22 +5,26 @@ WORKDIR /mlflow
 # Installer MLflow et dépendances
 RUN pip install --no-cache-dir mlflow psycopg2-binary boto3
 
-# Créer dossier artefacts
+# Créer dossiers artefacts + métadonnées (montés comme volumes en compose)
 RUN useradd -ms /bin/bash airflow
-RUN mkdir -p /mlflow/artifacts && chown -R airflow:airflow /mlflow
+RUN mkdir -p /mlflow/artifacts /mlflow/mlruns && chown -R airflow:airflow /mlflow
 
 USER airflow
 
 ENV MLFLOW_ALLOW_MULTIPLE_HOSTS=true
-ENV MLFLOW_BACKEND_STORE_URI=${MLFLOW_DB_URL}
+# Persistent file-based metadata store. Overridable at runtime (e.g. to a DB URI).
+ENV MLFLOW_BACKEND_STORE_URI=file:///mlflow/mlruns
 ENV MLFLOW_HOST=0.0.0.0
 
 EXPOSE 5000
 
-CMD ["mlflow", "server", \
-     "--backend-store-uri", "${MLFLOW_BACKEND_STORE_URI}", \
-     "--artifacts-destination", "file:///mlflow/artifacts", \
-     "--serve-artifacts", \
-     "--allowed-hosts", "mlflow,localhost,*", \
-     "--host", "0.0.0.0", \
-     "--port", "5000"]
+# Shell-form CMD so $MLFLOW_BACKEND_STORE_URI is expanded at runtime. Exec-form
+# (JSON array) does NOT perform shell variable substitution, which is why the
+# previous CMD passed the literal string "${MLFLOW_BACKEND_STORE_URI}".
+CMD mlflow server \
+    --backend-store-uri "$MLFLOW_BACKEND_STORE_URI" \
+    --artifacts-destination file:///mlflow/artifacts \
+    --serve-artifacts \
+    --allowed-hosts mlflow,localhost \
+    --host "$MLFLOW_HOST" \
+    --port 5000
