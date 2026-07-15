@@ -1,29 +1,24 @@
 #!/bin/bash
-# Quick test runner script for drift-based retraining tests
+# Test runner: runs the full automated pytest suite under tests/.
+set -u
 
-echo "Running Drift-Based Retraining Tests"
+export ENV=test
+
+echo "Running full test suite (tests/)"
 echo "======================================"
 echo ""
 
-# Unit tests
-echo "Running unit tests (tests/test_retrain.py)..."
-python3 -m pytest tests/test_retrain.py -v --tb=short
+# Run the entire tests/ package (unit tests, API tests, DAG tests, monitoring).
+python3 -m pytest tests/ -v --tb=short
 UNIT_RESULT=$?
 
 echo ""
-
-# Integration tests  
-echo "Running integration tests (test_drift_retrain_logic.py)..."
-python3 test_drift_retrain_logic.py
-INTEGRATION_RESULT=$?
-
-echo ""
 echo "======================================"
 
-if [ $UNIT_RESULT -eq 0 ] && [ $INTEGRATION_RESULT -eq 0 ]; then
+if [ $UNIT_RESULT -eq 0 ]; then
     echo "All tests passed!"
     exit 0
 else
-    echo " Some tests failed"
+    echo "Some tests failed"
     exit 1
 fi

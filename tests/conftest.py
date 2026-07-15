@@ -100,8 +100,10 @@ def mock_app_state(mocker, client):
 @pytest.fixture
 def api_key():
     """Valid API key for authenticated requests."""
-    # Must match the default in src/api/core/security.py
-    return os.getenv("API_KEY_SECRET", "my-default-api-key")
+    # Read the value the app actually resolved so tests stay in sync with
+    # src/api/core/security.py regardless of its default.
+    from src.api.core.security import API_KEY_SECRET
+    return API_KEY_SECRET
 
 
 @pytest.fixture
