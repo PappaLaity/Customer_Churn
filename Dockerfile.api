@@ -15,7 +15,7 @@ COPY src ./src
 
 
 ENV PYTHONPATH=/app
-ENV API_KEY_SECRET=SECRET_KEY
+# API_KEY_SECRET is provided at runtime (compose/env), never baked into the image.
 
 EXPOSE 8000
 

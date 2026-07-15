@@ -7,13 +7,17 @@ ENV = os.getenv("ENV", "dev")
 if ENV == "test":
     DATABASE_URL = "sqlite:///./test.db"
 else:
-    DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@db:5432/churn_db")
+    DATABASE_URL = os.getenv("DATABASE_URL")
+    if not DATABASE_URL:
+        if ENV == "dev":
+            DATABASE_URL = "postgresql://user:password@db:5432/churn_db"
+        else:
+            raise RuntimeError(
+                "DATABASE_URL environment variable must be set in non-dev environments"
+            )
 
-# DATABASE_URL = "postgresql+psycopg2://user:password@db:5432/churn_db"
-# DATABASE_URL = "mysql+pymysql://root@localhost/churn_test"
-engine = create_engine(DATABASE_URL, echo=True)
-
-# engine = create_engine()
+# Echo SQL to logs only in local development to avoid leaking queries in prod.
+engine = create_engine(DATABASE_URL, echo=(ENV == "dev"))
 
 
 def init_db():
