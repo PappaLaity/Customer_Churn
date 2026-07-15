@@ -259,19 +259,48 @@ def register_best_model(best_run, model_registry_name="CustomerChurnModel"):
     versions = client.search_model_versions(f"name='{model_registry_name}'")
     prod_models = [v for v in versions if getattr(v, "current_stage", None) == "Production"]
 
+    candidate_recall = float(best_run["test_recall"])
+    # Tolerance for promotion: candidate may be up to `epsilon` below the incumbent
+    # and still be promoted (0.0 => must be at least as good). Tune via env.
+    epsilon = float(os.getenv("PROMOTION_RECALL_EPSILON", "0.0"))
+
     if not prod_models:
+        # No incumbent yet: the first model becomes Production.
         status = "Production"
+        archive = True
     else:
-        status = "Staging"
-    
-    # Promote directly to Production (skip Staging if not needed)
+        # Quality gate: only overwrite Production if the candidate is at least as
+        # good (within epsilon) as the best incumbent, measured by test recall.
+        def _incumbent_recall(v):
+            try:
+                return float((getattr(v, "tags", {}) or {}).get("test_recall", "-inf"))
+            except (TypeError, ValueError):
+                return float("-inf")
+
+        best_incumbent = max(_incumbent_recall(v) for v in prod_models)
+        if candidate_recall >= best_incumbent - epsilon:
+            status = "Production"
+            archive = True
+            print(
+                f"Quality gate PASSED: candidate recall {candidate_recall:.4f} "
+                f">= incumbent {best_incumbent:.4f} - eps {epsilon} -> promoting to Production"
+            )
+        else:
+            status = "Staging"
+            archive = False
+            print(
+                f"Quality gate FAILED: candidate recall {candidate_recall:.4f} "
+                f"< incumbent {best_incumbent:.4f} - eps {epsilon} -> keeping in Staging; "
+                f"Production left unchanged"
+            )
+
     client.transition_model_version_stage(
         name=model_registry_name,
         version=version.version,
         stage=status,
-        archive_existing_versions=True,
+        archive_existing_versions=archive,
     )
-    print(f"Promoted version {version.version} to {status} stage")
+    print(f"Set version {version.version} to {status} stage")
 
     # Verify all versions
     models = client.search_model_versions(f"name='{model_registry_name}'")
