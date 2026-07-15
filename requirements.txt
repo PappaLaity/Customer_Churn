@@ -24,7 +24,9 @@ imbalanced-learn
 psycopg2-binary
 pydantic[email]
 httpx
-evidently
+# Pinned to match requirements-airflow.txt so the API and Airflow containers run
+# the same Evidently API (avoids the 0.4.x/0.7.x skew reports.py had to guard).
+evidently==0.4.30
 alibi-detect
 pytest-mock
 slowapi
