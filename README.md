@@ -12,8 +12,6 @@ We Containerize the project using docker and deploy it automatically using [Depl
     -  [Dashboard] (https://customer-churn-dusky.vercel.app/dashboard)
         - This Url require the user to be connected
     -   [Login](https://customer-churn-dusky.vercel.app/login)
-        - email: admin@example.com
-        - password:admin
 
     - [Customer Infos](https://customer-churn-dusky.vercel.app/customers-dashboard)
         - This Url require the user to be connected
@@ -26,18 +24,14 @@ We Containerize the project using docker and deploy it automatically using [Depl
 
     - A default User Admin is created when launch api
     - You can manipulate endpoint by using api given when you logged to api
-    - email: admin@example.com
-    - password:admin
 
 - Airflow [Airflow](http://customer-churn.francecentral.cloudapp.azure.com/:8080)
-    - Login: admin
-    - Password: admin
+
       
 - Mlflow [Mlflow](http://customer-churn.francecentral.cloudapp.azure.com/:5001)
   
 - Grafana [Grafana](http://customer-churn.francecentral.cloudapp.azure.com/:3000)
-    - login: admin
-    - password: admin
+
 
 ## Local Run
 ### Process
@@ -57,18 +51,14 @@ Assume you have docker already installed in your computer:
 
     - A default User Admin is created when launch api
     - You can manipulate endpoint by using api given when you logged to api
-    - email: admin@example.com
-    - password:admin
+    
 
 - Airflow [Airflow](http://localhost:8080)
-    - Login: admin
-    - Password: admin
       
 - Mlflow [Mlflow](http://localhost:5001)
   
 - Grafana [Grafana](http://localhost:3000)
-    - login: admin
-    - password: admin
+
 - To build locally the front End you should Go to the frontend folder using cmd
 
     `cd frontend`
@@ -82,8 +72,6 @@ Assume you have docker already installed in your computer:
         -  [Dashboard] (http://localhost:8081/dashboard)
             - This Url require the user to be connected
         -   [Login](http://localhost:8081/login)
-            - email: admin@example.com
-            - password:admin
 
         - [Customer Infos](http://localhost:8081/customers-dashboard)
             - This Url require the user to be connected
